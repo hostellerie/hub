@@ -5,28 +5,22 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 }
 
 $hub_path = $_CONF['path'] . 'plugins/hub/';
-$langfile = $hub_path . 'language/' . $_CONF['language'] . '.php';
-if (file_exists($langfile)) {
-    require_once $langfile;
-} else {
-    require_once $hub_path . 'language/english.php';
-}
 require_once $hub_path . 'lib-audit.php';
 
 function plugin_cclabel_hub()
 {
-    global $_CONF, $LANG_HUB;
+    global $_CONF;
     if (!SEC_hasRights('hub.admin')) {
         return array();
     }
-    return array($LANG_HUB['plugin_name'], $_CONF['site_admin_url'] . '/plugins/hub/index.php', '');
+    return array('Hub', $_CONF['site_admin_url'] . '/plugins/hub/index.php', '');
 }
 
 function plugin_getadminoption_hub()
 {
-    global $_CONF, $LANG_HUB;
+    global $_CONF;
     if (SEC_hasRights('hub.admin')) {
-        return array($LANG_HUB['plugin_name'], $_CONF['site_admin_url'] . '/plugins/hub/index.php', 0);
+        return array('Hub', $_CONF['site_admin_url'] . '/plugins/hub/index.php', 0);
     }
 }
 
