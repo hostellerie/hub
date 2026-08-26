@@ -9,24 +9,30 @@ Version **0.1.0** is intentionally minimal: after installation it adds **Hub** t
 - Geeklog 2.1.1 or newer
 - PHP 5.6 or newer
 
-## Current audit columns
+## Current audit
+
+The permanent Plugin Interoperability Audit reports:
 
 - Item Info
 - Related Items
 - Blocks
 - Autotags
 - Search
-- Services
+- Services and reflected service signatures/actions
 - readiness score
-- lifecycle source evidence (`PLG_itemSaved()` / `PLG_itemDeleted()`)
-- inferred object types observed in lifecycle calls
-- service actions and reflected function signatures
-- complete runtime `plugin_*_<plugin>()` API surface
+- Lifecycle **emitter** source evidence (`PLG_itemSaved()` / `PLG_itemDeleted()` calls)
+- Lifecycle **listener** callbacks (`plugin_itemsaved_*()` / `plugin_itemdeleted_*()`)
+- object types discovered from `plugin_searchtypes_*()` when it can be called safely
+- object types observed as literal lifecycle types
+- primary type inference from `plugin_getiteminfo_*()`
+- complete runtime `plugin_*_<plugin>()` API surface under a collapsed Advanced section
 
-Lifecycle is reported as **source evidence**, not as a runtime guarantee. Hub scans installed plugin PHP code (with comments removed) for lifecycle calls and keeps runtime-detected capabilities visually distinct from inferred/source-detected information.
+Runtime-detected callbacks are kept distinct from source evidence and inference. Hub never presents source scanning as proof that every mutation path emits a lifecycle notification.
+
+Object-type evidence from several sources is merged into one entry instead of displaying duplicates. This lets Hub learn as much as possible from existing Geeklog conventions before requiring any Hub-specific capability contract.
 
 See `ROADMAP.md` for the planned pillar/relationship implementation.
 
 ## 0.1.0 audit details
 
-The audit includes Hub itself, exposes detected callback/function names and autotag names, and provides per-plugin recommendations in collapsed **Details / Recommendations** sections.
+The audit includes Hub itself, exposes detected callback/function names and autotag names, and provides per-plugin recommendations in collapsed **Details / Recommendations** sections. The most Hub-relevant information is shown first; embedding/discovery helpers are separated and the full Plugin API surface is hidden under **Advanced API surface** by default.
