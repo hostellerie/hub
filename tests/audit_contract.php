@@ -21,4 +21,32 @@ if (strpos($admin, 'Source evidence') === false || strpos($admin, 'Object types'
     fwrite(STDERR, "Missing enriched audit UI\n");
     exit(1);
 }
+
+$iterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)
+);
+foreach ($iterator as $fileInfo) {
+    if (!$fileInfo->isFile()) {
+        continue;
+    }
+    $extension = strtolower($fileInfo->getExtension());
+    if ($extension !== 'php' && $extension !== 'inc') {
+        continue;
+    }
+    $path = $fileInfo->getPathname();
+    $contents = file_get_contents($path);
+    if ($contents === false) {
+        fwrite(STDERR, "Unable to read PHP source: $path\n");
+        exit(1);
+    }
+    if (substr($contents, 0, 3) === "\xEF\xBB\xBF") {
+        fwrite(STDERR, "UTF-8 BOM detected: $path\n");
+        exit(1);
+    }
+    if (substr($contents, 0, 5) !== '<?php') {
+        fwrite(STDERR, "Leading output or missing PHP open tag: $path\n");
+        exit(1);
+    }
+}
+
 echo "Hub packaging contract OK\n";
