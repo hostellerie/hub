@@ -17,16 +17,24 @@ Hub turns a Geeklog content object (initially a Static Page) into a pillar and a
 - `hub.admin` permission and Hub Admin group
 - admin entry
 - audit all active plugins and display installed version
-- runtime detection of Item Info, Related Items, ID→URL, Blocks, Autotags, Search and detectable service/webservice entry points
-- role-aware classification: Content, Presentation, Service, Infrastructure and Orchestrator
+- runtime detection of:
+  - `plugin_getiteminfo_*`
+  - `plugin_getrelateditems_*`
+  - `plugin_getBlocks_*`
+  - `plugin_autotags_*`
+  - `plugin_dopluginsearch_*`
+  - detectable service/webservice entry points
+- readiness score
+- include Hub itself in the audit
+- show detected callback/service function names and declared autotag names
+- collapsed per-plugin Details / Recommendations guidance
+- role-aware classification: content, presentation, service, infrastructure and orchestrator
 - role-specific readiness with core and optional scores
-- lifecycle emitter source evidence and listener callback introspection
-- lifecycle contract compatibility, including nullable `sub_type`
-- object-type discovery and runtime API surface inventory
-- Additional Geeklog capabilities reported separately from Hub readiness
-- native statistics contribution (`plugin_showstats_*`, `plugin_statssummary_*`) reported as **Full / Partial / None** without changing Hub readiness
 - Markdown audit export for developer handoff and issue reports
-- do not infer lifecycle support when it cannot be proven
+- do not infer lifecycle support when it cannot be proven at runtime
+- audit native statistics contribution (`plugin_showstats_*`, `plugin_statssummary_*`) as Full / Partial / None without changing Hub readiness
+- report Content Syndication support (`plugin_getfeednames_*`, `plugin_getfeedcontent_*`, optional `plugin_feedupdatecheck_*`)
+- report XMLSitemap contribution through `plugin_collectSitemapItems_*` or the supported `PLG_getItemInfo(type, '*', ...)` fallback
 
 ## 0.2.0 — Capability contract
 
@@ -40,9 +48,9 @@ Hub turns a Geeklog content object (initially a Static Page) into a pillar and a
 
 - create Hub pillar records
 - first pillar target: Static Pages
-- attach complementary items by stable `item_type + item_sub_type nullable + item_id`
+- attach complementary items by stable `item_type + item_id`
 - no stored internal URL as source of truth
-- resolve title/URL through Geeklog APIs where available
+- resolve title/URL through `PLG_getItemInfo()` where available
 - manual ordering and enable/disable state
 
 ## 0.4.0 — Bidirectional navigation
@@ -94,12 +102,11 @@ Hub turns a Geeklog content object (initially a Static Page) into a pillar and a
 - compatibility matrix for major Geeklog plugins
 - tested packaging for supported Geeklog/PHP matrix
 
-## Future statistics integration
-
-- aggregate or present plugin-provided statistics through native Geeklog callbacks where useful
-- keep statistics outside readiness scoring
-- do not read another plugin's statistics tables directly when the Plugin API can provide the information
-
 ## Design rule
 
 Plugins should not add Hub-specific dependencies when a generic Geeklog API can expose the same capability. Hub should orchestrate relationships; each plugin remains the owner of its data, permissions, business logic and specialized rendering.
+
+## Future statistics integration
+
+- aggregate or present plugin-provided statistics through native Geeklog callbacks where useful
+- do not read another plugin's statistics tables directly when the Plugin API can provide the information

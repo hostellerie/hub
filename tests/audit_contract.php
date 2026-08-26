@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-role.php', 'lib-stats.php', 'admin/index.php', 'admin/audit.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-role.php', 'lib-stats.php', 'lib-distribution.php', 'admin/index.php', 'admin/audit.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -78,7 +78,9 @@ PLG_itemSaved($id, 'article');
 PLG_itemDeleted($id, "article");
 PHP;
 $realFacts = HUB_auditLifecycleCallsFromSource($realSource);
-if (!$realFacts['item_saved'] || !$realFacts['item_deleted'] || $realFacts['object_types'] !== array('article')) {
+if (!$realFacts['item_saved'] || !$realFacts['item_deleted']
+    || $realFacts['object_types'] !== array('article')
+) {
     fwrite(STDERR, "Lifecycle tokenizer real-call regression failed\n");
     exit(1);
 }
@@ -92,6 +94,27 @@ if (strpos(implode(' ', $stats), 'Statistics: Full') === false
     || strpos(implode(' ', $stats), 'Statistics summary') === false
 ) {
     fwrite(STDERR, "Statistics capability detection failed\n");
+    exit(1);
+}
+
+require_once $root . '/lib-distribution.php';
+
+function plugin_getfeednames_hubdistributiontest() {}
+function plugin_getfeedcontent_hubdistributiontest($feed, &$link, &$update_data, $feedType, $feedVersion) {}
+function plugin_feedupdatecheck_hubdistributiontest($feed, $topic, $update_data, $limit, $updated_type, $updated_topic, $updated_id) {}
+function plugin_collectSitemapItems_hubdistributiontest($uid, $limit) {}
+
+$syndication = HUB_distributionSyndicationCapabilities('hubdistributiontest');
+$dummyRow = array('caps' => array('item_info' => true));
+$sitemap = HUB_distributionSitemapCapabilities('hubdistributiontest', $dummyRow);
+$fallback = HUB_distributionSitemapCapabilities('hubfallbacktest', $dummyRow);
+
+if (strpos(implode(' ', $syndication), 'Content Syndication: Full') === false
+    || strpos(implode(' ', $syndication), 'Feed update check') === false
+    || strpos(implode(' ', $sitemap), 'Native collector') === false
+    || strpos(implode(' ', $fallback), 'Item Info fallback') === false
+) {
+    fwrite(STDERR, "Distribution capability detection failed\n");
     exit(1);
 }
 

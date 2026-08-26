@@ -41,5 +41,9 @@ function HUB_statsEnrichRows($rows)
         $rows[$key]['additional_capabilities'] = array_merge($statistics, $rows[$key]['additional_capabilities']);
         $rows[$key]['statistics'] = $statistics;
     }
+    if (function_exists('HUB_distributionEnrichRows')) {
+        return HUB_distributionEnrichRows($rows);
+    }
+
     return $rows;
 }

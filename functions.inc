@@ -8,6 +8,7 @@ $hub_path = $_CONF['path'] . 'plugins/hub/';
 require_once $hub_path . 'lib-audit.php';
 require_once $hub_path . 'lib-role.php';
 require_once $hub_path . 'lib-stats.php';
+require_once $hub_path . 'lib-distribution.php';
 
 function plugin_cclabel_hub()
 {
