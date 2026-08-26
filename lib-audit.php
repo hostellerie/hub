@@ -207,24 +207,143 @@ function HUB_auditPluginSourceFiles($plugin)
     return array_values(array_unique($files));
 }
 
-function HUB_auditStripPhpComments($source)
+function HUB_auditTokenText($token)
 {
-    if (!function_exists('token_get_all')) {
-        return $source;
+    return is_array($token) ? $token[1] : $token;
+}
+
+function HUB_auditTokenIsIgnorable($token)
+{
+    if (!is_array($token)) {
+        return false;
     }
-    $clean = '';
-    foreach (token_get_all($source) as $token) {
-        if (is_array($token)) {
-            if ($token[0] === T_COMMENT || $token[0] === T_DOC_COMMENT) {
-                $clean .= ' ';
-            } else {
-                $clean .= $token[1];
-            }
-        } else {
-            $clean .= $token;
+    return $token[0] === T_WHITESPACE
+        || $token[0] === T_COMMENT
+        || $token[0] === T_DOC_COMMENT;
+}
+
+function HUB_auditNextSignificantTokenIndex($tokens, $index)
+{
+    $count = count($tokens);
+    for ($i = $index; $i < $count; $i++) {
+        if (!HUB_auditTokenIsIgnorable($tokens[$i])) {
+            return $i;
         }
     }
-    return $clean;
+    return -1;
+}
+
+function HUB_auditPreviousSignificantTokenIndex($tokens, $index)
+{
+    for ($i = $index; $i >= 0; $i--) {
+        if (!HUB_auditTokenIsIgnorable($tokens[$i])) {
+            return $i;
+        }
+    }
+    return -1;
+}
+
+function HUB_auditDecodePhpStringLiteral($literal)
+{
+    $length = strlen($literal);
+    if ($length < 2) {
+        return '';
+    }
+    $quote = $literal[0];
+    if (($quote !== "'" && $quote !== '"') || $literal[$length - 1] !== $quote) {
+        return '';
+    }
+    $value = substr($literal, 1, -1);
+    if ($quote === "'") {
+        return str_replace(array('\\\\', "\\'"), array('\\', "'"), $value);
+    }
+    return stripcslashes($value);
+}
+
+function HUB_auditLifecycleCallsFromSource($source)
+{
+    $facts = array(
+        'item_saved'   => false,
+        'item_deleted' => false,
+        'object_types' => array(),
+    );
+
+    if (!function_exists('token_get_all')) {
+        return $facts;
+    }
+
+    $tokens = token_get_all($source);
+    $count = count($tokens);
+    $targets = array(
+        'plg_itemsaved'   => 'item_saved',
+        'plg_itemdeleted' => 'item_deleted',
+    );
+
+    for ($i = 0; $i < $count; $i++) {
+        $token = $tokens[$i];
+        if (!is_array($token) || $token[0] !== T_STRING) {
+            continue;
+        }
+
+        $name = strtolower($token[1]);
+        if (!isset($targets[$name])) {
+            continue;
+        }
+
+        $previous = HUB_auditPreviousSignificantTokenIndex($tokens, $i - 1);
+        if ($previous >= 0 && is_array($tokens[$previous]) && $tokens[$previous][0] === T_FUNCTION) {
+            continue;
+        }
+
+        $open = HUB_auditNextSignificantTokenIndex($tokens, $i + 1);
+        if ($open < 0 || HUB_auditTokenText($tokens[$open]) !== '(') {
+            continue;
+        }
+
+        $facts[$targets[$name]] = true;
+
+        $depth = 1;
+        $argument = 1;
+        $secondArgumentTokens = array();
+
+        for ($j = $open + 1; $j < $count && $depth > 0; $j++) {
+            $current = $tokens[$j];
+            $tokenText = HUB_auditTokenText($current);
+
+            if ($tokenText === '(' || $tokenText === '[' || $tokenText === '{') {
+                $depth++;
+            } elseif ($tokenText === ')' || $tokenText === ']' || $tokenText === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    break;
+                }
+            }
+
+            if ($depth === 1 && $tokenText === ',') {
+                $argument++;
+                continue;
+            }
+
+            if ($argument === 2 && $depth === 1 && !HUB_auditTokenIsIgnorable($current)) {
+                $secondArgumentTokens[] = $current;
+            }
+        }
+
+        if (count($secondArgumentTokens) === 1
+            && is_array($secondArgumentTokens[0])
+            && $secondArgumentTokens[0][0] === T_CONSTANT_ENCAPSED_STRING
+        ) {
+            $type = trim(HUB_auditDecodePhpStringLiteral($secondArgumentTokens[0][1]));
+            if ($type !== '') {
+                $facts['object_types'][$type] = true;
+            }
+        }
+    }
+
+    $facts['object_types'] = array_keys($facts['object_types']);
+    sort($facts['object_types']);
+
+    return $facts;
 }
 
 function HUB_auditRelativeSourcePath($path, $plugin)
@@ -241,38 +360,33 @@ function HUB_auditSourceFacts($plugin)
 {
     $facts = array('files_scanned' => 0, 'item_saved' => array(), 'item_deleted' => array(), 'object_types' => array());
     $types = array();
+
     foreach (HUB_auditPluginSourceFiles($plugin) as $file) {
         $source = @file_get_contents($file);
         if ($source === false || $source === '') {
             continue;
         }
+
         $facts['files_scanned']++;
-        $clean = HUB_auditStripPhpComments($source);
         $relative = HUB_auditRelativeSourcePath($file, $plugin);
-        if (preg_match('/\\bPLG_itemSaved\\s*\\(/i', $clean)) {
+        $sourceCalls = HUB_auditLifecycleCallsFromSource($source);
+
+        if ($sourceCalls['item_saved']) {
             $facts['item_saved'][] = $relative;
         }
-        if (preg_match('/\\bPLG_itemDeleted\\s*\\(/i', $clean)) {
+        if ($sourceCalls['item_deleted']) {
             $facts['item_deleted'][] = $relative;
         }
-        $patterns = array(
-            '/\\bPLG_itemSaved\\s*\\(\\s*[^,]+,\\s*[\'\"]([^\'\"]+)[\'\"]/i',
-            '/\\bPLG_itemDeleted\\s*\\(\\s*[^,]+,\\s*[\'\"]([^\'\"]+)[\'\"]/i',
-        );
-        foreach ($patterns as $pattern) {
-            if (preg_match_all($pattern, $clean, $matches) && isset($matches[1])) {
-                foreach ($matches[1] as $type) {
-                    if (trim($type) !== '') {
-                        $types[trim($type)] = true;
-                    }
-                }
-            }
+        foreach ($sourceCalls['object_types'] as $type) {
+            $types[$type] = true;
         }
     }
+
     $facts['item_saved'] = array_values(array_unique($facts['item_saved']));
     $facts['item_deleted'] = array_values(array_unique($facts['item_deleted']));
     $facts['object_types'] = array_keys($types);
     sort($facts['object_types']);
+
     return $facts;
 }
 
