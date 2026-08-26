@@ -28,11 +28,10 @@ Hub turns a Geeklog content object (initially a Static Page) into a pillar and a
 - include Hub itself in the audit
 - show detected callback/service function names and declared autotag names
 - collapsed per-plugin Details / Recommendations guidance
-- inspect installed PHP source for `PLG_itemSaved()` / `PLG_itemDeleted()` calls
-- infer literal object types observed in lifecycle calls
-- inspect service actions and function signatures through reflection
-- inventory the loaded `plugin_*_<plugin>()` API surface
-- clearly distinguish runtime facts, source evidence and unknowns
+- role-aware classification: content, presentation, service, infrastructure and orchestrator
+- role-specific readiness with core and optional scores
+- Markdown audit export for developer handoff and issue reports
+- do not infer lifecycle support when it cannot be proven at runtime
 
 ## 0.2.0 — Capability contract
 
