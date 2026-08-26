@@ -34,4 +34,34 @@ foreach ($iterator as $fileInfo) {
         exit(1);
     }
 }
+
+// Lifecycle tokenizer regression: strings/comments that mention lifecycle functions
+// must not be reported as calls, while real calls must be detected.
+require_once $root . '/lib-audit.php';
+
+$fakeSource = <<<'PHP'
+<?php
+$fake = 'PLG_itemSaved($id, "fake")';
+// PLG_itemDeleted($id, 'commented');
+preg_match('/PLG_itemSaved\s*\(/', $fake);
+PHP;
+$fakeFacts = HUB_auditLifecycleCallsFromSource($fakeSource);
+if ($fakeFacts['item_saved'] || $fakeFacts['item_deleted'] || !empty($fakeFacts['object_types'])) {
+    fwrite(STDERR, "Lifecycle tokenizer false-positive regression failed\n");
+    exit(1);
+}
+
+$realSource = <<<'PHP'
+<?php
+PLG_itemSaved($id, 'article');
+PLG_itemDeleted($id, "article");
+PHP;
+$realFacts = HUB_auditLifecycleCallsFromSource($realSource);
+if (!$realFacts['item_saved'] || !$realFacts['item_deleted']
+    || $realFacts['object_types'] !== array('article')
+) {
+    fwrite(STDERR, "Lifecycle tokenizer real-call regression failed\n");
+    exit(1);
+}
+
 echo "Hub packaging contract OK\n";
