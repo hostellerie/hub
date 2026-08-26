@@ -11,7 +11,7 @@ if (!SEC_hasRights('hub.admin')) {
     exit;
 }
 
-$rows = HUB_roleEnrichRows(HUB_auditActivePlugins());
+$rows = HUB_statsEnrichRows(HUB_roleEnrichRows(HUB_auditActivePlugins()));
 
 if (isset($_GET['export']) && $_GET['export'] === 'md') {
     $markdown = HUB_roleMarkdown($rows, defined('VERSION') ? VERSION : '-', PHP_VERSION, '0.1.0');
@@ -71,7 +71,7 @@ function HUB_adminCard($title, $items, $badge)
 
 function HUB_adminDetails($row)
 {
-    $out = '<tr class="hub-details-row"><td colspan="10"><details class="hub-details"><summary>Details / Recommendations</summary><div class="hub-details-body">';
+    $out = '<tr class="hub-details-row"><td colspan="11"><details class="hub-details"><summary>Details / Recommendations</summary><div class="hub-details-body">';
     $out .= '<div class="hub-role"><strong>Inferred role:</strong> ' . HUB_adminEscape($row['role']['label']);
     if (!empty($row['role']['evidence'])) {
         $out .= ' &mdash; ' . HUB_adminEscape(implode('; ', $row['role']['evidence']));
@@ -81,9 +81,11 @@ function HUB_adminDetails($row)
     $out .= '<h4>Hub-relevant capabilities</h4><div class="hub-grid">';
     $out .= HUB_adminCard('Item Info', $row['details']['item_info'], empty($row['details']['item_info']) ? 'Missing' : 'Runtime');
     $out .= HUB_adminCard('Related Items', $row['details']['related_items'], empty($row['details']['related_items']) ? 'Missing' : 'Runtime');
+    $out .= HUB_adminCard('ID to URL', $row['details']['id_to_url'], empty($row['details']['id_to_url']) ? 'Missing' : 'Runtime');
     $out .= HUB_adminCard('Services', $row['details']['services'], empty($row['details']['services']) ? 'Missing' : 'Runtime');
     $out .= HUB_adminCard('Lifecycle emitter', $row['lifecycle_emitter'], 'Source evidence');
     $out .= HUB_adminCard('Lifecycle listener', $row['lifecycle_listener'], 'Runtime');
+    $out .= HUB_adminCard('Lifecycle contract', $row['lifecycle_contract'], 'Compatibility');
     $out .= HUB_adminCard('Object types', $row['object_types'], 'Discovered');
     $out .= '</div>';
 
@@ -96,6 +98,9 @@ function HUB_adminDetails($row)
     $out .= HUB_adminCard('Autotags', $row['details']['autotags'], empty($row['details']['autotags']) ? 'Missing' : 'Runtime');
     $out .= HUB_adminCard('Search', $row['details']['search'], empty($row['details']['search']) ? 'Missing' : 'Runtime');
     $out .= '</div>';
+
+    $out .= '<h4>Additional Geeklog capabilities</h4>';
+    $out .= HUB_adminList($row['additional_capabilities']);
 
     $out .= '<details class="hub-advanced"><summary>Advanced API surface (' . count($row['api_surface']) . ' callbacks)</summary><div class="hub-advanced-body">' . HUB_adminList($row['api_surface']) . '</div></details>';
     $out .= '<div class="hub-legend"><strong>Evidence:</strong> ✓ Runtime = loaded/callable; ◐ Source = call found in PHP source; ? = cannot be concluded automatically.</div>';
@@ -118,19 +123,19 @@ $content .= '<h2>Plugin interoperability audit</h2>';
 $content .= '<p>Hub infers each plugin role before evaluating readiness, so content, presentation, service and infrastructure plugins are not judged against the same contract.</p>';
 $content .= '<a class="hub-export" href="?export=md">Export audit as Markdown (.md)</a>';
 $content .= '<p><strong>Geeklog:</strong> ' . HUB_adminEscape(defined('VERSION') ? VERSION : '-') . ' &nbsp; <strong>PHP:</strong> ' . HUB_adminEscape(PHP_VERSION) . ' &nbsp; <strong>Hub:</strong> 0.1.0</p>';
-$content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Plugin</th><th>Version</th><th>Role</th><th>Item Info</th><th>Related Items</th><th>Blocks</th><th>Autotags</th><th>Search</th><th>Services</th><th>Readiness</th></tr></thead><tbody>';
+$content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Plugin</th><th>Version</th><th>Role</th><th>Item Info</th><th>Related Items</th><th>ID&rarr;URL</th><th>Blocks</th><th>Autotags</th><th>Search</th><th>Services</th><th>Readiness</th></tr></thead><tbody>';
 
 if (empty($rows)) {
-    $content .= '<tr><td colspan="10">No active plugins were detected.</td></tr>';
+    $content .= '<tr><td colspan="11">No active plugins were detected.</td></tr>';
 } else {
     foreach ($rows as $row) {
         $c = $row['caps'];
         $content .= '<tr><td><strong>' . HUB_adminEscape($row['plugin']) . '</strong></td><td>' . HUB_adminEscape($row['version']) . '</td><td>' . HUB_adminEscape($row['role']['label']) . '</td>';
-        $content .= '<td style="text-align:center">' . HUB_adminYesNo($c['item_info']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['related_items']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['blocks']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['autotags']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['search']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['services']) . '</td><td>' . HUB_adminReadiness($row['role_readiness']) . '</td></tr>';
+        $content .= '<td style="text-align:center">' . HUB_adminYesNo($c['item_info']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['related_items']) . '</td><td style="text-align:center">' . HUB_adminYesNo(!empty($c['id_to_url'])) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['blocks']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['autotags']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['search']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['services']) . '</td><td>' . HUB_adminReadiness($row['role_readiness']) . '</td></tr>';
         $content .= HUB_adminDetails($row);
     }
 }
 $content .= '</tbody></table></div>';
-$content .= '<h3>Audit meaning</h3><p><strong>Role</strong>: inferred from existing Geeklog capabilities. <strong>C</strong>: core score for that role. <strong>O</strong>: optional interoperability score. Runtime, source evidence and inference remain distinct.</p>';
+$content .= '<h3>Audit meaning</h3><p><strong>Role</strong>: inferred from existing Geeklog capabilities. <strong>C</strong>: core score for that role. <strong>O</strong>: optional interoperability score, including ID→URL where available. Statistics are reported separately and do not affect readiness. Runtime, source evidence and inference remain distinct.</p>';
 $display = COM_startBlock('Hub 0.1.0') . $content . COM_endBlock();
 COM_output(COM_createHTMLDocument($display));
