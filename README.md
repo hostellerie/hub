@@ -18,8 +18,12 @@ Version **0.1.0** is intentionally minimal: after installation it adds **Hub** t
 - Search
 - Services
 - readiness score
+- lifecycle source evidence (`PLG_itemSaved()` / `PLG_itemDeleted()`)
+- inferred object types observed in lifecycle calls
+- service actions and reflected function signatures
+- complete runtime `plugin_*_<plugin>()` API surface
 
-Lifecycle support is not guessed in 0.1.0 because a plugin's calls to `PLG_itemSaved()` / `PLG_itemDeleted()` cannot be reliably proven from runtime function existence alone.
+Lifecycle is reported as **source evidence**, not as a runtime guarantee. Hub scans installed plugin PHP code (with comments removed) for lifecycle calls and keeps runtime-detected capabilities visually distinct from inferred/source-detected information.
 
 See `ROADMAP.md` for the planned pillar/relationship implementation.
 
