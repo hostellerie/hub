@@ -22,3 +22,7 @@ Version **0.1.0** is intentionally minimal: after installation it adds **Hub** t
 Lifecycle support is not guessed in 0.1.0 because a plugin's calls to `PLG_itemSaved()` / `PLG_itemDeleted()` cannot be reliably proven from runtime function existence alone.
 
 See `ROADMAP.md` for the planned pillar/relationship implementation.
+
+## 0.1.0 audit details
+
+The audit includes Hub itself, exposes detected callback/function names and autotag names, and provides per-plugin recommendations in collapsed **Details / Recommendations** sections.
