@@ -25,6 +25,9 @@ Hub turns a Geeklog content object (initially a Static Page) into a pillar and a
   - `plugin_dopluginsearch_*`
   - detectable service/webservice entry points
 - readiness score
+- include Hub itself in the audit
+- show detected callback/service function names and declared autotag names
+- collapsed per-plugin Details / Recommendations guidance
 - do not infer lifecycle support when it cannot be proven at runtime
 
 ## 0.2.0 — Capability contract
