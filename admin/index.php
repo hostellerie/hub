@@ -51,6 +51,19 @@ function HUB_adminCapabilityDetails($details)
     return $out;
 }
 
+function HUB_adminInfoCard($title, $details, $badge, $badgeClass)
+{
+    $out = '<section class="hub-cap-card hub-cap-card-on">';
+    $out .= '<div class="hub-cap-title">';
+    $out .= '<span>' . HUB_adminEscape($title) . '</span>';
+    $out .= '<span class="hub-cap-badge ' . HUB_adminEscape($badgeClass) . '">' . HUB_adminEscape($badge) . '</span>';
+    $out .= '</div>';
+    $out .= HUB_adminCapabilityDetails($details);
+    $out .= '</section>';
+
+    return $out;
+}
+
 function HUB_adminDetailsRow($row)
 {
     $labels = array(
@@ -74,13 +87,22 @@ function HUB_adminDetailsRow($row)
         $out .= '<div class="hub-cap-title">';
         $out .= '<span>' . HUB_adminEscape($label) . '</span>';
         $out .= $detected
-            ? '<span class="hub-cap-badge hub-cap-badge-on">Detected</span>'
+            ? '<span class="hub-cap-badge hub-cap-badge-on">Runtime</span>'
             : '<span class="hub-cap-badge">Missing</span>';
         $out .= '</div>';
         $out .= HUB_adminCapabilityDetails($row['details'][$key]);
         $out .= '</section>';
     }
 
+    $out .= HUB_adminInfoCard('Lifecycle', $row['lifecycle'], 'Source evidence', 'hub-cap-badge-source');
+    $out .= HUB_adminInfoCard('Object types', $row['object_types'], 'Inferred', 'hub-cap-badge-inferred');
+    $out .= HUB_adminInfoCard('Plugin API surface', $row['api_surface'], 'Runtime', 'hub-cap-badge-on');
+
+    $out .= '</div>';
+    $out .= '<div class="hub-audit-legend">';
+    $out .= '<strong>Evidence:</strong> <span class="hub-inline-runtime">✓ Runtime</span> = loaded/callable; ';
+    $out .= '<span class="hub-inline-source">◐ Source</span> = call found in PHP source; ';
+    $out .= '<span class="hub-inline-unknown">?</span> = cannot be concluded automatically.';
     $out .= '</div>';
     $out .= '<section class="hub-recommendations">';
     $out .= '<div class="hub-recommendations-title">Recommendations</div>';
@@ -112,10 +134,14 @@ $content .= '.hub-cap-card-on{background:#fff}';
 $content .= '.hub-cap-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:bold;margin-bottom:7px}';
 $content .= '.hub-cap-badge{display:inline-block;font-size:11px;font-weight:normal;line-height:1.4;padding:1px 6px;border-radius:10px;background:#eceff3;color:#5f6670;white-space:nowrap}';
 $content .= '.hub-cap-badge-on{background:#e8f3ea;color:#286335}';
+$content .= '.hub-cap-badge-source{background:#fff3cd;color:#735c00}';
+$content .= '.hub-cap-badge-inferred{background:#e9eefb;color:#3e568c}';
 $content .= '.hub-cap-list{margin:0;padding-left:18px}';
 $content .= '.hub-cap-list li{margin:3px 0;line-height:1.35}';
 $content .= '.hub-cap-list code{white-space:normal;overflow-wrap:anywhere;word-break:break-word;font-size:.92em}';
 $content .= '.hub-cap-empty{color:#7a8088;font-style:italic;font-size:.92em}';
+$content .= '.hub-audit-legend{margin:2px 0 12px;padding:8px 10px;background:#f6f7f9;border-radius:4px;color:#555;line-height:1.45}';
+$content .= '.hub-inline-runtime{color:#286335;font-weight:bold}.hub-inline-source{color:#735c00;font-weight:bold}.hub-inline-unknown{font-weight:bold}';
 $content .= '.hub-recommendations{border-left:4px solid #d7a900;background:#fffbea;padding:10px 14px;border-radius:3px}';
 $content .= '.hub-recommendations-title{font-weight:bold;margin-bottom:4px}';
 $content .= '.hub-recommendations ul{margin:4px 0 0 20px;padding:0}';
@@ -126,7 +152,7 @@ $content .= '@media(max-width:1100px){.hub-cap-grid{grid-template-columns:repeat
 $content .= '@media(max-width:700px){.hub-cap-grid{grid-template-columns:1fr}.hub-details>summary{padding:8px}}';
 $content .= '</style>';
 $content .= '<h2>Plugin interoperability audit</h2>';
-$content .= '<p>This first Hub milestone audits active plugins using capabilities that can be detected safely at runtime. Expand <strong>Details / Recommendations</strong> under a plugin to see detected function names, autotag names and suggested interoperability improvements. Lifecycle notifications (PLG_itemSaved / PLG_itemDeleted) are intentionally not guessed.</p>';
+$content .= '<p>This first Hub milestone audits active plugins using capabilities that can be detected safely at runtime. Expand <strong>Details / Recommendations</strong> under a plugin to see detected function names, autotag names and suggested interoperability improvements. Hub also inspects installed PHP source for lifecycle calls and literal object types. Source evidence is shown separately from runtime-detected capabilities so it is never presented as a guarantee.</p>';
 $content .= '<p><strong>Geeklog:</strong> ' . HUB_adminEscape(defined('VERSION') ? VERSION : '-') . ' &nbsp; <strong>PHP:</strong> ' . HUB_adminEscape(PHP_VERSION) . ' &nbsp; <strong>Hub:</strong> 0.1.0</p>';
 $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse">';
 $content .= '<thead><tr>';
