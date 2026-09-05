@@ -36,6 +36,19 @@ Hub turns a Geeklog content object (initially a Static Page) into a pillar and a
 - report Content Syndication support (`plugin_getfeednames_*`, `plugin_getfeedcontent_*`, optional `plugin_feedupdatecheck_*`)
 - report XMLSitemap contribution through `plugin_collectSitemapItems_*` or the supported `PLG_getItemInfo(type, '*', ...)` fallback
 
+## 0.1.1 — Immediate article link audit
+
+- select a Geeklog topic and a destination Static Page
+- inspect published, non-draft core articles assigned directly to the selected topic
+- check hyperlinks in both `introtext` and `bodytext`
+- recognize relative and absolute links, HTTP/HTTPS, www/non-www and reordered query parameters
+- list only articles without the expected link
+- provide direct View and Edit actions
+- keep this first release read-only: Hub never rewrites article content automatically
+- package an installable development ZIP in `dist/` through GitHub Actions
+
+This expedited milestone provides an immediately useful subset of the later discovery and SEO-integrity work. It deliberately reads only Geeklog core article, topic and Static Pages tables.
+
 ## 0.2.0 — Capability contract
 
 - optional plugin capability declaration for features that cannot be safely inferred
@@ -82,12 +95,14 @@ Hub turns a Geeklog content object (initially a Static Page) into a pillar and a
 
 ## 0.8.0 — Discovery and suggestions
 
+- extend the 0.1.1 topic audit beyond core articles
 - use topics, keywords and `PLG_getRelatedItems()`
 - suggest complementary content without automatically changing editorial relationships
 - explain why an item was suggested
 
 ## 0.9.0 — SEO and integrity
 
+- extend the 0.1.1 link audit to saved Hub relationships and plugin-owned content
 - orphaned-item checks
 - broken/missing object checks
 - sitemap/feed integration opportunities
