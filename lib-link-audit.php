@@ -18,6 +18,10 @@ function HUB_linkAuditArticlesByTopic($topicId)
     global $_TABLES;
 
     $rows = array();
+    if (empty($_TABLES['stories']) || empty($_TABLES['topic_assignments']) || empty($_TABLES['topics'])) {
+        return $rows;
+    }
+
     $topicId = addslashes((string) $topicId);
     $sql = "SELECT DISTINCT s.sid, s.title, s.introtext, s.bodytext, s.date, ta.tid, t.topic "
          . "FROM {$_TABLES['stories']} AS s "
@@ -27,7 +31,11 @@ function HUB_linkAuditArticlesByTopic($topicId)
          . "WHERE ta.tid = '" . $topicId . "' "
          . "AND s.draft_flag = 0 AND s.date <= NOW() "
          . "ORDER BY s.date DESC";
-    $result = DB_query($sql);
+
+    $result = DB_query($sql, 1);
+    if ($result === false) {
+        return $rows;
+    }
 
     while ($row = DB_fetchArray($result)) {
         $rows[] = $row;
@@ -46,7 +54,15 @@ function HUB_linkAuditTopics()
     global $_TABLES;
 
     $topics = array();
-    $result = DB_query("SELECT tid, topic FROM {$_TABLES['topics']} ORDER BY topic");
+    if (empty($_TABLES['topics'])) {
+        return $topics;
+    }
+
+    $result = DB_query("SELECT tid, topic FROM {$_TABLES['topics']} ORDER BY topic", 1);
+    if ($result === false) {
+        return $topics;
+    }
+
     while ($row = DB_fetchArray($result)) {
         $topics[] = $row;
     }
@@ -57,6 +73,10 @@ function HUB_linkAuditTopics()
 /**
  * Return static pages available for the audit selector.
  *
+ * The Static Pages plugin registers its physical table in $_TABLES['staticpage'].
+ * Do not depend on DB_checkTableExists(), whose availability/behaviour differs
+ * between supported Geeklog versions.
+ *
  * @return array
  */
 function HUB_linkAuditStaticPages()
@@ -64,11 +84,16 @@ function HUB_linkAuditStaticPages()
     global $_TABLES;
 
     $pages = array();
-    if (!isset($_TABLES['staticpage']) || !DB_checkTableExists('staticpage')) {
+    if (empty($_TABLES['staticpage'])) {
         return $pages;
     }
 
-    $result = DB_query("SELECT sp_id, sp_title FROM {$_TABLES['staticpage']} ORDER BY sp_title");
+    $table = $_TABLES['staticpage'];
+    $result = DB_query("SELECT sp_id, sp_title FROM {$table} ORDER BY sp_title", 1);
+    if ($result === false) {
+        return $pages;
+    }
+
     while ($row = DB_fetchArray($result)) {
         $pages[] = $row;
     }
@@ -112,7 +137,7 @@ function HUB_linkAuditUrlKey($url, $siteUrl)
         $siteParts = parse_url($siteUrl);
         $scheme = isset($siteParts['scheme']) ? $siteParts['scheme'] : 'https';
         $url = $scheme . ':' . $url;
-    } elseif ($url[0] === '/') {
+    } elseif (isset($url[0]) && $url[0] === '/') {
         $siteParts = parse_url($siteUrl);
         if (!isset($siteParts['host'])) {
             return '';
@@ -189,7 +214,9 @@ function HUB_linkAuditMissingArticles($topicId, $pageId)
     $targetUrl = HUB_linkAuditStaticPageUrl($pageId);
 
     foreach (HUB_linkAuditArticlesByTopic($topicId) as $article) {
-        $content = (string) $article['introtext'] . "\n" . (string) $article['bodytext'];
+        $introtext = isset($article['introtext']) ? (string) $article['introtext'] : '';
+        $bodytext = isset($article['bodytext']) ? (string) $article['bodytext'] : '';
+        $content = $introtext . "\n" . $bodytext;
         if (!HUB_linkAuditContainsLink($content, $targetUrl)) {
             $missing[] = $article;
         }
