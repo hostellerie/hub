@@ -37,6 +37,15 @@ function HUB_adminYesNo($value)
 
 function HUB_adminReadiness($readiness)
 {
+    $readiness = is_array($readiness) ? $readiness : array();
+    $readiness = array_merge(array(
+        'label' => 'Unknown',
+        'core_total' => 0,
+        'core_score' => 0,
+        'optional_total' => 0,
+        'optional_score' => 0,
+    ), $readiness);
+
     $out = '<strong>' . HUB_adminEscape($readiness['label']) . '</strong>';
     $parts = array();
     if ($readiness['core_total'] > 0) {
@@ -53,7 +62,7 @@ function HUB_adminReadiness($readiness)
 
 function HUB_adminList($items)
 {
-    if (empty($items)) {
+    if (!is_array($items) || empty($items)) {
         return '<div class="hub-empty">Not detected</div>';
     }
     $out = '<ul class="hub-list">';
@@ -71,22 +80,44 @@ function HUB_adminCard($title, $items, $badge)
 
 function HUB_adminDetails($row)
 {
+    $details = isset($row['details']) && is_array($row['details']) ? $row['details'] : array();
+    $details = array_merge(array(
+        'item_info' => array(),
+        'related_items' => array(),
+        'id_to_url' => array(),
+        'services' => array(),
+        'blocks' => array(),
+        'autotags' => array(),
+        'search' => array(),
+    ), $details);
+
+    $role = isset($row['role']) && is_array($row['role']) ? $row['role'] : array();
+    $role = array_merge(array('label' => 'Unknown', 'evidence' => array()), $role);
+
+    $lifecycleEmitter = isset($row['lifecycle_emitter']) && is_array($row['lifecycle_emitter']) ? $row['lifecycle_emitter'] : array();
+    $lifecycleListener = isset($row['lifecycle_listener']) && is_array($row['lifecycle_listener']) ? $row['lifecycle_listener'] : array();
+    $lifecycleContract = isset($row['lifecycle_contract']) && is_array($row['lifecycle_contract']) ? $row['lifecycle_contract'] : array();
+    $objectTypes = isset($row['object_types']) && is_array($row['object_types']) ? $row['object_types'] : array();
+    $additionalCapabilities = isset($row['additional_capabilities']) && is_array($row['additional_capabilities']) ? $row['additional_capabilities'] : array();
+    $apiSurface = isset($row['api_surface']) && is_array($row['api_surface']) ? $row['api_surface'] : array();
+    $recommendations = isset($row['role_recommendations']) && is_array($row['role_recommendations']) ? $row['role_recommendations'] : array();
+
     $out = '<tr class="hub-details-row"><td colspan="11"><details class="hub-details"><summary>Details / Recommendations</summary><div class="hub-details-body">';
-    $out .= '<div class="hub-role"><strong>Inferred role:</strong> ' . HUB_adminEscape($row['role']['label']);
-    if (!empty($row['role']['evidence'])) {
-        $out .= ' &mdash; ' . HUB_adminEscape(implode('; ', $row['role']['evidence']));
+    $out .= '<div class="hub-role"><strong>Inferred role:</strong> ' . HUB_adminEscape($role['label']);
+    if (!empty($role['evidence'])) {
+        $out .= ' &mdash; ' . HUB_adminEscape(implode('; ', $role['evidence']));
     }
     $out .= '</div>';
 
     $out .= '<h4>Hub-relevant capabilities</h4><div class="hub-grid">';
-    $out .= HUB_adminCard('Item Info', $row['details']['item_info'], empty($row['details']['item_info']) ? 'Missing' : 'Runtime');
-    $out .= HUB_adminCard('Related Items', $row['details']['related_items'], empty($row['details']['related_items']) ? 'Missing' : 'Runtime');
-    $out .= HUB_adminCard('ID to URL', $row['details']['id_to_url'], empty($row['details']['id_to_url']) ? 'Missing' : 'Runtime');
-    $out .= HUB_adminCard('Services', $row['details']['services'], empty($row['details']['services']) ? 'Missing' : 'Runtime');
-    $out .= HUB_adminCard('Lifecycle emitter', $row['lifecycle_emitter'], 'Source evidence');
-    $out .= HUB_adminCard('Lifecycle listener', $row['lifecycle_listener'], 'Runtime');
-    $out .= HUB_adminCard('Lifecycle contract', $row['lifecycle_contract'], 'Compatibility');
-    $out .= HUB_adminCard('Object types', $row['object_types'], 'Discovered');
+    $out .= HUB_adminCard('Item Info', $details['item_info'], empty($details['item_info']) ? 'Missing' : 'Runtime');
+    $out .= HUB_adminCard('Related Items', $details['related_items'], empty($details['related_items']) ? 'Missing' : 'Runtime');
+    $out .= HUB_adminCard('ID to URL', $details['id_to_url'], empty($details['id_to_url']) ? 'Missing' : 'Runtime');
+    $out .= HUB_adminCard('Services', $details['services'], empty($details['services']) ? 'Missing' : 'Runtime');
+    $out .= HUB_adminCard('Lifecycle emitter', $lifecycleEmitter, 'Source evidence');
+    $out .= HUB_adminCard('Lifecycle listener', $lifecycleListener, 'Runtime');
+    $out .= HUB_adminCard('Lifecycle contract', $lifecycleContract, 'Compatibility');
+    $out .= HUB_adminCard('Object types', $objectTypes, 'Discovered');
     $out .= '</div>';
 
     if (!empty($row['search_types_function'])) {
@@ -94,22 +125,22 @@ function HUB_adminDetails($row)
     }
 
     $out .= '<h4>Embedding / discovery</h4><div class="hub-grid">';
-    $out .= HUB_adminCard('Blocks', $row['details']['blocks'], empty($row['details']['blocks']) ? 'Missing' : 'Runtime');
-    $out .= HUB_adminCard('Autotags', $row['details']['autotags'], empty($row['details']['autotags']) ? 'Missing' : 'Runtime');
-    $out .= HUB_adminCard('Search', $row['details']['search'], empty($row['details']['search']) ? 'Missing' : 'Runtime');
+    $out .= HUB_adminCard('Blocks', $details['blocks'], empty($details['blocks']) ? 'Missing' : 'Runtime');
+    $out .= HUB_adminCard('Autotags', $details['autotags'], empty($details['autotags']) ? 'Missing' : 'Runtime');
+    $out .= HUB_adminCard('Search', $details['search'], empty($details['search']) ? 'Missing' : 'Runtime');
     $out .= '</div>';
 
     $out .= '<h4>Additional Geeklog capabilities</h4>';
-    $out .= HUB_adminList($row['additional_capabilities']);
+    $out .= HUB_adminList($additionalCapabilities);
 
-    $out .= '<details class="hub-advanced"><summary>Advanced API surface (' . count($row['api_surface']) . ' callbacks)</summary><div class="hub-advanced-body">' . HUB_adminList($row['api_surface']) . '</div></details>';
+    $out .= '<details class="hub-advanced"><summary>Advanced API surface (' . count($apiSurface) . ' callbacks)</summary><div class="hub-advanced-body">' . HUB_adminList($apiSurface) . '</div></details>';
     $out .= '<div class="hub-legend"><strong>Evidence:</strong> ✓ Runtime = loaded/callable; ◐ Source = call found in PHP source; ? = cannot be concluded automatically.</div>';
     $out .= '<section class="hub-recommend"><strong>Recommendations</strong>';
-    if (empty($row['role_recommendations'])) {
+    if (empty($recommendations)) {
         $out .= '<p>None.</p>';
     } else {
         $out .= '<ul>';
-        foreach ($row['role_recommendations'] as $recommendation) {
+        foreach ($recommendations as $recommendation) {
             $out .= '<li>' . HUB_adminEscape($recommendation) . '</li>';
         }
         $out .= '</ul>';
@@ -130,9 +161,20 @@ if (empty($rows)) {
     $content .= '<tr><td colspan="11">No active plugins were detected.</td></tr>';
 } else {
     foreach ($rows as $row) {
-        $c = $row['caps'];
-        $content .= '<tr><td><strong>' . HUB_adminEscape($row['plugin']) . '</strong></td><td>' . HUB_adminEscape($row['version']) . '</td><td>' . HUB_adminEscape($row['role']['label']) . '</td>';
-        $content .= '<td style="text-align:center">' . HUB_adminYesNo($c['item_info']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['related_items']) . '</td><td style="text-align:center">' . HUB_adminYesNo(!empty($c['id_to_url'])) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['blocks']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['autotags']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['search']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['services']) . '</td><td>' . HUB_adminReadiness($row['role_readiness']) . '</td></tr>';
+        $c = isset($row['caps']) && is_array($row['caps']) ? $row['caps'] : array();
+        $c = array_merge(array(
+            'item_info' => false,
+            'related_items' => false,
+            'id_to_url' => false,
+            'blocks' => false,
+            'autotags' => false,
+            'search' => false,
+            'services' => false,
+        ), $c);
+        $role = isset($row['role']) && is_array($row['role']) ? $row['role'] : array('label' => 'Unknown');
+        $roleLabel = isset($role['label']) ? $role['label'] : 'Unknown';
+        $content .= '<tr><td><strong>' . HUB_adminEscape(isset($row['plugin']) ? $row['plugin'] : '') . '</strong></td><td>' . HUB_adminEscape(isset($row['version']) ? $row['version'] : '') . '</td><td>' . HUB_adminEscape($roleLabel) . '</td>';
+        $content .= '<td style="text-align:center">' . HUB_adminYesNo($c['item_info']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['related_items']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['id_to_url']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['blocks']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['autotags']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['search']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['services']) . '</td><td>' . HUB_adminReadiness(isset($row['role_readiness']) ? $row['role_readiness'] : array()) . '</td></tr>';
         $content .= HUB_adminDetails($row);
     }
 }
