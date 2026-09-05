@@ -19,11 +19,13 @@ function HUB_linkAuditArticlesByTopic($topicId)
 
     $rows = array();
     $topicId = addslashes((string) $topicId);
-    $sql = "SELECT s.sid, s.title, s.introtext, s.bodytext, s.date, s.tid, t.topic "
+    $sql = "SELECT DISTINCT s.sid, s.title, s.introtext, s.bodytext, s.date, ta.tid, t.topic "
          . "FROM {$_TABLES['stories']} AS s "
-         . "LEFT JOIN {$_TABLES['topics']} AS t ON t.tid = s.tid "
-         . "WHERE s.tid = '" . $topicId . "' "
-         . "AND s.draft_flag = 0 AND s.status = 1 "
+         . "INNER JOIN {$_TABLES['topic_assignments']} AS ta "
+         . "ON ta.type = 'article' AND ta.id = s.sid "
+         . "LEFT JOIN {$_TABLES['topics']} AS t ON t.tid = ta.tid "
+         . "WHERE ta.tid = '" . $topicId . "' "
+         . "AND s.draft_flag = 0 AND s.date <= NOW() "
          . "ORDER BY s.date DESC";
     $result = DB_query($sql);
 
