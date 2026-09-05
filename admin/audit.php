@@ -14,7 +14,7 @@ if (!SEC_hasRights('hub.admin')) {
 $rows = HUB_statsEnrichRows(HUB_roleEnrichRows(HUB_auditActivePlugins()));
 
 if (isset($_GET['export']) && $_GET['export'] === 'md') {
-    $markdown = HUB_roleMarkdown($rows, defined('VERSION') ? VERSION : '-', PHP_VERSION, '0.1.0');
+    $markdown = HUB_roleMarkdown($rows, defined('VERSION') ? VERSION : '-', PHP_VERSION, plugin_chkVersion_hub());
     $filename = 'geeklog-hub-audit-' . date('Ymd-His') . '.md';
     if (!headers_sent()) {
         header('Content-Type: text/markdown; charset=UTF-8');
@@ -119,10 +119,11 @@ function HUB_adminDetails($row)
 
 $content = '<style>';
 $content .= '.hub-details-row>td{padding:0 10px 14px!important;border-top:0!important}.hub-details>summary{cursor:pointer;font-weight:bold;padding:9px 12px;background:#f6f7f9;border-radius:4px}.hub-details-body{padding:4px}.hub-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}.hub-card{min-width:0;border:1px solid #d9dde5;border-radius:5px;padding:10px 12px;background:#fff}.hub-card-title{display:flex;justify-content:space-between;gap:8px;font-weight:bold;margin-bottom:7px}.hub-badge{font-size:11px;font-weight:normal;padding:1px 6px;border-radius:10px;background:#eceff3;color:#5f6670;white-space:nowrap}.hub-list{margin:0;padding-left:18px}.hub-list li{margin:3px 0}.hub-list code{white-space:normal;overflow-wrap:anywhere;word-break:break-word}.hub-empty{color:#777;font-style:italic}.hub-role{margin:10px 0;padding:8px 10px;background:#f3f7f4;border-left:4px solid #6c9b74;border-radius:3px}.hub-note,.hub-legend{margin:8px 0 12px;padding:8px 10px;background:#f6f7f9;border-radius:4px}.hub-advanced{margin:4px 0 12px;border:1px solid #d9dde5;border-radius:5px}.hub-advanced>summary{cursor:pointer;font-weight:bold;padding:9px 11px}.hub-advanced-body{padding:0 12px 10px}.hub-recommend{display:block;border-left:4px solid #d7a900;background:#fffbea;padding:10px 14px;border-radius:3px}.hub-readiness-score{font-size:.88em;color:#666;font-weight:normal}.hub-export{display:inline-block;margin:8px 0 14px;padding:7px 12px;border:1px solid #b9c0c8;border-radius:4px;background:#f6f7f9;text-decoration:none;font-weight:bold}@media(max-width:1100px){.hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.hub-grid{grid-template-columns:1fr}}</style>';
+$content .= '<nav style="margin:0 0 18px"><strong>Plugin interoperability audit</strong> &nbsp; <a href="link-audit.php">Article link audit</a></nav>';
 $content .= '<h2>Plugin interoperability audit</h2>';
 $content .= '<p>Hub infers each plugin role before evaluating readiness, so content, presentation, service and infrastructure plugins are not judged against the same contract.</p>';
 $content .= '<a class="hub-export" href="?export=md">Export audit as Markdown (.md)</a>';
-$content .= '<p><strong>Geeklog:</strong> ' . HUB_adminEscape(defined('VERSION') ? VERSION : '-') . ' &nbsp; <strong>PHP:</strong> ' . HUB_adminEscape(PHP_VERSION) . ' &nbsp; <strong>Hub:</strong> 0.1.0</p>';
+$content .= '<p><strong>Geeklog:</strong> ' . HUB_adminEscape(defined('VERSION') ? VERSION : '-') . ' &nbsp; <strong>PHP:</strong> ' . HUB_adminEscape(PHP_VERSION) . ' &nbsp; <strong>Hub:</strong> ' . HUB_adminEscape(plugin_chkVersion_hub()) . '</p>';
 $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Plugin</th><th>Version</th><th>Role</th><th>Item Info</th><th>Related Items</th><th>ID&rarr;URL</th><th>Blocks</th><th>Autotags</th><th>Search</th><th>Services</th><th>Readiness</th></tr></thead><tbody>';
 
 if (empty($rows)) {
@@ -137,5 +138,5 @@ if (empty($rows)) {
 }
 $content .= '</tbody></table></div>';
 $content .= '<h3>Audit meaning</h3><p><strong>Role</strong>: inferred from existing Geeklog capabilities. <strong>C</strong>: core score for that role. <strong>O</strong>: optional interoperability score, including ID→URL where available. Statistics are reported separately and do not affect readiness. Runtime, source evidence and inference remain distinct.</p>';
-$display = COM_startBlock('Hub 0.1.0') . $content . COM_endBlock();
+$display = COM_startBlock('Hub ' . plugin_chkVersion_hub()) . $content . COM_endBlock();
 COM_output(COM_createHTMLDocument($display));
