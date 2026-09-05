@@ -2,14 +2,26 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.1.0** is intentionally minimal: after installation it adds **Hub** to the administration area and audits active plugins for detectable interoperability capabilities and their installed versions.
+Version **0.1.1-dev** keeps the interoperability audit and adds a read-only article link audit for immediate editorial cleanup.
 
 ## Requirements
 
 - Geeklog 2.1.1 or newer
 - PHP 5.6 or newer
 
-## Current audit
+## Article link audit (0.1.1-dev)
+
+From **Hub administration → Article link audit**, select:
+
+1. a Geeklog topic;
+2. a destination Static Page;
+3. **Run audit**.
+
+Hub lists published, non-draft articles assigned directly to that topic whose introduction and body do not contain a hyperlink to the selected page. Relative and absolute links, HTTP/HTTPS, www/non-www and equivalent query-string order are recognized. Each result provides **View** and **Edit** links.
+
+The audit does not modify article content. This first implementation targets Geeklog core articles and Static Pages only.
+
+## Current interoperability audit
 
 The permanent Plugin Interoperability Audit reports:
 
@@ -65,3 +77,7 @@ The audit also reports native Geeklog distribution contracts without changing Hu
 - **XML Sitemap contribution**: native `plugin_collectSitemapItems_*()` when available, with the XMLSitemap plugin's `PLG_getItemInfo(type, '*', ...)` fallback reported separately
 
 These capabilities are informational interoperability signals. Hub does not read another plugin's tables to infer them.
+
+## Development archive
+
+The `Build installable archive` GitHub Actions workflow creates `dist/hub-0.1.1-dev.zip`. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
