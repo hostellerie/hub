@@ -8,7 +8,7 @@ global $_HUB_PLUGIN;
 
 $_HUB_PLUGIN = array(
     'pi_name'       => 'hub',
-    'pi_version'    => '0.1.0',
+    'pi_version'    => '0.1.1-dev',
     'gl_version'    => '2.1.1',
     'pi_url'        => 'https://github.com/hostellerie/hub',
     'GROUPS'        => array(
