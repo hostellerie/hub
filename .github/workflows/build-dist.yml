@@ -63,8 +63,6 @@ jobs:
 
           unzip -t "dist/${archive}"
 
-          # Verify that this really is a Geeklog-installable plugin archive:
-          # one top-level hub/ directory containing the required plugin files.
           unzip -l "dist/${archive}" | grep -q ' hub/config.php$'
           unzip -l "dist/${archive}" | grep -q ' hub/autoinstall.php$'
           unzip -l "dist/${archive}" | grep -q ' hub/functions.inc$'
@@ -93,7 +91,7 @@ jobs:
       - name: Upload installable archive
         uses: actions/upload-artifact@v4
         with:
-          name: hub-installable-${{ github.ref_name }}
+          name: hub-installable
           path: dist/${{ steps.package.outputs.archive }}
           if-no-files-found: error
           retention-days: 14
