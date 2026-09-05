@@ -1,0 +1,45 @@
+name: Build installable archive
+
+on:
+  push:
+    branches:
+      - main
+      - dev/article-link-audit
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Build Geeklog plugin archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(php -r "include 'config.php'; echo \\$_HUB_PLUGIN['pi_version'];")"
+          archive="hub-${version}.zip"
+          rm -rf build-package dist
+          mkdir -p build-package/hub dist
+          rsync -a ./ build-package/hub/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'build-package/' \
+            --exclude 'dist/'
+          (
+            cd build-package
+            zip -qr "../dist/${archive}" hub
+          )
+          unzip -t "dist/${archive}"
+
+      - name: Upload installable archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: hub-installable
+          path: dist/*.zip
+          if-no-files-found: error
