@@ -18,11 +18,15 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Validate PHP syntax
+        shell: bash
+        run: find . -type f \( -name '*.php' -o -name '*.inc' \) -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+
       - name: Build Geeklog plugin archive
         shell: bash
         run: |
           set -euo pipefail
-          version="$(php -r "include 'config.php'; echo \\$_HUB_PLUGIN['pi_version'];")"
+          version="$(php -r 'include "config.php"; echo $_HUB_PLUGIN["pi_version"];')"
           archive="hub-${version}.zip"
           rm -rf build-package dist
           mkdir -p build-package/hub dist
