@@ -127,7 +127,7 @@ This expedited milestone provides an immediately useful subset of the later disc
 - allow optional capability declaration only for features that cannot be safely inferred
 - keep that declaration generic and reusable by Hub, Connector and other consumers
 - do **not** create `plugin_hubCapabilities_*()` if the same information can be exposed generically
-- expose explicit lifecycle declaration where runtime detection is insufficient
+- support an optional generic lifecycle declaration (`emits`, `listens`, `sub_type`) where runtime/source detection is insufficient, while keeping declaration separate from proof
 - expose a reusable runtime service catalogue with dispatcher presence, supported actions and reflected signatures
 - expose structured render capability where useful
 - provide admin recommendations explaining which interoperability hooks are missing
