@@ -180,3 +180,29 @@ function HUB_capabilityDeclaredRoles($plugin)
         ? $declaration['roles']
         : array();
 }
+
+
+/**
+ * Return recommendations only when a plugin opted into the generic capability
+ * contract but returned an invalid declaration.
+ *
+ * Missing declarations are intentionally not reported as a problem.
+ *
+ * @param string $plugin
+ * @return array
+ */
+function HUB_capabilityDeclarationRecommendations($plugin)
+{
+    $declaration = HUB_capabilityDeclaration($plugin);
+
+    if (empty($declaration['available']) || !empty($declaration['valid'])) {
+        return array();
+    }
+
+    $recommendations = array();
+    foreach ($declaration['errors'] as $error) {
+        $recommendations[] = 'Fix ' . $declaration['function'] . '(): ' . $error;
+    }
+
+    return $recommendations;
+}
