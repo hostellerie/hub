@@ -32,9 +32,9 @@ Hub does not require existing Static Pages to be reconfigured merely to satisfy 
 
 ## Generic capability declarations
 
-Hub now detects optional generic `plugin_getcapabilities_*()` declarations when a plugin exposes them. The expected declaration is versioned with a `schema` value and may advertise generic `roles` and `capabilities`.
+Hub now detects optional generic `plugin_getcapabilities_*()` declarations when a plugin exposes them. The expected declaration is versioned with a `schema` value and may advertise generic `roles`, `capabilities`, and an optional `lifecycle` block describing emitted/listened events and `sub_type` support.
 
-These declarations are treated as plugin-supplied metadata only. Hub keeps them separate from runtime callback detection, source evidence, permissions and inferred role/readiness. This avoids inventing a Hub-specific capability API while allowing plugins such as Videos or Monitor to describe capabilities that cannot be inferred safely.
+These declarations are treated as plugin-supplied metadata only. Hub keeps them separate from runtime callback detection, source evidence, permissions and inferred role/readiness. The optional `lifecycle` block remains declarative metadata and never replaces runtime/source proof. This avoids inventing a Hub-specific capability API while allowing plugins such as Videos or Monitor to describe capabilities that cannot be inferred safely.
 
 ## Reusable service catalogue
 
