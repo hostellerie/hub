@@ -230,7 +230,14 @@ function HUB_roleEnrichRows($rows)
         $role = HUB_roleInfer($row);
         $rows[$key]['role'] = $role;
         $rows[$key]['role_readiness'] = HUB_roleReadiness($row, $role);
-        $rows[$key]['role_recommendations'] = HUB_roleRecommendations($row, $role);
+        $recommendations = HUB_roleRecommendations($row, $role);
+        if (function_exists('HUB_capabilityDeclarationRecommendations')) {
+            $recommendations = array_merge(
+                $recommendations,
+                HUB_capabilityDeclarationRecommendations(isset($row['plugin']) ? $row['plugin'] : '')
+            );
+        }
+        $rows[$key]['role_recommendations'] = array_values(array_unique($recommendations));
     }
     return $rows;
 }
