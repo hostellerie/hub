@@ -12,6 +12,9 @@ $hubPluginPath = rtrim($_CONF['path'], '/\\') . '/plugins/hub/';
 if (!function_exists('HUB_linkAuditTopics')) {
     require_once $hubPluginPath . 'lib-link-audit.php';
 }
+if (!function_exists('HUB_topicUrl')) {
+    require_once $hubPluginPath . 'lib-staticpages.php';
+}
 
 if (!SEC_hasRights('hub.admin')) {
     COM_accessLog('User ' . (int) $_USER['uid'] . ' attempted to access the Hub link audit without permission.');
@@ -33,7 +36,7 @@ $hubTopicRows = HUB_linkAuditTopics();
 $hubStaticPageRows = HUB_linkAuditStaticPages();
 
 $content = '<style>';
-$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
+$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-topic-note{margin:10px 0 0}.hub-topic-note a{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
 $content .= '</style>';
 $content .= '<nav class="hub-nav"><a href="audit.php">Plugin interoperability audit</a><strong>Article link audit</strong></nav>';
 $content .= '<h2>Articles without a link to a static page</h2>';
@@ -74,10 +77,14 @@ if ($hubRunAudit && !empty($hubTopicRows) && !empty($hubStaticPageRows)) {
     $hubAllArticles = HUB_linkAuditArticlesByTopic($hubSelectedTopicId);
     $hubMissingArticles = HUB_linkAuditMissingArticles($hubSelectedTopicId, $hubSelectedPageId);
     $hubTargetUrl = HUB_linkAuditStaticPageUrl($hubSelectedPageId);
+    $hubTopicUrl = HUB_topicUrl($hubSelectedTopicId);
 
     $hubEscapedTargetUrl = HUB_linkAuditAdminEscape($hubTargetUrl);
+    $hubEscapedTopicUrl = HUB_linkAuditAdminEscape($hubTopicUrl);
     $content .= '<div class="hub-summary"><strong>' . count($hubMissingArticles) . '</strong> article(s) without the selected link out of <strong>' . count($hubAllArticles) . '</strong> published article(s).'
-        . '<br><span class="hub-url">Target: <a href="' . $hubEscapedTargetUrl . '" target="_blank" rel="noopener">' . $hubEscapedTargetUrl . '</a></span></div>';
+        . '<br><span class="hub-url">Target: <a href="' . $hubEscapedTargetUrl . '" target="_blank" rel="noopener">' . $hubEscapedTargetUrl . '</a></span>'
+        . '<p class="hub-topic-note">Hub automatically adds the assigned topic links at the bottom of the Static Page. You can also edit the page and place this topic link manually in its content: '
+        . '<a href="' . $hubEscapedTopicUrl . '" target="_blank" rel="noopener">' . $hubEscapedTopicUrl . '</a></p></div>';
 
     if (empty($hubMissingArticles)) {
         $content .= '<p class="hub-empty-result">Every published article in this topic contains a link to the selected page.</p>';
