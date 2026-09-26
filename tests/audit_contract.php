@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-role.php', 'lib-stats.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-services.php', 'lib-role.php', 'lib-stats.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -86,6 +86,43 @@ if (empty($capabilityDeclaration['valid'])
 $invalidCapabilityDeclaration = HUB_capabilityDeclaration('hubcapinvalid');
 if (!empty($invalidCapabilityDeclaration['valid']) || empty($invalidCapabilityDeclaration['errors'])) {
     fwrite(STDERR, "Invalid generic capability declaration was accepted\n");
+    exit(1);
+}
+if (!function_exists('plugin_getcapabilities_hub')) {
+    require_once $root . '/functions.inc';
+}
+$hubDeclaration = HUB_capabilityDeclaration('hub');
+if (empty($hubDeclaration['valid'])
+    || !in_array('orchestrator', $hubDeclaration['roles'], true)
+    || !in_array('hub.capabilities.discover', $hubDeclaration['capabilities'], true)
+) {
+    fwrite(STDERR, "Hub generic capability declaration is missing or invalid\n");
+    exit(1);
+}
+
+
+require_once $root . '/lib-services.php';
+
+function plugin_wsEnabled_hubservicetest()
+{
+    return true;
+}
+
+function service_dashboard_summary_hubservicetest($args, &$output, &$svc_msg)
+{
+}
+
+function service_item_read_hubservicetest($args, &$output, &$svc_msg)
+{
+}
+
+$serviceCatalogue = HUB_serviceCatalogue('hubservicetest');
+if (empty($serviceCatalogue['dispatcher'])
+    || count($serviceCatalogue['actions']) !== 2
+    || $serviceCatalogue['actions'][0]['action'] !== 'dashboard_summary'
+    || $serviceCatalogue['actions'][1]['action'] !== 'item_read'
+) {
+    fwrite(STDERR, "Reusable service catalogue detection failed\n");
     exit(1);
 }
 
