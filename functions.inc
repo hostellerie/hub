@@ -29,13 +29,8 @@ function plugin_getcapabilities_hub()
 {
     return array(
         'schema' => 1,
-        'roles' => array('orchestrator'),
-        'capabilities' => array(
-            'hub.capabilities.discover',
-            'hub.interoperability.audit',
-            'hub.links.audit',
-            'hub.staticpages.topics.render'
-        )
+        'roles' => array('relationship', 'orchestrator', 'service'),
+        'capabilities' => array()
     );
 }
 
