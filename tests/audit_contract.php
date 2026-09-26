@@ -15,7 +15,7 @@ foreach (array('HUB_roleInfer', 'HUB_roleReadiness', 'HUB_roleEnrichRows', 'HUB_
         exit(1);
     }
 }
-if (strpos($admin, 'Export audit as Markdown') === false || strpos($admin, '<th>Role</th>') === false || strpos($admin, 'ID to URL') === false || strpos($admin, 'Additional Geeklog capabilities') === false) {
+if (strpos($admin, 'Export audit as Markdown') === false || strpos($admin, '<th>Role</th>') === false || strpos($admin, 'ID to URL') === false || strpos($admin, 'Extended Geeklog integration') === false || strpos($admin, 'Shared content contract evidence') === false || strpos($admin, 'Modernization metadata') === false) {
     fwrite(STDERR, "Missing role-aware/export audit UI\n");
     exit(1);
 }
