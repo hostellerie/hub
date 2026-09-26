@@ -103,6 +103,7 @@ The audit should not reduce a communication or infrastructure plugin's score sim
 - discover the topics assigned to that Static Page automatically
 - inspect published, non-draft core articles assigned to any of those topics
 - deduplicate articles assigned to more than one matching topic
+- show the matching assigned topic(s) for each suggested article so the editorial reason is explicit
 - check hyperlinks in both `introtext` and `bodytext`
 - recognize relative and absolute links, HTTP/HTTPS, www/non-www and reordered query parameters
 - list only articles without the expected link
