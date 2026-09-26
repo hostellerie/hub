@@ -35,6 +35,24 @@ foreach ($iterator as $fileInfo) {
     }
 }
 
+
+$readme = file_get_contents($root . '/README.md');
+$roadmap = file_get_contents($root . '/ROADMAP.md');
+$libAudit = file_get_contents($root . '/lib-audit.php');
+
+if (strpos($readme, 'selected topic URL') !== false) {
+    fwrite(STDERR, "README still contains obsolete selected-topic wording\n");
+    exit(1);
+}
+if (strpos($roadmap, 'select a Geeklog topic') !== false) {
+    fwrite(STDERR, "Roadmap still requires obsolete manual topic selection\n");
+    exit(1);
+}
+if (strpos($libAudit, 'current 0.1.0 audit milestone') !== false) {
+    fwrite(STDERR, "Hub self-audit still reports the obsolete 0.1.0 milestone\n");
+    exit(1);
+}
+
 require_once $root . '/lib-audit.php';
 
 foreach (array('HUB_auditLifecycleCallsFromSource', 'HUB_auditLifecycleListenerDetails', 'HUB_auditPluginApiSurface') as $needle) {
