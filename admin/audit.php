@@ -127,6 +127,7 @@ function HUB_adminDetails($row)
     $objectTypes = isset($row['object_types']) && is_array($row['object_types']) ? $row['object_types'] : array();
     $additionalCapabilities = isset($row['additional_capabilities']) && is_array($row['additional_capabilities']) ? $row['additional_capabilities'] : array();
     $declaredCapabilities = isset($row['capability_declaration_details']) && is_array($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array();
+    $renderCapabilities = isset($row['render_catalogue_details']) && is_array($row['render_catalogue_details']) ? $row['render_catalogue_details'] : array();
     $apiSurface = isset($row['api_surface']) && is_array($row['api_surface']) ? $row['api_surface'] : array();
     $recommendations = isset($row['role_recommendations']) && is_array($row['role_recommendations']) ? $row['role_recommendations'] : array();
 
@@ -160,6 +161,8 @@ function HUB_adminDetails($row)
 
     $out .= '<h4>Generic capability declaration</h4>';
     $out .= HUB_adminList($declaredCapabilities);
+    $out .= '<h4>Plugin-owned render entry points</h4>';
+    $out .= HUB_adminList($renderCapabilities);
     if (!empty($declaredCapabilities)) {
         $out .= '<div class="hub-note">This declaration is plugin-supplied metadata. Hub keeps it distinct from runtime detection and source evidence.</div>';
     }
