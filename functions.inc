@@ -29,6 +29,24 @@ function plugin_getadminoption_hub()
     }
 }
 
+
+
+/**
+ * Load Hub public styles independently from the active theme.
+ *
+ * @return string
+ */
+function plugin_getheadercode_hub()
+{
+    global $_CONF, $_SCRIPTS;
+
+    if (isset($_SCRIPTS) && is_object($_SCRIPTS) && method_exists($_SCRIPTS, 'setCSSFile')) {
+        $_SCRIPTS->setCSSFile('hub', rtrim($_CONF['site_url'], '/') . '/hub/hub.css');
+    }
+
+    return '';
+}
+
 function plugin_chkVersion_hub()
 {
     global $_CONF;
