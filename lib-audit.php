@@ -13,6 +13,12 @@ if (!function_exists('HUB_serviceCatalogue')) {
 if (!function_exists('HUB_renderCatalogue')) {
     require_once __DIR__ . '/lib-render.php';
 }
+if (!function_exists('HUB_contentContractEvidence')) {
+    require_once __DIR__ . '/lib-content-contract.php';
+}
+if (!function_exists('HUB_metadataManifest')) {
+    require_once __DIR__ . '/lib-metadata.php';
+}
 
 function HUB_auditPluginVersion($plugin)
 {
@@ -614,6 +620,8 @@ function HUB_auditPlugin($plugin)
     $renderCatalogue = HUB_renderCatalogue($plugin);
     $services = HUB_auditServiceFunctions($plugin);
     $capabilityDeclaration = HUB_capabilityDeclaration($plugin);
+    $contentContract = HUB_contentContractEvidence($plugin);
+    $metadataManifest = HUB_metadataManifest($plugin);
     $sourceFacts = HUB_auditSourceFacts($plugin);
     $caps = array(
         'item_info' => HUB_auditFunctionExists('plugin_getiteminfo_', $plugin),
@@ -645,6 +653,10 @@ function HUB_auditPlugin($plugin)
         'render_catalogue_details' => HUB_renderCatalogueDetails($renderCatalogue),
         'capability_declaration' => $capabilityDeclaration,
         'capability_declaration_details' => HUB_capabilityDeclarationDetails($capabilityDeclaration),
+        'content_contract' => $contentContract,
+        'content_contract_details' => HUB_contentContractDetails($contentContract),
+        'metadata_manifest' => $metadataManifest,
+        'metadata_manifest_details' => HUB_metadataManifestDetails($metadataManifest),
         'lifecycle_emitter' => HUB_auditLifecycleEmitterDetails($sourceFacts),
         'lifecycle_listener' => HUB_auditLifecycleListenerDetails($plugin),
         'lifecycle_contract' => HUB_auditLifecycleContractDetails($plugin),
