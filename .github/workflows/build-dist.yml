@@ -72,9 +72,22 @@ jobs:
 
           unzip -t "dist/${archive}"
 
-          unzip -l "dist/${archive}" | grep -q ' hub/config.php$'
-          unzip -l "dist/${archive}" | grep -q ' hub/autoinstall.php$'
-          unzip -l "dist/${archive}" | grep -q ' hub/functions.inc
+          archive_files="$(unzip -Z1 "dist/${archive}")"
+          for required_file in \
+            hub/config.php \
+            hub/autoinstall.php \
+            hub/functions.inc \
+            hub/plugin.json \
+            hub/lib-content-contract.php \
+            hub/lib-metadata.php \
+            hub/lib-render.php \
+            hub/public_html/hub.css
+          do
+            printf '%s\n' "$archive_files" | grep -Fxq "$required_file" || {
+              echo "Missing from archive: $required_file" >&2
+              exit 1
+            }
+          done
 
           echo "archive=${archive}" >> "$GITHUB_OUTPUT"
           echo "Built dist/${archive}"
