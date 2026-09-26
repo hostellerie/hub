@@ -77,11 +77,20 @@ function HUB_topicUrl($topicId)
 /**
  * Render the visible topics assigned to a Static Page.
  *
+ * Prefer Geeklog's native related-topics renderer so Static Pages use the
+ * same localized label, permissions and topicrelated.thtml markup as articles.
+ * Keep a small fallback for supported installations where the helper is not
+ * available.
+ *
  * @param string $pageId
  * @return string
  */
 function HUB_renderStaticPageTopics($pageId)
 {
+    if (function_exists('TOPIC_relatedTopics')) {
+        return TOPIC_relatedTopics('staticpages', (string) $pageId, 0);
+    }
+
     $rows = HUB_staticPageTopics($pageId);
     if (empty($rows)) {
         return '';
@@ -106,7 +115,5 @@ function HUB_renderStaticPageTopics($pageId)
         return '';
     }
 
-    return '<p class="hub-staticpage-topics"><strong>Topics:</strong> '
-        . implode(' &middot; ', $links)
-        . '</p>';
+    return '<div class="related-topics">Topics: ' . implode(' ', $links) . '</div>';
 }
