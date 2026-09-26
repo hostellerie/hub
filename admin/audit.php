@@ -128,6 +128,8 @@ function HUB_adminDetails($row)
     $additionalCapabilities = isset($row['additional_capabilities']) && is_array($row['additional_capabilities']) ? $row['additional_capabilities'] : array();
     $declaredCapabilities = isset($row['capability_declaration_details']) && is_array($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array();
     $renderCapabilities = isset($row['render_catalogue_details']) && is_array($row['render_catalogue_details']) ? $row['render_catalogue_details'] : array();
+    $contentContract = isset($row['content_contract_details']) && is_array($row['content_contract_details']) ? $row['content_contract_details'] : array();
+    $metadataManifest = isset($row['metadata_manifest_details']) && is_array($row['metadata_manifest_details']) ? $row['metadata_manifest_details'] : array();
     $apiSurface = isset($row['api_surface']) && is_array($row['api_surface']) ? $row['api_surface'] : array();
     $recommendations = isset($row['role_recommendations']) && is_array($row['role_recommendations']) ? $row['role_recommendations'] : array();
 
@@ -138,7 +140,7 @@ function HUB_adminDetails($row)
     }
     $out .= '</div>';
 
-    $out .= '<h4>Hub-relevant capabilities</h4><div class="hub-grid">';
+    $out .= '<h4>Content interoperability baseline</h4><div class="hub-grid">';
     $out .= HUB_adminCard('Item Info', $details['item_info'], empty($details['item_info']) ? 'Missing' : 'Runtime');
     $out .= HUB_adminCard('Related Items', $details['related_items'], empty($details['related_items']) ? 'Missing' : 'Runtime');
     $out .= HUB_adminCard('ID to URL', $details['id_to_url'], empty($details['id_to_url']) ? 'Missing' : 'Runtime');
@@ -148,6 +150,9 @@ function HUB_adminDetails($row)
     $out .= HUB_adminCard('Lifecycle contract', $lifecycleContract, 'Compatibility');
     $out .= HUB_adminCard('Object types', $objectTypes, 'Discovered');
     $out .= '</div>';
+
+    $out .= '<h4>Shared content contract evidence</h4>';
+    $out .= HUB_adminList($contentContract);
 
     if (!empty($row['search_types_function'])) {
         $out .= '<div class="hub-note"><strong>Object type discovery:</strong> <code>' . HUB_adminEscape($row['search_types_function']) . '</code> was called when safe to do so.</div>';
@@ -159,7 +164,7 @@ function HUB_adminDetails($row)
     $out .= HUB_adminCard('Search', $details['search'], empty($details['search']) ? 'Missing' : 'Runtime');
     $out .= '</div>';
 
-    $out .= '<h4>Generic capability declaration</h4>';
+    $out .= '<h4>Shared capability declaration</h4>';
     $out .= HUB_adminList($declaredCapabilities);
     $out .= '<h4>Plugin-owned render entry points</h4>';
     $out .= HUB_adminList($renderCapabilities);
@@ -167,8 +172,11 @@ function HUB_adminDetails($row)
         $out .= '<div class="hub-note">This declaration is plugin-supplied metadata. Hub keeps it distinct from runtime detection and source evidence.</div>';
     }
 
-    $out .= '<h4>Additional Geeklog capabilities</h4>';
+    $out .= '<h4>Extended Geeklog integration</h4>';
     $out .= HUB_adminList($additionalCapabilities);
+
+    $out .= '<h4>Modernization metadata</h4>';
+    $out .= HUB_adminList($metadataManifest);
 
     $out .= '<details class="hub-advanced"><summary>Advanced API surface (' . count($apiSurface) . ' callbacks)</summary><div class="hub-advanced-body">' . HUB_adminList($apiSurface) . '</div></details>';
     $out .= '<div class="hub-legend"><strong>Evidence:</strong> ✓ Runtime = loaded/callable; ◐ Source = call found in PHP source; ? = cannot be concluded automatically.</div>';
