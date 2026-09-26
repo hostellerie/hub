@@ -54,3 +54,38 @@ function plugin_autouninstall_hub()
         'vars'       => array(),
     );
 }
+
+
+/**
+ * Extend supported Geeklog templates with Hub relationship context.
+ *
+ * Static Pages already call PLG_templateSetVars('staticpage', ...), so Hub can
+ * append assigned topics at render time without modifying stored sp_content.
+ *
+ * @param string $templatename
+ * @param object $template
+ * @return void
+ */
+function plugin_templatesetvars_hub($templatename, &$template)
+{
+    if ($templatename !== 'staticpage' || !is_object($template)) {
+        return;
+    }
+
+    if (!method_exists($template, 'get_var') || !method_exists($template, 'set_var')) {
+        return;
+    }
+
+    $pageId = (string) $template->get_var('sp_id');
+    if ($pageId === '') {
+        return;
+    }
+
+    $topicsHtml = HUB_renderStaticPageTopics($pageId);
+    if ($topicsHtml === '') {
+        return;
+    }
+
+    $content = (string) $template->get_var('content');
+    $template->set_var('content', $content . "\n" . $topicsHtml);
+}
