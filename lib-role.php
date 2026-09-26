@@ -324,6 +324,9 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $sit
         $out .= "### Generic capability declaration\n\n";
         $out .= HUB_roleMarkdownList(isset($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array()) . "\n";
         $out .= "> Plugin-supplied declaration; kept distinct from runtime detection and source evidence.\n\n";
+        $out .= "### Plugin-owned render entry points\n\n";
+        $out .= HUB_roleMarkdownList(isset($row['render_catalogue_details']) ? $row['render_catalogue_details'] : array()) . "\n";
+        $out .= "> Discovery only; the owning plugin remains responsible for arguments, permissions and output.\n\n";
         $out .= "### Embedding / discovery\n\n";
         $out .= "#### Blocks\n" . HUB_roleMarkdownList($row['details']['blocks']) . "\n";
         $out .= "#### Autotags\n" . HUB_roleMarkdownList($row['details']['autotags']) . "\n";
