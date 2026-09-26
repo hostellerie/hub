@@ -4,6 +4,10 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
     die('This file can not be used on its own.');
 }
 
+if (!function_exists('HUB_capabilityDeclaration')) {
+    require_once __DIR__ . '/lib-capabilities.php';
+}
+
 function HUB_auditPluginVersion($plugin)
 {
     global $_TABLES;
@@ -538,6 +542,7 @@ function HUB_auditPlugin($plugin)
 {
     $autotags = HUB_auditAutotags($plugin);
     $services = HUB_auditServiceFunctions($plugin);
+    $capabilityDeclaration = HUB_capabilityDeclaration($plugin);
     $sourceFacts = HUB_auditSourceFacts($plugin);
     $caps = array(
         'item_info' => HUB_auditFunctionExists('plugin_getiteminfo_', $plugin),
@@ -562,6 +567,8 @@ function HUB_auditPlugin($plugin)
         'details' => HUB_auditCapabilityDetails($plugin, $autotags, $services),
         'autotags' => $autotags,
         'services' => $services,
+        'capability_declaration' => $capabilityDeclaration,
+        'capability_declaration_details' => HUB_capabilityDeclarationDetails($capabilityDeclaration),
         'lifecycle_emitter' => HUB_auditLifecycleEmitterDetails($sourceFacts),
         'lifecycle_listener' => HUB_auditLifecycleListenerDetails($plugin),
         'object_types' => HUB_auditObjectTypeDetails($objectTypes),
