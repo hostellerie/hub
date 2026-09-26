@@ -260,9 +260,17 @@ function HUB_roleMarkdownList($items)
     return $out;
 }
 
-function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion)
+function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $siteName = '')
 {
-    $out = "# Geeklog Plugin Interoperability Audit\n\n";
+    $siteName = trim((string) $siteName);
+    $reportTitle = $siteName !== ''
+        ? $siteName . ' — Plugin Interoperability Audit'
+        : 'Plugin Interoperability Audit';
+
+    $out = '# ' . $reportTitle . "\n\n";
+    if ($siteName !== '') {
+        $out .= '- Site: `' . str_replace('`', '\\`', $siteName) . "`\n";
+    }
     $out .= '- Geeklog: `' . $geeklogVersion . "`\n";
     $out .= '- PHP: `' . $phpVersion . "`\n";
     $out .= '- Hub: `' . $hubVersion . "`\n";
