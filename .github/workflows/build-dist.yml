@@ -19,6 +19,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out source
@@ -79,6 +80,14 @@ jobs:
           echo "archive=${archive}" >> "$GITHUB_OUTPUT"
           echo "Built dist/${archive}"
 
+      - name: Upload installable archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: hub-installable
+          path: dist/${{ steps.package.outputs.archive }}
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Commit archive to dist
         shell: bash
         run: |
@@ -95,12 +104,13 @@ jobs:
           fi
 
           git commit -m "build: refresh installable Hub archive"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
 
-      - name: Upload installable archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: hub-installable
-          path: dist/${{ steps.package.outputs.archive }}
-          if-no-files-found: error
-          retention-days: 14
+          # Do not let a stale build overwrite a branch that advanced while
+          # this job was running. A newer push already has its own build.
+          git fetch origin "${GITHUB_REF_NAME}"
+          if [ "$(git rev-parse HEAD^)" != "$(git rev-parse "origin/${GITHUB_REF_NAME}")" ]; then
+            echo "Branch advanced during build; skip dist push and let the newer run publish it."
+            exit 0
+          fi
+
+          git push origin "HEAD:${GITHUB_REF_NAME}"
