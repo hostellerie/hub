@@ -19,6 +19,12 @@ When Hub is enabled, normal Static Page rendering also appends the visible topic
 
 The audit does not modify article content. This first implementation targets Geeklog core articles and Static Pages only.
 
+## Generic capability declarations
+
+Hub now detects optional generic `plugin_getcapabilities_*()` declarations when a plugin exposes them. The expected declaration is versioned with a `schema` value and may advertise generic `roles` and `capabilities`.
+
+These declarations are treated as plugin-supplied metadata only. Hub keeps them separate from runtime callback detection, source evidence, permissions and inferred role/readiness. This avoids inventing a Hub-specific capability API while allowing plugins such as Videos or Monitor to describe capabilities that cannot be inferred safely.
+
 ## Current interoperability audit
 
 The permanent Plugin Interoperability Audit reports:
