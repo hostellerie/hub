@@ -28,39 +28,24 @@ function HUB_linkAuditAdminEscape($value)
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
-$hubSelectedTopicId = isset($_GET['tid']) ? COM_applyFilter($_GET['tid']) : '';
 $hubSelectedPageId = isset($_GET['page_id']) ? COM_applyFilter($_GET['page_id']) : '';
-$hubRunAudit = ($hubSelectedTopicId !== '' && $hubSelectedPageId !== '');
+$hubRunAudit = ($hubSelectedPageId !== '');
 
-$hubTopicRows = HUB_linkAuditTopics();
 $hubStaticPageRows = HUB_linkAuditStaticPages();
 
 $content = '<style>';
-$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-topic-note{margin:10px 0 0}.hub-topic-note a{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
+$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-topic-note{margin:10px 0 0}.hub-topic-note a{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
 $content .= '</style>';
 $content .= '<nav class="hub-nav"><a href="audit.php">Plugin interoperability audit</a><strong>Article link audit</strong></nav>';
 $content .= '<h2>Articles without a link to a static page</h2>';
-$content .= '<p>Select a topic and a destination static page. Hub lists the published articles assigned to that topic whose introduction and body do not contain a link to the selected page.</p>';
-
-if (empty($hubTopicRows)) {
-    $content .= '<p class="hub-warning">No Geeklog topic could be loaded.</p>';
-}
+$content .= '<p>Select a Static Page. Hub discovers its assigned topics automatically, gathers published articles from those topics, and lists the articles that do not currently contain a link to the selected page.</p>';
 
 if (empty($hubStaticPageRows)) {
     $content .= '<p class="hub-warning">No static page could be loaded. Check that the Static Pages plugin is installed and enabled.</p>';
 }
 
-if (!empty($hubTopicRows) && !empty($hubStaticPageRows)) {
+if (!empty($hubStaticPageRows)) {
     $content .= '<form class="hub-audit-form" method="get" action="link-audit.php">';
-    $content .= '<div class="hub-field"><label for="tid">Topic</label><select id="tid" name="tid" required><option value="">Select a topic</option>';
-    foreach ($hubTopicRows as $hubTopicRow) {
-        $hubTid = isset($hubTopicRow['tid']) ? $hubTopicRow['tid'] : '';
-        $hubTopicName = isset($hubTopicRow['topic']) ? $hubTopicRow['topic'] : $hubTid;
-        $hubSelected = ((string) $hubTid === (string) $hubSelectedTopicId) ? ' selected' : '';
-        $content .= '<option value="' . HUB_linkAuditAdminEscape($hubTid) . '"' . $hubSelected . '>' . HUB_linkAuditAdminEscape($hubTopicName) . ' (' . HUB_linkAuditAdminEscape($hubTid) . ')</option>';
-    }
-    $content .= '</select></div>';
-
     $content .= '<div class="hub-field"><label for="page_id">Static page</label><select id="page_id" name="page_id" required><option value="">Select a static page</option>';
     foreach ($hubStaticPageRows as $hubStaticPageRow) {
         $hubSpId = isset($hubStaticPageRow['sp_id']) ? $hubStaticPageRow['sp_id'] : '';
@@ -73,22 +58,51 @@ if (!empty($hubTopicRows) && !empty($hubStaticPageRows)) {
     $content .= '</form>';
 }
 
-if ($hubRunAudit && !empty($hubTopicRows) && !empty($hubStaticPageRows)) {
-    $hubAllArticles = HUB_linkAuditArticlesByTopic($hubSelectedTopicId);
-    $hubMissingArticles = HUB_linkAuditMissingArticles($hubSelectedTopicId, $hubSelectedPageId);
-    $hubTargetUrl = HUB_linkAuditStaticPageUrl($hubSelectedPageId);
-    $hubTopicUrl = HUB_topicUrl($hubSelectedTopicId);
+if ($hubRunAudit && !empty($hubStaticPageRows)) {
+    $hubAssignedTopics = HUB_staticPageTopics($hubSelectedPageId);
+    $hubTopicIds = array();
+    foreach ($hubAssignedTopics as $hubAssignedTopic) {
+        if (isset($hubAssignedTopic['tid']) && $hubAssignedTopic['tid'] !== '') {
+            $hubTopicIds[] = (string) $hubAssignedTopic['tid'];
+        }
+    }
 
+    $hubAllArticles = HUB_linkAuditArticlesByTopics($hubTopicIds);
+    $hubMissingArticles = HUB_linkAuditMissingArticlesForTopics($hubTopicIds, $hubSelectedPageId);
+    $hubTargetUrl = HUB_linkAuditStaticPageUrl($hubSelectedPageId);
     $hubEscapedTargetUrl = HUB_linkAuditAdminEscape($hubTargetUrl);
-    $hubEscapedTopicUrl = HUB_linkAuditAdminEscape($hubTopicUrl);
-    $content .= '<div class="hub-summary"><strong>' . count($hubMissingArticles) . '</strong> article(s) without the selected link out of <strong>' . count($hubAllArticles) . '</strong> published article(s).'
-        . '<br><span class="hub-url">Target: <a href="' . $hubEscapedTargetUrl . '" target="_blank" rel="noopener">' . $hubEscapedTargetUrl . '</a></span>'
-        . '<p class="hub-topic-note">Hub automatically adds the assigned topic links at the bottom of the Static Page. You can also edit the page and place this topic link manually in its content: '
-        . '<a href="' . $hubEscapedTopicUrl . '" target="_blank" rel="noopener">' . $hubEscapedTopicUrl . '</a></p></div>';
+
+    $hubTopicLinks = array();
+    foreach ($hubAssignedTopics as $hubAssignedTopic) {
+        $hubTid = isset($hubAssignedTopic['tid']) ? (string) $hubAssignedTopic['tid'] : '';
+        $hubTopicName = isset($hubAssignedTopic['topic']) && $hubAssignedTopic['topic'] !== ''
+            ? (string) $hubAssignedTopic['topic']
+            : $hubTid;
+        if ($hubTid === '') {
+            continue;
+        }
+        $hubTopicUrl = HUB_topicUrl($hubTid);
+        $hubTopicLinks[] = '<a href="' . HUB_linkAuditAdminEscape($hubTopicUrl) . '" target="_blank" rel="noopener">'
+            . HUB_linkAuditAdminEscape($hubTopicName) . '</a>';
+    }
+
+    $content .= '<div class="hub-summary"><strong>' . count($hubMissingArticles) . '</strong> possible link(s) to review out of <strong>' . count($hubAllArticles) . '</strong> published article(s) found in the Static Page\'s assigned topics.'
+        . '<br><span class="hub-url">Target: <a href="' . $hubEscapedTargetUrl . '" target="_blank" rel="noopener">' . $hubEscapedTargetUrl . '</a></span>';
+
+    if (!empty($hubTopicLinks)) {
+        $content .= '<br><span>Assigned topics: ' . implode(' &middot; ', $hubTopicLinks) . '</span>';
+    } else {
+        $content .= '<p class="hub-warning">This Static Page has no visible assigned topics, so there are no topic-related articles to audit.</p>';
+    }
+
+    $content .= '<p class="hub-topic-note">Hub automatically adds the assigned topic links at the bottom of the Static Page. You can also edit the page and place any of these topic links manually at the most relevant position in the page content.</p></div>';
 
     if (empty($hubMissingArticles)) {
-        $content .= '<p class="hub-empty-result">Every published article in this topic contains a link to the selected page.</p>';
+        if (!empty($hubTopicIds)) {
+            $content .= '<p class="hub-empty-result">No missing contextual links were found among published articles in the assigned topics.</p>';
+        }
     } else {
+        $content .= '<p>The articles below belong to one or more topics assigned to this Static Page but do not currently link back to it. Review them to decide whether adding a contextual link is appropriate.</p>';
         $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>ID</th><th>Published</th><th>Actions</th></tr></thead><tbody>';
         foreach ($hubMissingArticles as $hubArticleRow) {
             $hubSid = isset($hubArticleRow['sid']) ? $hubArticleRow['sid'] : '';
