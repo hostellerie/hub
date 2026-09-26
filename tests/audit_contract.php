@@ -262,7 +262,7 @@ if (HUB_linkAuditContainsLink('<p>https://example.com/staticpages/index.php?page
     exit(1);
 }
 
-$siteAwareMarkdown = HUB_roleMarkdown(array(), '2.2.2', '8.1.0', '0.2.0-dev', 'Ecologie Pratique');
+$siteAwareMarkdown = HUB_roleMarkdown(array(), '2.2.2', '8.1.0', '0.2.0', 'Ecologie Pratique');
 if (strpos($siteAwareMarkdown, '# Ecologie Pratique — Plugin Interoperability Audit') === false
     || strpos($siteAwareMarkdown, '- Site: `Ecologie Pratique`') === false
 ) {
