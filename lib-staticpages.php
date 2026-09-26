@@ -60,6 +60,69 @@ function HUB_staticPageTopics($pageId)
 }
 
 /**
+ * Describe the native Geeklog topic assignment context of a Static Page.
+ *
+ * "all" and "homeonly" are placement/display options inherited from Geeklog's
+ * Static Pages model. They are not treated by Hub as editorial topic
+ * relationships. Only real topic ids are returned as specific topics.
+ *
+ * @param string $pageId
+ * @return array
+ */
+function HUB_staticPageTopicContext($pageId)
+{
+    global $_TABLES;
+
+    $context = array(
+        'all' => false,
+        'homeonly' => false,
+        'specific_topics' => HUB_staticPageTopics($pageId),
+        'assignment_ids' => array(),
+        'placement_only' => false,
+    );
+
+    if (empty($_TABLES['topic_assignments'])) {
+        return $context;
+    }
+
+    $escapedPageId = function_exists('DB_escapeString')
+        ? DB_escapeString((string) $pageId)
+        : addslashes((string) $pageId);
+
+    $sql = "SELECT DISTINCT tid FROM {$_TABLES['topic_assignments']} "
+         . "WHERE type = 'staticpages' AND id = '" . $escapedPageId . "'";
+
+    $result = DB_query($sql, 1);
+    if ($result === false) {
+        return $context;
+    }
+
+    $allId = defined('TOPIC_ALL_OPTION') ? (string) TOPIC_ALL_OPTION : 'all';
+    $homeOnlyId = defined('TOPIC_HOMEONLY_OPTION') ? (string) TOPIC_HOMEONLY_OPTION : 'homeonly';
+
+    while ($row = DB_fetchArray($result)) {
+        $tid = isset($row['tid']) ? (string) $row['tid'] : '';
+        if ($tid === '') {
+            continue;
+        }
+
+        $context['assignment_ids'][] = $tid;
+
+        if ($tid === $allId) {
+            $context['all'] = true;
+        } elseif ($tid === $homeOnlyId) {
+            $context['homeonly'] = true;
+        }
+    }
+
+    $context['assignment_ids'] = array_values(array_unique($context['assignment_ids']));
+    $context['placement_only'] = empty($context['specific_topics'])
+        && ($context['all'] || $context['homeonly']);
+
+    return $context;
+}
+
+/**
  * Build a public topic URL through Geeklog's URL builder.
  *
  * @param string $topicId
