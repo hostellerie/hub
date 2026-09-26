@@ -503,7 +503,7 @@ function HUB_auditRecommendations($plugin, $caps, $sourceFacts)
 {
     $recommendations = array();
     if ($plugin === 'hub') {
-        $recommendations[] = 'Hub is the orchestrator. Its current 0.1.0 audit milestone does not need addressable content APIs yet.';
+        $recommendations[] = 'Hub is the orchestrator. In 0.1.1 it audits interoperability, renders assigned Static Page topics, and suggests article-to-Static-Page links without acting as a content provider.';
     } else {
         if (!$caps['item_info']) {
             $recommendations[] = 'If this plugin exposes addressable content, implement plugin_getiteminfo_' . $plugin . '() so Hub can resolve current title and URL from type + id.';
