@@ -61,6 +61,11 @@ function plugin_getcapabilities_hubcaptest()
         'schema' => 1,
         'roles' => array('service', 'content', 'content'),
         'capabilities' => array('content.read', 'dashboard.summary', 'content.read'),
+        'lifecycle' => array(
+            'emits' => array('item.saved', 'item.deleted', 'item.saved'),
+            'listens' => array('item.saved'),
+            'sub_type' => true,
+        ),
     );
 }
 
@@ -73,11 +78,27 @@ function plugin_getcapabilities_hubcapinvalid()
     );
 }
 
+function plugin_getcapabilities_hubcapbadlifecycle()
+{
+    return array(
+        'schema' => 1,
+        'roles' => array('content'),
+        'capabilities' => array('content.lifecycle'),
+        'lifecycle' => array(
+            'emits' => 'item.saved',
+            'sub_type' => 'yes',
+        ),
+    );
+}
+
 $capabilityDeclaration = HUB_capabilityDeclaration('hubcaptest');
 if (empty($capabilityDeclaration['valid'])
     || $capabilityDeclaration['schema'] !== 1
     || $capabilityDeclaration['roles'] !== array('content', 'service')
     || $capabilityDeclaration['capabilities'] !== array('content.read', 'dashboard.summary')
+    || $capabilityDeclaration['lifecycle']['emits'] !== array('item.deleted', 'item.saved')
+    || $capabilityDeclaration['lifecycle']['listens'] !== array('item.saved')
+    || $capabilityDeclaration['lifecycle']['sub_type'] !== true
 ) {
     fwrite(STDERR, "Generic capability declaration validation failed\n");
     exit(1);
@@ -92,11 +113,29 @@ if (!HUB_capabilitySupports('hubcaptest', 'content.read')
     exit(1);
 }
 
+$declaredLifecycle = HUB_capabilityDeclaredLifecycle('hubcaptest');
+if ($declaredLifecycle['emits'] !== array('item.deleted', 'item.saved')
+    || $declaredLifecycle['listens'] !== array('item.saved')
+    || $declaredLifecycle['sub_type'] !== true
+) {
+    fwrite(STDERR, "Declared lifecycle helper failed\n");
+    exit(1);
+}
+
 $invalidCapabilityDeclaration = HUB_capabilityDeclaration('hubcapinvalid');
 if (!empty($invalidCapabilityDeclaration['valid']) || empty($invalidCapabilityDeclaration['errors'])) {
     fwrite(STDERR, "Invalid generic capability declaration was accepted\n");
     exit(1);
 }
+$badLifecycleDeclaration = HUB_capabilityDeclaration('hubcapbadlifecycle');
+if (!empty($badLifecycleDeclaration['valid'])
+    || strpos(implode(' ', $badLifecycleDeclaration['errors']), 'lifecycle.emits must be an array') === false
+    || strpos(implode(' ', $badLifecycleDeclaration['errors']), 'lifecycle.sub_type must be boolean') === false
+) {
+    fwrite(STDERR, "Invalid lifecycle declaration was accepted\n");
+    exit(1);
+}
+
 $hubFunctionsSource = file_get_contents($root . '/functions.inc');
 if (strpos($hubFunctionsSource, 'function plugin_getcapabilities_hub()') === false
     || strpos($hubFunctionsSource, "'orchestrator'") === false
