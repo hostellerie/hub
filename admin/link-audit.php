@@ -74,9 +74,14 @@ if ($hubRunAudit && !empty($hubTopicRows) && !empty($hubStaticPageRows)) {
     $hubAllArticles = HUB_linkAuditArticlesByTopic($hubSelectedTopicId);
     $hubMissingArticles = HUB_linkAuditMissingArticles($hubSelectedTopicId, $hubSelectedPageId);
     $hubTargetUrl = HUB_linkAuditStaticPageUrl($hubSelectedPageId);
+    $hubTopicUrl = HUB_topicUrl($hubSelectedTopicId);
 
     $hubEscapedTargetUrl = HUB_linkAuditAdminEscape($hubTargetUrl);
-    $content .= '<div class="hub-summary"><strong>' . count($hubMissingArticles) . '</strong> article(s) without the selected link out of <strong>' . count($hubAllArticles) . '</strong> published article(s).<br><span class="hub-url">Target: <a href="' . $hubEscapedTargetUrl . '" target="_blank" rel="noopener">' . $hubEscapedTargetUrl . '</a></span> <button type="button" class="hub-copy-url" data-url="' . $hubEscapedTargetUrl . '" onclick="if(navigator.clipboard&amp;&amp;navigator.clipboard.writeText){navigator.clipboard.writeText(this.getAttribute(\'data-url\'));this.textContent=\'Copied\';}else{window.prompt(\'Copy URL\',this.getAttribute(\'data-url\'));}">Copy URL</button></div>';
+    $hubEscapedTopicUrl = HUB_linkAuditAdminEscape($hubTopicUrl);
+    $content .= '<div class="hub-summary"><strong>' . count($hubMissingArticles) . '</strong> article(s) without the selected link out of <strong>' . count($hubAllArticles) . '</strong> published article(s).'
+        . '<br><span class="hub-url">Target: <a href="' . $hubEscapedTargetUrl . '" target="_blank" rel="noopener">' . $hubEscapedTargetUrl . '</a></span>'
+        . '<br><span class="hub-url">Topic: <a href="' . $hubEscapedTopicUrl . '" target="_blank" rel="noopener">' . $hubEscapedTopicUrl . '</a></span> '
+        . '<button type="button" class="hub-copy-url" data-url="' . $hubEscapedTopicUrl . '" onclick="if(navigator.clipboard&amp;&amp;navigator.clipboard.writeText){navigator.clipboard.writeText(this.getAttribute(\'data-url\'));this.textContent=\'Copied\';}else{window.prompt(\'Copy URL\',this.getAttribute(\'data-url\'));}">Copy URL</button></div>';
 
     if (empty($hubMissingArticles)) {
         $content .= '<p class="hub-empty-result">Every published article in this topic contains a link to the selected page.</p>';
