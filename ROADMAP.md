@@ -107,7 +107,7 @@ The audit should not reduce a communication or infrastructure plugin's score sim
 - recognize relative and absolute links, HTTP/HTTPS, www/non-www and reordered query parameters
 - list only articles without the expected link
 - provide direct View and Edit actions
-- append assigned visible topic links to normal Static Page rendering without modifying stored content
+- append assigned visible topic links to normal Static Page rendering without modifying stored content, reusing Geeklog's native `TOPIC_relatedTopics()` renderer and `topicrelated.thtml` markup
 - allow the administrator to reuse the selected topic URL manually when a link should be placed at a specific position in Static Page content
 - keep this first release read-only: Hub never rewrites article content automatically
 - package an installable development ZIP in `dist/` through GitHub Actions
