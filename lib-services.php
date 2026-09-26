@@ -138,3 +138,35 @@ function HUB_serviceCatalogueDetails($catalogue)
 
     return $details;
 }
+
+
+/**
+ * Check whether a service action is exposed at runtime by a plugin.
+ *
+ * This only checks the loaded service catalogue. The owning plugin remains
+ * responsible for authorization and execution.
+ *
+ * @param string $plugin
+ * @param string $action
+ * @return bool
+ */
+function HUB_serviceHasAction($plugin, $action)
+{
+    $action = strtolower(trim((string) $action));
+    if ($action === '') {
+        return false;
+    }
+
+    $catalogue = HUB_serviceCatalogue($plugin);
+    if (empty($catalogue['actions']) || !is_array($catalogue['actions'])) {
+        return false;
+    }
+
+    foreach ($catalogue['actions'] as $service) {
+        if (isset($service['action']) && strtolower((string) $service['action']) === $action) {
+            return true;
+        }
+    }
+
+    return false;
+}
