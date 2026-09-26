@@ -515,7 +515,7 @@ function HUB_auditRecommendations($plugin, $caps, $sourceFacts)
 {
     $recommendations = array();
     if ($plugin === 'hub') {
-        $recommendations[] = 'Hub is the orchestrator. In 0.1.1 it audits interoperability, renders assigned Static Page topics, and suggests article-to-Static-Page links without acting as a content provider.';
+        $recommendations[] = 'Hub is the orchestrator. It audits interoperability, renders assigned Static Page topics, suggests article-to-Static-Page links, and discovers reusable plugin capabilities without acting as a content provider.';
     } else {
         if (!$caps['item_info']) {
             $recommendations[] = 'If this plugin exposes addressable content, implement plugin_getiteminfo_' . $plugin . '() so Hub can resolve current title and URL from type + id.';
