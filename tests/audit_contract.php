@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-role.php', 'lib-stats.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-role.php', 'lib-stats.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -50,6 +50,42 @@ if (strpos($roadmap, 'select a Geeklog topic') !== false) {
 }
 if (strpos($libAudit, 'current 0.1.0 audit milestone') !== false) {
     fwrite(STDERR, "Hub self-audit still reports the obsolete 0.1.0 milestone\n");
+    exit(1);
+}
+
+require_once $root . '/lib-capabilities.php';
+
+function plugin_getcapabilities_hubcaptest()
+{
+    return array(
+        'schema' => 1,
+        'roles' => array('service', 'content', 'content'),
+        'capabilities' => array('content.read', 'dashboard.summary', 'content.read'),
+    );
+}
+
+function plugin_getcapabilities_hubcapinvalid()
+{
+    return array(
+        'schema' => 0,
+        'roles' => 'content',
+        'capabilities' => array(),
+    );
+}
+
+$capabilityDeclaration = HUB_capabilityDeclaration('hubcaptest');
+if (empty($capabilityDeclaration['valid'])
+    || $capabilityDeclaration['schema'] !== 1
+    || $capabilityDeclaration['roles'] !== array('content', 'service')
+    || $capabilityDeclaration['capabilities'] !== array('content.read', 'dashboard.summary')
+) {
+    fwrite(STDERR, "Generic capability declaration validation failed\n");
+    exit(1);
+}
+
+$invalidCapabilityDeclaration = HUB_capabilityDeclaration('hubcapinvalid');
+if (!empty($invalidCapabilityDeclaration['valid']) || empty($invalidCapabilityDeclaration['errors'])) {
+    fwrite(STDERR, "Invalid generic capability declaration was accepted\n");
     exit(1);
 }
 
