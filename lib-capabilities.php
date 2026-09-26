@@ -139,3 +139,44 @@ function HUB_capabilityDeclarationDetails($declaration)
 
     return $details;
 }
+
+
+/**
+ * Check whether a valid plugin declaration advertises a capability.
+ *
+ * This is declaration lookup only; it is not proof that the capability is
+ * currently usable or authorized for the caller.
+ *
+ * @param string $plugin
+ * @param string $capability
+ * @return bool
+ */
+function HUB_capabilitySupports($plugin, $capability)
+{
+    $capability = trim((string) $capability);
+    if ($capability === '') {
+        return false;
+    }
+
+    $declaration = HUB_capabilityDeclaration($plugin);
+    if (empty($declaration['valid']) || empty($declaration['capabilities'])) {
+        return false;
+    }
+
+    return in_array($capability, $declaration['capabilities'], true);
+}
+
+/**
+ * Return the roles from a valid generic capability declaration.
+ *
+ * @param string $plugin
+ * @return array
+ */
+function HUB_capabilityDeclaredRoles($plugin)
+{
+    $declaration = HUB_capabilityDeclaration($plugin);
+
+    return !empty($declaration['valid']) && !empty($declaration['roles'])
+        ? $declaration['roles']
+        : array();
+}
