@@ -5,6 +5,7 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 }
 
 $hub_path = $_CONF['path'] . 'plugins/hub/';
+require_once $hub_path . 'lib-capabilities.php';
 require_once $hub_path . 'lib-audit.php';
 require_once $hub_path . 'lib-role.php';
 require_once $hub_path . 'lib-stats.php';
