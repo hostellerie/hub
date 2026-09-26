@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-role.php', 'lib-stats.php', 'lib-distribution.php', 'admin/index.php', 'admin/audit.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-role.php', 'lib-stats.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -82,6 +82,40 @@ if (!$realFacts['item_saved'] || !$realFacts['item_deleted']
     || $realFacts['object_types'] !== array('article')
 ) {
     fwrite(STDERR, "Lifecycle tokenizer real-call regression failed\n");
+    exit(1);
+}
+
+require_once $root . '/lib-link-audit.php';
+
+$_CONF = array('site_url' => 'https://example.com');
+
+$target = 'https://example.com/staticpages/index.php?page=page-1';
+$equivalentLinks = array(
+    'http://www.example.com/staticpages/index.php?page=page-1',
+    '/staticpages/index.php?page=page-1',
+    'https://example.com/staticpages/index.php?page=page-1#section',
+);
+foreach ($equivalentLinks as $candidate) {
+    if (HUB_linkAuditUrlKey($candidate, $_CONF['site_url']) !== HUB_linkAuditUrlKey($target, $_CONF['site_url'])) {
+        fwrite(STDERR, "Link audit URL normalization failed: $candidate\n");
+        exit(1);
+    }
+}
+
+$queryA = 'https://example.com/staticpages/index.php?b=2&a=1';
+$queryB = 'https://example.com/staticpages/index.php?a=1&b=2';
+if (HUB_linkAuditUrlKey($queryA, $_CONF['site_url']) !== HUB_linkAuditUrlKey($queryB, $_CONF['site_url'])) {
+    fwrite(STDERR, "Link audit query-order normalization failed\n");
+    exit(1);
+}
+
+$html = '<p>See <a href="/staticpages/index.php?page=page-1">the pillar page</a>.</p>';
+if (!HUB_linkAuditContainsLink($html, $target)) {
+    fwrite(STDERR, "Link audit anchor detection failed\n");
+    exit(1);
+}
+if (HUB_linkAuditContainsLink('<p>https://example.com/staticpages/index.php?page=page-1</p>', $target)) {
+    fwrite(STDERR, "Link audit must only detect hyperlinks, not plain URL text\n");
     exit(1);
 }
 
