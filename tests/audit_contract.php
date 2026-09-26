@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-services.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-content-contract.php', 'lib-metadata.php', 'lib-services.php', 'lib-render.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'plugin.json', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -50,6 +50,13 @@ if (strpos($roadmap, 'select a Geeklog topic') !== false) {
 }
 if (strpos($libAudit, 'current 0.1.0 audit milestone') !== false) {
     fwrite(STDERR, "Hub self-audit still reports the obsolete 0.1.0 milestone\n");
+    exit(1);
+}
+if (strpos($readme, 'Shared Memorandum alignment') === false
+    || strpos($roadmap, 'hub.context.read') === false
+    || strpos($roadmap, 'Agent is the provider-neutral Geeklog machine access layer') === false
+) {
+    fwrite(STDERR, "README is not aligned with Memorandum contracts\n");
     exit(1);
 }
 
@@ -138,11 +145,23 @@ if (!empty($badLifecycleDeclaration['valid'])
 
 $hubFunctionsSource = file_get_contents($root . '/functions.inc');
 if (strpos($hubFunctionsSource, 'function plugin_getcapabilities_hub()') === false
+    || strpos($hubFunctionsSource, "'relationship'") === false
     || strpos($hubFunctionsSource, "'orchestrator'") === false
-    || strpos($hubFunctionsSource, "'hub.capabilities.discover'") === false
+    || strpos($hubFunctionsSource, "'service'") === false
 ) {
-    fwrite(STDERR, "Hub generic capability declaration is missing from functions.inc\n");
+    fwrite(STDERR, "Hub shared role declaration is missing from functions.inc\n");
     exit(1);
+}
+foreach (array(
+    'hub.capabilities.discover',
+    'hub.interoperability.audit',
+    'hub.links.audit',
+    'hub.staticpages.topics.render'
+) as $obsoleteHubCapability) {
+    if (strpos($hubFunctionsSource, $obsoleteHubCapability) !== false) {
+        fwrite(STDERR, "Obsolete Hub-only capability still declared: $obsoleteHubCapability\n");
+        exit(1);
+    }
 }
 $invalidDeclarationRecommendations = HUB_capabilityDeclarationRecommendations('hubcapinvalid');
 if (empty($invalidDeclarationRecommendations)
@@ -186,6 +205,47 @@ if (!HUB_serviceHasAction('hubservicetest', 'dashboard_summary')
     exit(1);
 }
 
+
+require_once $root . '/lib-content-contract.php';
+require_once $root . '/lib-metadata.php';
+
+function plugin_getiteminfo_hubcollectiontest($id, $what, $uid = 0, $options = array())
+{
+    if ($id === '*') {
+        $since = isset($options['since']) ? $options['since'] : 0;
+        $limit = isset($options['limit']) ? $options['limit'] : 20;
+        $order = isset($options['order']) ? $options['order'] : 'modified-desc';
+        if ($order === 'hits-desc') {
+            return array(array('id' => '1', 'hits' => 10));
+        }
+        return array();
+    }
+    return array('id' => $id, 'hits' => 1);
+}
+
+$contentEvidence = HUB_contentContractEvidence('hubcollectiontest');
+if (empty($contentEvidence['collection_source'])
+    || empty($contentEvidence['since_source'])
+    || empty($contentEvidence['limit_source'])
+    || empty($contentEvidence['order_source'])
+    || empty($contentEvidence['hits_source'])
+    || empty($contentEvidence['hits_desc_source'])
+) {
+    fwrite(STDERR, "Memorandum content-contract evidence failed\n");
+    exit(1);
+}
+
+$hubManifest = json_decode(file_get_contents($root . '/plugin.json'), true);
+if (!is_array($hubManifest)
+    || !isset($hubManifest['schema']) || (int) $hubManifest['schema'] !== 1
+    || !isset($hubManifest['id']) || $hubManifest['id'] !== 'hub'
+    || !isset($hubManifest['name']) || $hubManifest['name'] !== 'Hub'
+    || empty($hubManifest['requires']['geeklog'])
+    || empty($hubManifest['requires']['php'])
+) {
+    fwrite(STDERR, "Hub plugin.json metadata manifest is invalid\n");
+    exit(1);
+}
 
 require_once $root . '/lib-audit.php';
 
