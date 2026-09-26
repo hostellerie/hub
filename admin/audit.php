@@ -4,6 +4,24 @@ require_once '../../../lib-common.php';
 require_once '../../auth.inc.php';
 require_once $_CONF['path'] . 'system/lib-admin.php';
 
+function HUB_adminFilenameSlug($value)
+{
+    $value = trim((string) $value);
+
+    if (function_exists('iconv')) {
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        if ($ascii !== false) {
+            $value = $ascii;
+        }
+    }
+
+    $value = strtolower($value);
+    $value = preg_replace('/[^a-z0-9]+/', '-', $value);
+    $value = trim($value, '-');
+
+    return $value !== '' ? $value : 'site';
+}
+
 if (!SEC_hasRights('hub.admin')) {
     COM_accessLog('User ' . (int) $_USER['uid'] . ' attempted to access Hub administration without permission.');
     $display = COM_startBlock('Access denied') . 'You do not have sufficient rights to access this page.' . COM_endBlock();
@@ -16,8 +34,15 @@ $hubAuditCacheMeta = array();
 $rows = HUB_auditCachedRows($hubForceAuditRefresh, 600, $hubAuditCacheMeta);
 
 if (isset($_GET['export']) && $_GET['export'] === 'md') {
-    $markdown = HUB_roleMarkdown($rows, defined('VERSION') ? VERSION : '-', PHP_VERSION, plugin_chkVersion_hub());
-    $filename = 'geeklog-hub-audit-' . date('Ymd-His') . '.md';
+    $hubSiteName = isset($_CONF['site_name']) ? (string) $_CONF['site_name'] : '';
+    $markdown = HUB_roleMarkdown(
+        $rows,
+        defined('VERSION') ? VERSION : '-',
+        PHP_VERSION,
+        plugin_chkVersion_hub(),
+        $hubSiteName
+    );
+    $filename = HUB_adminFilenameSlug($hubSiteName) . '-hub-audit-' . date('Ymd-His') . '.md';
     if (!headers_sent()) {
         header('Content-Type: text/markdown; charset=UTF-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
