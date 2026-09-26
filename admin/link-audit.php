@@ -150,6 +150,6 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
     }
 }
 
-$hubVersion = function_exists('plugin_chkVersion_hub') ? plugin_chkVersion_hub() : '0.2.0-dev';
+$hubVersion = function_exists('plugin_chkVersion_hub') ? plugin_chkVersion_hub() : '0.2.0';
 $display = COM_startBlock('Hub ' . HUB_linkAuditAdminEscape($hubVersion)) . $content . COM_endBlock();
 COM_output(COM_createHTMLDocument($display));
