@@ -31,6 +31,10 @@ jobs:
             -not -path './dist/*' \
             -print0 | xargs -0 -n1 php -l
 
+      - name: Run Hub contract tests
+        shell: bash
+        run: php tests/audit_contract.php
+
       - name: Build Geeklog plugin archive
         id: package
         shell: bash
@@ -65,7 +69,68 @@ jobs:
 
           unzip -l "dist/${archive}" | grep -q ' hub/config.php$'
           unzip -l "dist/${archive}" | grep -q ' hub/autoinstall.php$'
-          unzip -l "dist/${archive}" | grep -q ' hub/functions.inc$'
+          unzip -l "dist/${archive}" | grep -q ' hub/functions.inc
+
+          echo "archive=${archive}" >> "$GITHUB_OUTPUT"
+          echo "Built dist/${archive}"
+
+      - name: Commit archive to dist
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A dist/
+
+          if git diff --cached --quiet; then
+            echo "dist is already up to date."
+            exit 0
+          fi
+
+          git commit -m "build: refresh installable Hub archive"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Upload installable archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: hub-installable
+          path: dist/${{ steps.package.outputs.archive }}
+          if-no-files-found: error
+          retention-days: 14
+
+          unzip -l "dist/${archive}" | grep -q ' hub/public_html/hub.css
+
+          echo "archive=${archive}" >> "$GITHUB_OUTPUT"
+          echo "Built dist/${archive}"
+
+      - name: Commit archive to dist
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A dist/
+
+          if git diff --cached --quiet; then
+            echo "dist is already up to date."
+            exit 0
+          fi
+
+          git commit -m "build: refresh installable Hub archive"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Upload installable archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: hub-installable
+          path: dist/${{ steps.package.outputs.archive }}
+          if-no-files-found: error
+          retention-days: 14
+
 
           echo "archive=${archive}" >> "$GITHUB_OUTPUT"
           echo "Built dist/${archive}"
