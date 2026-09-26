@@ -44,6 +44,42 @@ function HUB_linkAuditArticlesByTopic($topicId)
     return $rows;
 }
 
+
+/**
+ * Return published articles assigned to any of the supplied topics.
+ *
+ * Articles assigned to more than one matching topic are returned only once.
+ *
+ * @param array $topicIds
+ * @return array
+ */
+function HUB_linkAuditArticlesByTopics(array $topicIds)
+{
+    $articles = array();
+
+    foreach ($topicIds as $topicId) {
+        foreach (HUB_linkAuditArticlesByTopic($topicId) as $article) {
+            if (!isset($article['sid'])) {
+                continue;
+            }
+            $articles[(string) $article['sid']] = $article;
+        }
+    }
+
+    if (!empty($articles)) {
+        uasort($articles, function ($a, $b) {
+            $dateA = isset($a['date']) ? strtotime($a['date']) : 0;
+            $dateB = isset($b['date']) ? strtotime($b['date']) : 0;
+            if ($dateA === $dateB) {
+                return 0;
+            }
+            return ($dateA > $dateB) ? -1 : 1;
+        });
+    }
+
+    return array_values($articles);
+}
+
 /**
  * Return topics available for the audit selector.
  *
@@ -214,6 +250,32 @@ function HUB_linkAuditMissingArticles($topicId, $pageId)
     $targetUrl = HUB_linkAuditStaticPageUrl($pageId);
 
     foreach (HUB_linkAuditArticlesByTopic($topicId) as $article) {
+        $introtext = isset($article['introtext']) ? (string) $article['introtext'] : '';
+        $bodytext = isset($article['bodytext']) ? (string) $article['bodytext'] : '';
+        $content = $introtext . "\n" . $bodytext;
+        if (!HUB_linkAuditContainsLink($content, $targetUrl)) {
+            $missing[] = $article;
+        }
+    }
+
+    return $missing;
+}
+
+
+/**
+ * Return published articles in any supplied topic that do not link to the
+ * selected Static Page.
+ *
+ * @param array $topicIds
+ * @param string $pageId
+ * @return array
+ */
+function HUB_linkAuditMissingArticlesForTopics(array $topicIds, $pageId)
+{
+    $missing = array();
+    $targetUrl = HUB_linkAuditStaticPageUrl($pageId);
+
+    foreach (HUB_linkAuditArticlesByTopics($topicIds) as $article) {
         $introtext = isset($article['introtext']) ? (string) $article['introtext'] : '';
         $bodytext = isset($article['bodytext']) ? (string) $article['bodytext'] : '';
         $content = $introtext . "\n" . $bodytext;
