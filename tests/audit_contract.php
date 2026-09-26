@@ -37,7 +37,7 @@ foreach ($iterator as $fileInfo) {
 
 require_once $root . '/lib-audit.php';
 
-foreach (array('HUB_auditLifecycleCallsFromSource', 'HUB_auditLifecycleContractDetails', 'HUB_auditAdditionalCapabilities') as $needle) {
+foreach (array('HUB_auditLifecycleCallsFromSource', 'HUB_auditLifecycleListenerDetails', 'HUB_auditPluginApiSurface') as $needle) {
     if (!function_exists($needle)) {
         fwrite(STDERR, "Missing finalized audit capability: $needle\n");
         exit(1);
@@ -49,14 +49,19 @@ function plugin_itemdeleted_hubtest($id, $type, $sub_type) {}
 function plugin_idtourl_hubtest($sub_type, $item_id) {}
 function plugin_getlanguageoverrides_hubtest() {}
 
-$contractDetails = HUB_auditLifecycleContractDetails('hubtest');
-if (strpos(implode(' ', $contractDetails), 'sub_type-aware') === false) {
-    fwrite(STDERR, "sub_type lifecycle contract detection failed\n");
+$listenerDetails = HUB_auditLifecycleListenerDetails('hubtest');
+$listenerText = implode(' ', $listenerDetails);
+if (strpos($listenerText, 'plugin_itemsaved_hubtest') === false
+    || strpos($listenerText, '$sub_type') === false
+    || strpos($listenerText, 'plugin_itemdeleted_hubtest') === false
+) {
+    fwrite(STDERR, "Lifecycle listener signature detection failed\n");
     exit(1);
 }
-$additional = HUB_auditAdditionalCapabilities('hubtest');
-if (strpos(implode(' ', $additional), 'Language overrides') === false) {
-    fwrite(STDERR, "Additional Geeklog capability detection failed\n");
+
+$apiSurface = HUB_auditPluginApiSurface('hubtest');
+if (strpos(implode(' ', $apiSurface), 'plugin_getlanguageoverrides_hubtest') === false) {
+    fwrite(STDERR, "Plugin API surface detection failed\n");
     exit(1);
 }
 
