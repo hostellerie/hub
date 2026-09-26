@@ -88,7 +88,12 @@ function HUB_topicUrl($topicId)
 function HUB_renderStaticPageTopics($pageId)
 {
     if (function_exists('TOPIC_relatedTopics')) {
-        return TOPIC_relatedTopics('staticpages', (string) $pageId, 0);
+        $html = TOPIC_relatedTopics('staticpages', (string) $pageId, 0);
+        if ($html === '') {
+            return '';
+        }
+
+        return '<div class="hub-staticpage-topics">' . $html . '</div>';
     }
 
     $rows = HUB_staticPageTopics($pageId);
@@ -115,5 +120,5 @@ function HUB_renderStaticPageTopics($pageId)
         return '';
     }
 
-    return '<div class="related-topics">Topics: ' . implode(' ', $links) . '</div>';
+    return '<div class="hub-staticpage-topics"><div class="related-topics">Topics: ' . implode(' ', $links) . '</div></div>';
 }
