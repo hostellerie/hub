@@ -83,6 +83,15 @@ if (empty($capabilityDeclaration['valid'])
     exit(1);
 }
 
+
+if (!HUB_capabilitySupports('hubcaptest', 'content.read')
+    || HUB_capabilitySupports('hubcaptest', 'missing.capability')
+    || HUB_capabilityDeclaredRoles('hubcaptest') !== array('content', 'service')
+) {
+    fwrite(STDERR, "Capability lookup helper failed\n");
+    exit(1);
+}
+
 $invalidCapabilityDeclaration = HUB_capabilityDeclaration('hubcapinvalid');
 if (!empty($invalidCapabilityDeclaration['valid']) || empty($invalidCapabilityDeclaration['errors'])) {
     fwrite(STDERR, "Invalid generic capability declaration was accepted\n");
@@ -122,6 +131,14 @@ if (empty($serviceCatalogue['dispatcher'])
     fwrite(STDERR, "Reusable service catalogue detection failed\n");
     exit(1);
 }
+if (!HUB_serviceHasAction('hubservicetest', 'dashboard_summary')
+    || !HUB_serviceHasAction('hubservicetest', 'item_read')
+    || HUB_serviceHasAction('hubservicetest', 'missing_action')
+) {
+    fwrite(STDERR, "Service action lookup helper failed\n");
+    exit(1);
+}
+
 
 require_once $root . '/lib-audit.php';
 
