@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-services.php', 'lib-role.php', 'lib-stats.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-services.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -262,6 +262,14 @@ if (HUB_linkAuditContainsLink('<p>https://example.com/staticpages/index.php?page
     exit(1);
 }
 
+$siteAwareMarkdown = HUB_roleMarkdown(array(), '2.2.2', '8.1.0', '0.2.0-dev', 'Ecologie Pratique');
+if (strpos($siteAwareMarkdown, '# Ecologie Pratique — Plugin Interoperability Audit') === false
+    || strpos($siteAwareMarkdown, '- Site: `Ecologie Pratique`') === false
+) {
+    fwrite(STDERR, "Site-aware Markdown export failed\n");
+    exit(1);
+}
+
 require_once $root . '/lib-stats.php';
 function plugin_showstats_hubstatstest($showsitestats) {}
 function plugin_statssummary_hubstatstest() {}
@@ -292,6 +300,26 @@ if (strpos(implode(' ', $syndication), 'Content Syndication: Full') === false
     || strpos(implode(' ', $fallback), 'Item Info fallback') === false
 ) {
     fwrite(STDERR, "Distribution capability detection failed\n");
+    exit(1);
+}
+
+$staticPageSource = file_get_contents($root . '/lib-staticpages.php');
+$linkAuditSource = file_get_contents($root . '/admin/link-audit.php');
+$auditCacheSource = file_get_contents($root . '/lib-audit-cache.php');
+
+if (strpos($staticPageSource, 'function HUB_staticPageTopicContext') === false
+    || strpos($staticPageSource, "'placement_only'") === false
+    || strpos($linkAuditSource, 'placement options') === false
+) {
+    fwrite(STDERR, "Static Page placement semantics documentation missing\n");
+    exit(1);
+}
+
+if (strpos($auditCacheSource, 'CACHE_check_instance') === false
+    || strpos($auditCacheSource, 'CACHE_create_instance') === false
+    || strpos($auditCacheSource, 'HUB_auditCacheFingerprint') === false
+) {
+    fwrite(STDERR, "Audit cache contract missing\n");
     exit(1);
 }
 
