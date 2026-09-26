@@ -5,78 +5,79 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 }
 
 /**
- * Return published articles assigned directly to a topic.
- *
- * This first implementation deliberately uses Geeklog core tables only. It does
- * not inspect data owned by third-party plugins.
- *
- * @param string $topicId
- * @return array
- */
-function HUB_linkAuditArticlesByTopic($topicId)
-{
-    global $_TABLES;
-
-    $rows = array();
-    if (empty($_TABLES['stories']) || empty($_TABLES['topic_assignments']) || empty($_TABLES['topics'])) {
-        return $rows;
-    }
-
-    $topicId = addslashes((string) $topicId);
-    $sql = "SELECT DISTINCT s.sid, s.title, s.introtext, s.bodytext, s.date, ta.tid, t.topic "
-         . "FROM {$_TABLES['stories']} AS s "
-         . "INNER JOIN {$_TABLES['topic_assignments']} AS ta "
-         . "ON ta.type = 'article' AND ta.id = s.sid "
-         . "LEFT JOIN {$_TABLES['topics']} AS t ON t.tid = ta.tid "
-         . "WHERE ta.tid = '" . $topicId . "' "
-         . "AND s.draft_flag = 0 AND s.date <= NOW() "
-         . "ORDER BY s.date DESC";
-
-    $result = DB_query($sql, 1);
-    if ($result === false) {
-        return $rows;
-    }
-
-    while ($row = DB_fetchArray($result)) {
-        $rows[] = $row;
-    }
-
-    return $rows;
-}
-
-
-/**
  * Return published articles assigned to any of the supplied topics.
  *
- * Articles assigned to more than one matching topic are returned only once.
+ * A single query is used for all topic ids. Articles assigned to more than one
+ * matching topic are returned only once, with the matching topics preserved in
+ * the `hub_topics` element for audit explanations.
+ *
+ * This implementation deliberately uses Geeklog core tables only. It does not
+ * inspect data owned by third-party plugins.
  *
  * @param array $topicIds
  * @return array
  */
 function HUB_linkAuditArticlesByTopics(array $topicIds)
 {
+    global $_TABLES;
+
     $articles = array();
 
+    if (empty($_TABLES['stories']) || empty($_TABLES['topic_assignments']) || empty($_TABLES['topics'])) {
+        return array();
+    }
+
+    $escapedTopicIds = array();
     foreach ($topicIds as $topicId) {
-        foreach (HUB_linkAuditArticlesByTopic($topicId) as $article) {
-            if (!isset($article['sid'])) {
-                continue;
-            }
+        $topicId = (string) $topicId;
+        if ($topicId === '') {
+            continue;
+        }
 
-            $sid = (string) $article['sid'];
-            $tid = isset($article['tid']) ? (string) $article['tid'] : '';
-            $topic = isset($article['topic']) && $article['topic'] !== ''
-                ? (string) $article['topic']
-                : $tid;
+        $escapedTopicIds[] = function_exists('DB_escapeString')
+            ? DB_escapeString($topicId)
+            : addslashes($topicId);
+    }
 
-            if (!isset($articles[$sid])) {
-                $article['hub_topics'] = array();
-                $articles[$sid] = $article;
-            }
+    $escapedTopicIds = array_values(array_unique($escapedTopicIds));
+    if (empty($escapedTopicIds)) {
+        return array();
+    }
 
-            if ($tid !== '') {
-                $articles[$sid]['hub_topics'][$tid] = $topic;
-            }
+    $quotedTopicIds = "'" . implode("','", $escapedTopicIds) . "'";
+
+    $sql = "SELECT s.sid, s.title, s.introtext, s.bodytext, s.date, ta.tid, t.topic "
+         . "FROM {$_TABLES['stories']} AS s "
+         . "INNER JOIN {$_TABLES['topic_assignments']} AS ta "
+         . "ON ta.type = 'article' AND ta.id = s.sid "
+         . "INNER JOIN {$_TABLES['topics']} AS t ON t.tid = ta.tid "
+         . "WHERE ta.tid IN (" . $quotedTopicIds . ") "
+         . "AND s.draft_flag = 0 AND s.date <= NOW() "
+         . "ORDER BY s.date DESC, t.topic ASC";
+
+    $result = DB_query($sql, 1);
+    if ($result === false) {
+        return array();
+    }
+
+    while ($article = DB_fetchArray($result)) {
+        if (!isset($article['sid'])) {
+            continue;
+        }
+
+        $sid = (string) $article['sid'];
+        $tid = isset($article['tid']) ? (string) $article['tid'] : '';
+        $topic = isset($article['topic']) && $article['topic'] !== ''
+            ? (string) $article['topic']
+            : $tid;
+
+        if (!isset($articles[$sid])) {
+            $article['hub_topics'] = array();
+            $articles[$sid] = $article;
+        }
+
+        if ($tid !== '') {
+            $articles[$sid]['hub_topics'][$tid] = $topic;
         }
     }
 
@@ -86,17 +87,6 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
         }
     }
     unset($article);
-
-    if (!empty($articles)) {
-        uasort($articles, function ($a, $b) {
-            $dateA = isset($a['date']) ? strtotime($a['date']) : 0;
-            $dateB = isset($b['date']) ? strtotime($b['date']) : 0;
-            if ($dateA === $dateB) {
-                return 0;
-            }
-            return ($dateA > $dateB) ? -1 : 1;
-        });
-    }
 
     return array_values($articles);
 }
@@ -231,31 +221,6 @@ function HUB_linkAuditContainsLink($content, $targetUrl)
 
     return false;
 }
-
-/**
- * Return published articles in a topic that do not link to the static page.
- *
- * @param string $topicId
- * @param string $pageId
- * @return array
- */
-function HUB_linkAuditMissingArticles($topicId, $pageId)
-{
-    $missing = array();
-    $targetUrl = HUB_linkAuditStaticPageUrl($pageId);
-
-    foreach (HUB_linkAuditArticlesByTopic($topicId) as $article) {
-        $introtext = isset($article['introtext']) ? (string) $article['introtext'] : '';
-        $bodytext = isset($article['bodytext']) ? (string) $article['bodytext'] : '';
-        $content = $introtext . "\n" . $bodytext;
-        if (!HUB_linkAuditContainsLink($content, $targetUrl)) {
-            $missing[] = $article;
-        }
-    }
-
-    return $missing;
-}
-
 
 /**
  * Return published articles in any supplied topic that do not link to the
