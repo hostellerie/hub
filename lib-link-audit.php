@@ -62,9 +62,30 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
             if (!isset($article['sid'])) {
                 continue;
             }
-            $articles[(string) $article['sid']] = $article;
+
+            $sid = (string) $article['sid'];
+            $tid = isset($article['tid']) ? (string) $article['tid'] : '';
+            $topic = isset($article['topic']) && $article['topic'] !== ''
+                ? (string) $article['topic']
+                : $tid;
+
+            if (!isset($articles[$sid])) {
+                $article['hub_topics'] = array();
+                $articles[$sid] = $article;
+            }
+
+            if ($tid !== '') {
+                $articles[$sid]['hub_topics'][$tid] = $topic;
+            }
         }
     }
+
+    foreach ($articles as &$article) {
+        if (!empty($article['hub_topics'])) {
+            natcasesort($article['hub_topics']);
+        }
+    }
+    unset($article);
 
     if (!empty($articles)) {
         uasort($articles, function ($a, $b) {
@@ -78,32 +99,6 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
     }
 
     return array_values($articles);
-}
-
-/**
- * Return topics available for the audit selector.
- *
- * @return array
- */
-function HUB_linkAuditTopics()
-{
-    global $_TABLES;
-
-    $topics = array();
-    if (empty($_TABLES['topics'])) {
-        return $topics;
-    }
-
-    $result = DB_query("SELECT tid, topic FROM {$_TABLES['topics']} ORDER BY topic", 1);
-    if ($result === false) {
-        return $topics;
-    }
-
-    while ($row = DB_fetchArray($result)) {
-        $topics[] = $row;
-    }
-
-    return $topics;
 }
 
 /**
