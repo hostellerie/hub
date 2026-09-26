@@ -9,7 +9,7 @@ require_once $_CONF['path'] . 'system/lib-admin.php';
  * having loaded the Hub functions.inc file before reaching this script.
  */
 $hubPluginPath = rtrim($_CONF['path'], '/\\') . '/plugins/hub/';
-if (!function_exists('HUB_linkAuditTopics')) {
+if (!function_exists('HUB_linkAuditStaticPages')) {
     require_once $hubPluginPath . 'lib-link-audit.php';
 }
 if (!function_exists('HUB_topicUrl')) {
@@ -103,7 +103,7 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
         }
     } else {
         $content .= '<p>The articles below belong to one or more topics assigned to this Static Page but do not currently link back to it. Review them to decide whether adding a contextual link is appropriate.</p>';
-        $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>ID</th><th>Published</th><th>Actions</th></tr></thead><tbody>';
+        $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>Matched topics</th><th>ID</th><th>Published</th><th>Actions</th></tr></thead><tbody>';
         foreach ($hubMissingArticles as $hubArticleRow) {
             $hubSid = isset($hubArticleRow['sid']) ? $hubArticleRow['sid'] : '';
             $hubTitle = isset($hubArticleRow['title']) ? $hubArticleRow['title'] : $hubSid;
@@ -112,7 +112,20 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
                 ? COM_buildURL($_CONF['site_url'] . '/article.php?story=' . rawurlencode($hubSid))
                 : $_CONF['site_url'] . '/article.php?story=' . rawurlencode($hubSid);
             $hubEditUrl = $_CONF['site_admin_url'] . '/story.php?mode=edit&sid=' . rawurlencode($hubSid);
-            $content .= '<tr><td><strong>' . HUB_linkAuditAdminEscape($hubTitle) . '</strong></td><td><code>' . HUB_linkAuditAdminEscape($hubSid) . '</code></td><td>' . HUB_linkAuditAdminEscape($hubDate) . '</td><td><a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a> &middot; <a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a></td></tr>';
+
+            $hubMatchedTopicLinks = array();
+            if (!empty($hubArticleRow['hub_topics']) && is_array($hubArticleRow['hub_topics'])) {
+                foreach ($hubArticleRow['hub_topics'] as $hubMatchedTid => $hubMatchedTopicName) {
+                    $hubMatchedTopicUrl = HUB_topicUrl($hubMatchedTid);
+                    $hubMatchedTopicLinks[] = '<a href="' . HUB_linkAuditAdminEscape($hubMatchedTopicUrl) . '" target="_blank" rel="noopener">'
+                        . HUB_linkAuditAdminEscape($hubMatchedTopicName) . '</a>';
+                }
+            }
+            $hubMatchedTopicsHtml = empty($hubMatchedTopicLinks)
+                ? '&mdash;'
+                : implode('<br>', $hubMatchedTopicLinks);
+
+            $content .= '<tr><td><strong>' . HUB_linkAuditAdminEscape($hubTitle) . '</strong></td><td>' . $hubMatchedTopicsHtml . '</td><td><code>' . HUB_linkAuditAdminEscape($hubSid) . '</code></td><td>' . HUB_linkAuditAdminEscape($hubDate) . '</td><td><a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a> &middot; <a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a></td></tr>';
         }
         $content .= '</tbody></table></div>';
     }
