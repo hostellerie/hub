@@ -172,7 +172,7 @@ function HUB_roleRecommendations($row, $role)
     $out = array();
 
     if ($role['name'] === 'orchestrator') {
-        return array('Hub is the orchestrator. The 0.1.0 audit milestone does not need addressable content APIs.');
+        return array('Hub is the orchestrator. In 0.1.1 it audits interoperability, renders assigned Static Page topics, and suggests article-to-Static-Page links without acting as a content provider.');
     }
 
     if ($role['name'] === 'content') {
@@ -300,6 +300,9 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion)
         $out .= "#### Lifecycle emitter\n" . HUB_roleMarkdownList($row['lifecycle_emitter']) . "\n";
         $out .= "#### Lifecycle listener\n" . HUB_roleMarkdownList($row['lifecycle_listener']) . "\n";
         $out .= "#### Object types\n" . HUB_roleMarkdownList($row['object_types']) . "\n";
+        $out .= "### Generic capability declaration\n\n";
+        $out .= HUB_roleMarkdownList(isset($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array()) . "\n";
+        $out .= "> Plugin-supplied declaration; kept distinct from runtime detection and source evidence.\n\n";
         $out .= "### Embedding / discovery\n\n";
         $out .= "#### Blocks\n" . HUB_roleMarkdownList($row['details']['blocks']) . "\n";
         $out .= "#### Autotags\n" . HUB_roleMarkdownList($row['details']['autotags']) . "\n";
