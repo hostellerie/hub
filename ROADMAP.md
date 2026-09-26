@@ -1,6 +1,6 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.2.0-dev`
+**Current development milestone:** `0.2.0` (in development)
 
 ## Vision
 
