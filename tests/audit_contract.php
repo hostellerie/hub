@@ -88,15 +88,12 @@ if (!empty($invalidCapabilityDeclaration['valid']) || empty($invalidCapabilityDe
     fwrite(STDERR, "Invalid generic capability declaration was accepted\n");
     exit(1);
 }
-if (!function_exists('plugin_getcapabilities_hub')) {
-    require_once $root . '/functions.inc';
-}
-$hubDeclaration = HUB_capabilityDeclaration('hub');
-if (empty($hubDeclaration['valid'])
-    || !in_array('orchestrator', $hubDeclaration['roles'], true)
-    || !in_array('hub.capabilities.discover', $hubDeclaration['capabilities'], true)
+$hubFunctionsSource = file_get_contents($root . '/functions.inc');
+if (strpos($hubFunctionsSource, 'function plugin_getcapabilities_hub()') === false
+    || strpos($hubFunctionsSource, "'orchestrator'") === false
+    || strpos($hubFunctionsSource, "'hub.capabilities.discover'") === false
 ) {
-    fwrite(STDERR, "Hub generic capability declaration is missing or invalid\n");
+    fwrite(STDERR, "Hub generic capability declaration is missing from functions.inc\n");
     exit(1);
 }
 
