@@ -33,7 +33,7 @@ $hubTopicRows = HUB_linkAuditTopics();
 $hubStaticPageRows = HUB_linkAuditStaticPages();
 
 $content = '<style>';
-$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-copy-url{margin-left:8px;padding:2px 8px;min-height:28px;vertical-align:middle}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
+$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
 $content .= '</style>';
 $content .= '<nav class="hub-nav"><a href="audit.php">Plugin interoperability audit</a><strong>Article link audit</strong></nav>';
 $content .= '<h2>Articles without a link to a static page</h2>';
@@ -80,8 +80,7 @@ if ($hubRunAudit && !empty($hubTopicRows) && !empty($hubStaticPageRows)) {
     $hubEscapedTopicUrl = HUB_linkAuditAdminEscape($hubTopicUrl);
     $content .= '<div class="hub-summary"><strong>' . count($hubMissingArticles) . '</strong> article(s) without the selected link out of <strong>' . count($hubAllArticles) . '</strong> published article(s).'
         . '<br><span class="hub-url">Target: <a href="' . $hubEscapedTargetUrl . '" target="_blank" rel="noopener">' . $hubEscapedTargetUrl . '</a></span>'
-        . '<br><span class="hub-url">Topic: <a href="' . $hubEscapedTopicUrl . '" target="_blank" rel="noopener">' . $hubEscapedTopicUrl . '</a></span> '
-        . '<button type="button" class="hub-copy-url" data-url="' . $hubEscapedTopicUrl . '" onclick="if(navigator.clipboard&amp;&amp;navigator.clipboard.writeText){navigator.clipboard.writeText(this.getAttribute(\'data-url\'));this.textContent=\'Copied\';}else{window.prompt(\'Copy URL\',this.getAttribute(\'data-url\'));}">Copy URL</button></div>';
+        . '<br><span class="hub-url">Topic: <a href="' . $hubEscapedTopicUrl . '" target="_blank" rel="noopener">' . $hubEscapedTopicUrl . '</a></span></div>';
 
     if (empty($hubMissingArticles)) {
         $content .= '<p class="hub-empty-result">Every published article in this topic contains a link to the selected page.</p>';
