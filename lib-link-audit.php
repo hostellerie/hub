@@ -60,6 +60,9 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
     if (function_exists('COM_getTopicSQL')) {
         $sql .= COM_getTopicSQL('AND', 0, 'ta');
     }
+    if (function_exists('COM_getLangSQL')) {
+        $sql .= COM_getLangSQL('sid', 'AND', 's');
+    }
 
     $sql .= " ORDER BY s.date DESC, t.topic ASC";
 
@@ -118,7 +121,19 @@ function HUB_linkAuditStaticPages()
     }
 
     $table = $_TABLES['staticpage'];
-    $result = DB_query("SELECT sp_id, sp_title FROM {$table} ORDER BY sp_title", 1);
+    $sql = "SELECT sp.sp_id, sp.sp_title FROM {$table} AS sp "
+         . "WHERE sp.draft_flag = 0 AND sp.template_flag = 0 ";
+
+    if (function_exists('COM_getPermSQL')) {
+        $sql .= COM_getPermSQL('AND', 0, 2, 'sp');
+    }
+    if (function_exists('COM_getLangSQL')) {
+        $sql .= COM_getLangSQL('sp_id', 'AND', 'sp');
+    }
+
+    $sql .= " ORDER BY sp.sp_title";
+
+    $result = DB_query($sql, 1);
     if ($result === false) {
         return $pages;
     }
