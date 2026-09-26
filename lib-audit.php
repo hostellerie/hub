@@ -404,10 +404,11 @@ function HUB_auditSourceFacts($plugin)
 
 function HUB_auditCapabilityDetails($plugin, $autotags, $services)
 {
-    $details = array('item_info' => array(), 'related_items' => array(), 'blocks' => array(), 'autotags' => array(), 'search' => array(), 'services' => array());
+    $details = array('item_info' => array(), 'related_items' => array(), 'id_to_url' => array(), 'blocks' => array(), 'autotags' => array(), 'search' => array(), 'services' => array());
     $map = array(
         'item_info' => 'plugin_getiteminfo_' . $plugin,
         'related_items' => 'plugin_getrelateditems_' . $plugin,
+        'id_to_url' => 'plugin_idtourl_' . $plugin,
         'blocks' => 'plugin_getBlocks_' . $plugin,
         'search' => 'plugin_dopluginsearch_' . $plugin,
     );
@@ -511,6 +512,63 @@ function HUB_auditObjectTypeDetails($types)
     return $details;
 }
 
+function HUB_auditLifecycleContractDetails($plugin)
+{
+    $details = array();
+
+    foreach (array('plugin_itemsaved_' . $plugin, 'plugin_itemdeleted_' . $plugin) as $function) {
+        if (!function_exists($function)) {
+            continue;
+        }
+
+        $subTypeAware = false;
+
+        if (class_exists('ReflectionFunction')) {
+            try {
+                $reflection = new ReflectionFunction($function);
+                foreach ($reflection->getParameters() as $parameter) {
+                    if (strtolower($parameter->getName()) === 'sub_type') {
+                        $subTypeAware = true;
+                        break;
+                    }
+                }
+            } catch (Exception $e) {
+                $subTypeAware = false;
+            }
+        }
+
+        $details[] = ($subTypeAware ? '✓ ' : '◐ ')
+            . HUB_auditFunctionSignature($function)
+            . ($subTypeAware ? ' — sub_type-aware' : ' — legacy/no sub_type');
+    }
+
+    if (empty($details)) {
+        $details[] = '? No lifecycle listener callback detected.';
+    }
+
+    return $details;
+}
+
+function HUB_auditAdditionalCapabilities($plugin)
+{
+    $map = array(
+        'URL to ID' => 'plugin_urltoid_' . $plugin,
+        'Language overrides' => 'plugin_getlanguageoverrides_' . $plugin,
+        'User contributed content' => 'plugin_usercontributed_' . $plugin,
+        'reCAPTCHA support' => 'plugin_supportsrecaptcha_' . $plugin,
+    );
+
+    $details = array();
+
+    foreach ($map as $label => $function) {
+        if (function_exists($function)) {
+            $details[] = '✓ ' . $label . ': ' . HUB_auditFunctionSignature($function);
+        }
+    }
+
+    return $details;
+}
+
 function HUB_auditRecommendations($plugin, $caps, $sourceFacts)
 {
     $recommendations = array();
@@ -556,6 +614,7 @@ function HUB_auditPlugin($plugin)
     $caps = array(
         'item_info' => HUB_auditFunctionExists('plugin_getiteminfo_', $plugin),
         'related_items' => HUB_auditFunctionExists('plugin_getrelateditems_', $plugin),
+        'id_to_url' => HUB_auditFunctionExists('plugin_idtourl_', $plugin),
         'blocks' => HUB_auditFunctionExists('plugin_getblocks_', $plugin),
         'autotags' => HUB_auditFunctionExists('plugin_autotags_', $plugin),
         'search' => HUB_auditFunctionExists('plugin_dopluginsearch_', $plugin),
@@ -582,9 +641,11 @@ function HUB_auditPlugin($plugin)
         'capability_declaration_details' => HUB_capabilityDeclarationDetails($capabilityDeclaration),
         'lifecycle_emitter' => HUB_auditLifecycleEmitterDetails($sourceFacts),
         'lifecycle_listener' => HUB_auditLifecycleListenerDetails($plugin),
+        'lifecycle_contract' => HUB_auditLifecycleContractDetails($plugin),
         'object_types' => HUB_auditObjectTypeDetails($objectTypes),
         'search_types_function' => function_exists('plugin_searchtypes_' . $plugin) ? HUB_auditFunctionSignature('plugin_searchtypes_' . $plugin) : '',
         'api_surface' => HUB_auditPluginApiSurface($plugin),
+        'additional_capabilities' => HUB_auditAdditionalCapabilities($plugin),
         'source_facts' => $sourceFacts,
         'recommendations' => HUB_auditRecommendations($plugin, $caps, $sourceFacts),
         'score' => $score,
