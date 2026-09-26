@@ -1,15 +1,15 @@
 /* Hub public presentation.
  * Kept theme-neutral so Hub remains independent from the active Geeklog theme.
  */
-.related-topics{
+.hub-staticpage-topics .related-topics{
     margin-top:1.25rem;
     padding-top:1rem;
     border-top:1px solid rgba(127,127,127,.25);
     line-height:1.6;
 }
-.related-topics a{
+.hub-staticpage-topics .related-topics a{
     display:inline;
 }
-.related-topics a + a{
+.hub-staticpage-topics .related-topics a + a{
     margin-left:.65rem;
 }
