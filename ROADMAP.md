@@ -117,6 +117,8 @@ This expedited milestone provides an immediately useful subset of the later disc
 
 ## 0.2.0 — Generic capability discovery
 
+- detect and validate existing generic `plugin_getcapabilities_*()` declarations without making them Hub-specific
+- keep declared roles/capabilities visibly distinct from runtime/source evidence and inferred readiness
 - detect capabilities that can be proven from existing Geeklog Plugin APIs
 - allow optional capability declaration only for features that cannot be safely inferred
 - keep that declaration generic and reusable by Hub, Connector and other consumers
