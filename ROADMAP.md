@@ -160,6 +160,8 @@ future external integrations
 - consume `PLG_itemSaved()` / `PLG_itemDeleted()` notifications
 - refresh cached metadata
 - detect all pillar pages affected by a changed item
+- detect Static Pages whose public rendering changes when topic assignments are added or removed
+- detect Static Pages affected when an assigned topic is renamed, removed or otherwise changes its public label/URL
 - invalidate relevant Hub caches
 - maintain a dependency graph based on stable content identity
 - expose affected-page/context information through a reusable Hub service for administration and future external consumers
@@ -179,12 +181,13 @@ These are conceptual service names, not frozen API names.
 ## 0.6.0 — Services and IndexNow
 
 - ask IndexNow through `PLG_invokeService()` to queue all affected URLs
+- include Static Page URLs whose rendered topic links changed because of assignment changes or topic metadata changes
 - batch and deduplicate URLs in IndexNow, not Hub
 - establish generic service conventions reusable by other plugins
 - expose IndexNow status in Hub only as information when the IndexNow plugin provides it
 - never duplicate IndexNow transport or queue logic inside Hub
 
-Preferred flow:
+Preferred flows:
 
 ```text
 Content saved
@@ -192,6 +195,18 @@ Content saved
 PLG_itemSaved()
     ↓
 Hub determines affected pages
+    ↓
+IndexNow service
+    ↓
+queue / deduplicate / submit
+```
+
+```text
+Topic assignment / topic metadata changed
+    ↓
+Hub identifies affected Static Pages
+    ↓
+Hub resolves their public URLs
     ↓
 IndexNow service
     ↓
