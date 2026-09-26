@@ -13,7 +13,7 @@ Version **0.1.1-dev** keeps the interoperability audit and adds a read-only arti
 
 From **Hub administration → Article link audit**, select a destination Static Page and click **Run audit**.
 
-Hub discovers the topics assigned to that Static Page automatically, gathers the published non-draft articles from those topics, deduplicates articles assigned to more than one matching topic, and lists only the articles whose introduction and body do not contain a hyperlink to the selected page. Relative and absolute links, HTTP/HTTPS, www/non-www and equivalent query-string order are recognized. Each result provides **View** and **Edit** links.
+Hub discovers the topics assigned to that Static Page automatically, gathers the published non-draft articles from those topics, deduplicates articles assigned to more than one matching topic, and lists only the articles whose introduction and body do not contain a hyperlink to the selected page. Each suggestion also shows the matching assigned topic(s), making the editorial reason for the suggestion explicit. Relative and absolute links, HTTP/HTTPS, www/non-www and equivalent query-string order are recognized. Each result provides **View** and **Edit** links.
 
 When Hub is enabled, normal Static Page rendering also appends the visible topics assigned to that page using Geeklog's native `TOPIC_relatedTopics()` renderer. Static Pages therefore use the same localized `related-topics` markup as articles (for example `Classé dans :` in French). The stored `sp_content` is not modified. The audit also exposes the selected topic URL so an administrator can optionally edit the Static Page and place that link manually at a preferred position in the page content.
 
