@@ -17,7 +17,7 @@ From **Hub administration → Article link audit**, select:
 2. a destination Static Page;
 3. **Run audit**.
 
-Hub lists published, non-draft articles assigned directly to that topic whose introduction and body do not contain a hyperlink to the selected page. Relative and absolute links, HTTP/HTTPS, www/non-www and equivalent query-string order are recognized. Each result provides **View** and **Edit** links. The audit also exposes the selected topic URL with a **Copy URL** action, so an administrator can quickly reuse that topic link while editing the destination Static Page.
+Hub lists published, non-draft articles assigned directly to that topic whose introduction and body do not contain a hyperlink to the selected page. Relative and absolute links, HTTP/HTTPS, www/non-www and equivalent query-string order are recognized. Each result provides **View** and **Edit** links. The audit also exposes the selected topic URL directly, so an administrator can quickly reuse that topic link while editing the destination Static Page.
 
 When Hub is enabled, normal Static Page rendering also appends the visible topics assigned to that page as linked topic names. The stored `sp_content` is not modified.
 
