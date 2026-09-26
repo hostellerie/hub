@@ -172,7 +172,7 @@ function HUB_roleRecommendations($row, $role)
     $out = array();
 
     if ($role['name'] === 'orchestrator') {
-        return array('Hub is the orchestrator. In 0.1.1 it audits interoperability, renders assigned Static Page topics, and suggests article-to-Static-Page links without acting as a content provider.');
+        return array('Hub is the orchestrator. It audits interoperability, renders assigned Static Page topics, suggests article-to-Static-Page links, and discovers reusable plugin capabilities without acting as a content provider.');
     }
 
     if ($role['name'] === 'content') {
