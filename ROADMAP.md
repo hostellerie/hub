@@ -1,5 +1,7 @@
 # Hub for Geeklog — Roadmap
 
+**Current development milestone:** `0.2.0-dev`
+
 ## Vision
 
 Hub turns a Geeklog content object, initially a Static Page, into a pillar and associates complementary items from articles and plugins without rewriting their stored content.
@@ -124,9 +126,10 @@ This expedited milestone provides an immediately useful subset of the later disc
 - keep that declaration generic and reusable by Hub, Connector and other consumers
 - do **not** create `plugin_hubCapabilities_*()` if the same information can be exposed generically
 - expose explicit lifecycle declaration where runtime detection is insufficient
-- expose service catalogue / supported actions where useful
+- expose a reusable runtime service catalogue with dispatcher presence, supported actions and reflected signatures
 - expose structured render capability where useful
 - provide admin recommendations explaining which interoperability hooks are missing
+- Hub itself advertises its current orchestrator capabilities through the same generic declaration contract
 
 The long-term goal is a shared capability description usable by:
 
