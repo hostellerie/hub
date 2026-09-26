@@ -80,6 +80,7 @@ Hub should never introduce a second parallel contract merely because it is a con
 - role-aware classification: content, presentation, service, infrastructure, communication and orchestrator
 - role-specific readiness with core and optional scores
 - Markdown audit export for developer handoff and issue reports
+- cache normalized interoperability audit data through Geeklog's native cache API, with fingerprint invalidation and manual refresh
 - do not infer lifecycle support when it cannot be proven at runtime
 - audit native statistics contribution (`plugin_showstats_*`, `plugin_statssummary_*`) as Full / Partial / None without changing Hub readiness
 - report Content Syndication support (`plugin_getfeednames_*`, `plugin_getfeedcontent_*`, optional `plugin_feedupdatecheck_*`)
@@ -111,7 +112,7 @@ The audit should not reduce a communication or infrastructure plugin's score sim
 - list only articles without the expected link
 - provide direct View and Edit actions
 - append assigned visible topic links to normal Static Page rendering without modifying stored content, reusing Geeklog's native `TOPIC_relatedTopics()` renderer and `topicrelated.thtml` markup
-- allow the administrator to reuse the selected topic URL manually when a link should be placed at a specific position in Static Page content
+- expose specific Geeklog topic context as a suggestion signal while treating All/Home page only assignments strictly as placement options
 - keep this first release read-only: Hub never rewrites article content automatically
 - package an installable development ZIP in `dist/` through GitHub Actions
 
@@ -147,6 +148,7 @@ future external integrations
 
 - create Hub pillar records
 - first pillar target: Static Pages
+- Hub pillar/editorial relationships must remain independent from Static Page placement assignments (All/Home page only/specific display context)
 - attach complementary items by stable `item_type + item_id`
 - no stored internal URL as source of truth
 - resolve title/URL through `PLG_getItemInfo()` where available
