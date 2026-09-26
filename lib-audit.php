@@ -7,6 +7,9 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 if (!function_exists('HUB_capabilityDeclaration')) {
     require_once __DIR__ . '/lib-capabilities.php';
 }
+if (!function_exists('HUB_serviceCatalogue')) {
+    require_once __DIR__ . '/lib-services.php';
+}
 
 function HUB_auditPluginVersion($plugin)
 {
@@ -82,16 +85,21 @@ function HUB_auditAutotags($plugin)
 
 function HUB_auditServiceFunctions($plugin)
 {
+    $catalogue = HUB_serviceCatalogue($plugin);
     $services = array();
-    $suffix = '_' . strtolower($plugin);
-    foreach (HUB_auditRuntimeFunctions($plugin, 'service_') as $function) {
-        $lower = strtolower($function);
+
+    if (empty($catalogue['actions']) || !is_array($catalogue['actions'])) {
+        return $services;
+    }
+
+    foreach ($catalogue['actions'] as $service) {
         $services[] = array(
-            'name' => $function,
-            'action' => substr($lower, strlen('service_'), -strlen($suffix)),
-            'signature' => HUB_auditFunctionSignature($function),
+            'name' => isset($service['function']) ? $service['function'] : '',
+            'action' => isset($service['action']) ? $service['action'] : '',
+            'signature' => isset($service['signature']) ? $service['signature'] : '',
         );
     }
+
     return $services;
 }
 
@@ -541,6 +549,7 @@ function HUB_auditRecommendations($plugin, $caps, $sourceFacts)
 function HUB_auditPlugin($plugin)
 {
     $autotags = HUB_auditAutotags($plugin);
+    $serviceCatalogue = HUB_serviceCatalogue($plugin);
     $services = HUB_auditServiceFunctions($plugin);
     $capabilityDeclaration = HUB_capabilityDeclaration($plugin);
     $sourceFacts = HUB_auditSourceFacts($plugin);
@@ -567,6 +576,8 @@ function HUB_auditPlugin($plugin)
         'details' => HUB_auditCapabilityDetails($plugin, $autotags, $services),
         'autotags' => $autotags,
         'services' => $services,
+        'service_catalogue' => $serviceCatalogue,
+        'service_catalogue_details' => HUB_serviceCatalogueDetails($serviceCatalogue),
         'capability_declaration' => $capabilityDeclaration,
         'capability_declaration_details' => HUB_capabilityDeclarationDetails($capabilityDeclaration),
         'lifecycle_emitter' => HUB_auditLifecycleEmitterDetails($sourceFacts),
