@@ -312,7 +312,7 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $sit
             $out .= "\n";
         }
 
-        $out .= "### Hub-relevant capabilities\n\n";
+        $out .= "### Content interoperability baseline\n\n";
         $out .= "#### Item Info\n" . HUB_roleMarkdownList($row['details']['item_info']) . "\n";
         $out .= "#### Related Items\n" . HUB_roleMarkdownList($row['details']['related_items']) . "\n";
         $out .= "#### ID to URL\n" . HUB_roleMarkdownList(isset($row['details']['id_to_url']) ? $row['details']['id_to_url'] : array()) . "\n";
@@ -321,7 +321,10 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $sit
         $out .= "#### Lifecycle listener\n" . HUB_roleMarkdownList($row['lifecycle_listener']) . "\n";
         $out .= "#### Lifecycle contract\n" . HUB_roleMarkdownList(isset($row['lifecycle_contract']) ? $row['lifecycle_contract'] : array()) . "\n";
         $out .= "#### Object types\n" . HUB_roleMarkdownList($row['object_types']) . "\n";
-        $out .= "### Generic capability declaration\n\n";
+        $out .= "### Shared content contract evidence\n\n";
+        $out .= HUB_roleMarkdownList(isset($row['content_contract_details']) ? $row['content_contract_details'] : array()) . "\n";
+        $out .= "> Declaration/source evidence only; Hub does not execute arbitrary provider collection queries during audit.\n\n";
+        $out .= "### Shared capability declaration\n\n";
         $out .= HUB_roleMarkdownList(isset($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array()) . "\n";
         $out .= "> Plugin-supplied declaration; kept distinct from runtime detection and source evidence.\n\n";
         $out .= "### Plugin-owned render entry points\n\n";
@@ -331,7 +334,10 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $sit
         $out .= "#### Blocks\n" . HUB_roleMarkdownList($row['details']['blocks']) . "\n";
         $out .= "#### Autotags\n" . HUB_roleMarkdownList($row['details']['autotags']) . "\n";
         $out .= "#### Search\n" . HUB_roleMarkdownList($row['details']['search']) . "\n";
-        $out .= "### Additional Geeklog capabilities\n\n" . HUB_roleMarkdownList(isset($row['additional_capabilities']) ? $row['additional_capabilities'] : array()) . "\n";
+        $out .= "### Extended Geeklog integration\n\n" . HUB_roleMarkdownList(isset($row['additional_capabilities']) ? $row['additional_capabilities'] : array()) . "\n";
+        $out .= "### Modernization metadata\n\n";
+        $out .= HUB_roleMarkdownList(isset($row['metadata_manifest_details']) ? $row['metadata_manifest_details'] : array()) . "\n";
+        $out .= "> plugin.json is recommended modernization metadata and does not affect readiness scoring.\n\n";
         $out .= "### Advanced API surface\n\n" . HUB_roleMarkdownList($row['api_surface']) . "\n";
         $out .= "### Recommendations\n\n";
         if (empty($row['role_recommendations'])) {
