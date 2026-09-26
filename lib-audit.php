@@ -10,6 +10,9 @@ if (!function_exists('HUB_capabilityDeclaration')) {
 if (!function_exists('HUB_serviceCatalogue')) {
     require_once __DIR__ . '/lib-services.php';
 }
+if (!function_exists('HUB_renderCatalogue')) {
+    require_once __DIR__ . '/lib-render.php';
+}
 
 function HUB_auditPluginVersion($plugin)
 {
@@ -608,6 +611,7 @@ function HUB_auditPlugin($plugin)
 {
     $autotags = HUB_auditAutotags($plugin);
     $serviceCatalogue = HUB_serviceCatalogue($plugin);
+    $renderCatalogue = HUB_renderCatalogue($plugin);
     $services = HUB_auditServiceFunctions($plugin);
     $capabilityDeclaration = HUB_capabilityDeclaration($plugin);
     $sourceFacts = HUB_auditSourceFacts($plugin);
@@ -637,6 +641,8 @@ function HUB_auditPlugin($plugin)
         'services' => $services,
         'service_catalogue' => $serviceCatalogue,
         'service_catalogue_details' => HUB_serviceCatalogueDetails($serviceCatalogue),
+        'render_catalogue' => $renderCatalogue,
+        'render_catalogue_details' => HUB_renderCatalogueDetails($renderCatalogue),
         'capability_declaration' => $capabilityDeclaration,
         'capability_declaration_details' => HUB_capabilityDeclarationDetails($capabilityDeclaration),
         'lifecycle_emitter' => HUB_auditLifecycleEmitterDetails($sourceFacts),
