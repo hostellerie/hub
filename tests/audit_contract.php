@@ -105,6 +105,14 @@ if (strpos($hubFunctionsSource, 'function plugin_getcapabilities_hub()') === fal
     fwrite(STDERR, "Hub generic capability declaration is missing from functions.inc\n");
     exit(1);
 }
+$invalidDeclarationRecommendations = HUB_capabilityDeclarationRecommendations('hubcapinvalid');
+if (empty($invalidDeclarationRecommendations)
+    || !empty(HUB_capabilityDeclarationRecommendations('hubcaptest'))
+) {
+    fwrite(STDERR, "Invalid capability declaration recommendation failed\n");
+    exit(1);
+}
+
 
 
 require_once $root . '/lib-services.php';
