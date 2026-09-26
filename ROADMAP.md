@@ -99,8 +99,10 @@ The audit should not reduce a communication or infrastructure plugin's score sim
 
 ## 0.1.1 — Immediate article link audit
 
-- select a Geeklog topic and a destination Static Page
-- inspect published, non-draft core articles assigned directly to the selected topic
+- select a destination Static Page
+- discover the topics assigned to that Static Page automatically
+- inspect published, non-draft core articles assigned to any of those topics
+- deduplicate articles assigned to more than one matching topic
 - check hyperlinks in both `introtext` and `bodytext`
 - recognize relative and absolute links, HTTP/HTTPS, www/non-www and reordered query parameters
 - list only articles without the expected link
