@@ -2,7 +2,7 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.2.0** keeps the read-only interoperability and article-link audits while adding generic capability and service discovery for reusable Geeklog interoperability.
+Version **0.2.0** keeps the read-only interoperability and article-link audits while aligning capability, service, content-contract and metadata discovery with the shared Geeklog Memorandum contracts.
 
 ## Requirements
 
@@ -36,33 +36,48 @@ Hub now detects optional generic `plugin_getcapabilities_*()` declarations when 
 
 These declarations are treated as plugin-supplied metadata only. Hub keeps them separate from runtime callback detection, source evidence, permissions and inferred role/readiness. The optional `lifecycle` block remains declarative metadata and never replaces runtime/source proof. This avoids inventing a Hub-specific capability API while allowing plugins such as Videos or Monitor to describe capabilities that cannot be inferred safely.
 
+## Shared Memorandum alignment
+
+Hub consumes the shared interoperability conventions maintained in `hostellerie/memorandum`; it does not define a parallel Hub-only plugin contract. In particular:
+
+- normalized content remains owned by `plugin_getiteminfo_*()` and related Geeklog APIs;
+- lifecycle remains owned by `PLG_itemSaved()` / `PLG_itemDeleted()`;
+- specialized provider operations remain owned by bounded services;
+- capability declarations describe existing provider surfaces and do not grant authorization;
+- Hub owns relationships/context, Agent owns provider-neutral machine access, and external Connectors adapt Agent to a client/protocol.
+
+Hub's own `plugin.json` follows the same recommended static metadata convention.
+
 ## Reusable service catalogue
 
 Hub 0.2.0 exposes a reusable runtime catalogue through `HUB_serviceCatalogue()`. It reports whether the plugin service dispatcher is present and lists loaded `service_*_<plugin>()` actions with reflected signatures. The catalogue is descriptive only: Hub does not invoke the service, bypass ACL checks, or take ownership of the service implementation.
 
-Hub itself now advertises its current orchestrator capabilities through `plugin_getcapabilities_hub()`, using the same generic declaration contract consumed from other plugins.
+Hub itself uses the same shared declaration contract through `plugin_getcapabilities_hub()`. Its declared roles are `relationship`, `orchestrator` and `service`. Hub does not advertise future `hub.*` capabilities until the corresponding provider-owned service/read surface actually exists.
 
 ## Current interoperability audit
 
-The permanent Plugin Interoperability Audit reports:
+The permanent Plugin Interoperability Audit follows the shared Memorandum model and separates three layers instead of treating every callback as one Hub-specific checklist.
 
-- Item Info
-- Related Items
-- Blocks
-- Autotags
-- Search
-- Services and reflected service signatures/actions
-- readiness score
-- Lifecycle **emitter** source evidence (`PLG_itemSaved()` / `PLG_itemDeleted()` calls)
-- Lifecycle **listener** callbacks (`plugin_itemsaved_*()` / `plugin_itemdeleted_*()`)
-- object types discovered from `plugin_searchtypes_*()` when it can be called safely
-- object types observed as literal lifecycle types
-- primary type inference from `plugin_getiteminfo_*()`
-- complete runtime `plugin_*_<plugin>()` API surface under a collapsed Advanced section
+### Content interoperability baseline
 
-Runtime-detected callbacks are kept distinct from source evidence and inference. Hub never presents source scanning as proof that every mutation path emits a lifecycle notification.
+For content-owning providers Hub reports Item Info, stable object types, lifecycle save/delete evidence, URL resolution and services. It also reports **shared content contract evidence** for the recommended Item Info collection conventions:
 
-Object-type evidence from several sources is merged into one entry instead of displaying duplicates. This lets Hub learn as much as possible from existing Geeklog conventions before requiring any Hub-specific capability contract.
+- `content.collection` declarations;
+- source evidence for `$id = '*'`;
+- source evidence for collection options `since`, `limit` and `order`;
+- source evidence for optional `hits` / `hits-desc` popularity support.
+
+Hub deliberately does **not** execute arbitrary `plugin_getiteminfo_*('*', ...)` provider queries merely to prove these conventions. Declaration/source evidence remains distinct from runtime proof and does not currently change readiness scoring.
+
+### Extended Geeklog integration
+
+Hub reports native optional/distribution surfaces separately, including Related Items, Blocks, Autotags, Search, services, Content Syndication, XML Sitemap, statistics, language overrides and other detectable Geeklog APIs. Optional integration does not reduce a provider's core content-readiness score merely because a feature is irrelevant to that provider.
+
+### Shared capabilities and modernization metadata
+
+Hub detects the provider-neutral `plugin_getcapabilities_*()` convention, reusable service actions, plugin-owned render entry points and the optional static `plugin.json` manifest. The manifest is validated as modernization metadata but is not a Geeklog Core requirement and does not affect readiness scoring.
+
+Runtime-detected callbacks are kept distinct from source evidence, provider declarations and inference. Hub never presents source scanning as proof that every mutation path emits a lifecycle notification. The full runtime `plugin_*_<plugin>()` surface remains available under the collapsed **Advanced API surface** section.
 
 See `ROADMAP.md` for the planned pillar/relationship implementation.
 
