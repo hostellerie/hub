@@ -25,6 +25,12 @@ Hub now detects optional generic `plugin_getcapabilities_*()` declarations when 
 
 These declarations are treated as plugin-supplied metadata only. Hub keeps them separate from runtime callback detection, source evidence, permissions and inferred role/readiness. This avoids inventing a Hub-specific capability API while allowing plugins such as Videos or Monitor to describe capabilities that cannot be inferred safely.
 
+## Reusable service catalogue
+
+Hub 0.2.0-dev exposes a reusable runtime catalogue through `HUB_serviceCatalogue()`. It reports whether the plugin service dispatcher is present and lists loaded `service_*_<plugin>()` actions with reflected signatures. The catalogue is descriptive only: Hub does not invoke the service, bypass ACL checks, or take ownership of the service implementation.
+
+Hub itself now advertises its current orchestrator capabilities through `plugin_getcapabilities_hub()`, using the same generic declaration contract consumed from other plugins.
+
 ## Current interoperability audit
 
 The permanent Plugin Interoperability Audit reports:
