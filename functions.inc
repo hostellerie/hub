@@ -6,6 +6,7 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 
 $hub_path = $_CONF['path'] . 'plugins/hub/';
 require_once $hub_path . 'lib-capabilities.php';
+require_once $hub_path . 'lib-services.php';
 require_once $hub_path . 'lib-audit.php';
 require_once $hub_path . 'lib-role.php';
 require_once $hub_path . 'lib-stats.php';
@@ -20,6 +21,20 @@ function plugin_cclabel_hub()
         return array();
     }
     return array('Hub', $_CONF['site_admin_url'] . '/plugins/hub/index.php', '');
+}
+
+function plugin_getcapabilities_hub()
+{
+    return array(
+        'schema' => 1,
+        'roles' => array('orchestrator'),
+        'capabilities' => array(
+            'hub.capabilities.discover',
+            'hub.interoperability.audit',
+            'hub.links.audit',
+            'hub.staticpages.topics.render'
+        )
+    );
 }
 
 function plugin_getadminoption_hub()
