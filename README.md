@@ -19,7 +19,7 @@ From **Hub administration → Article link audit**, select:
 
 Hub lists published, non-draft articles assigned directly to that topic whose introduction and body do not contain a hyperlink to the selected page. Relative and absolute links, HTTP/HTTPS, www/non-www and equivalent query-string order are recognized. Each result provides **View** and **Edit** links.
 
-When Hub is enabled, normal Static Page rendering also appends the visible topics assigned to that page as linked topic names. The stored `sp_content` is not modified.
+When Hub is enabled, normal Static Page rendering also appends the visible topics assigned to that page as linked topic names. The stored `sp_content` is not modified. The audit also exposes the selected topic URL so an administrator can optionally edit the Static Page and place that link manually at a preferred position in the page content.
 
 The audit does not modify article content. This first implementation targets Geeklog core articles and Static Pages only.
 
