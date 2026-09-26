@@ -22,7 +22,9 @@ Content plugins / Core
         |
         +--> Hello for communication workflows
         +--> IndexNow for URL submission
-        +--> Connector for external access to Hub capabilities
+        +--> Agent for provider-neutral machine access
+                  |
+                  +--> Connectors / protocol adapters
 ```
 
 ## Compatibility target
@@ -40,7 +42,7 @@ Content plugins / Core
 3. Hub must not duplicate another plugin's business logic, rendering, transport, queue, analytics, or persistence model.
 4. Each plugin remains authoritative for its own data, permissions, URLs, actions and specialized rendering.
 5. Hub may orchestrate a service, but the service-owning plugin remains responsible for execution.
-6. The future ChatGPT/agent Connector must consume Hub capabilities where useful and must not duplicate Hub's relationship graph or context logic.
+6. Agent is the provider-neutral machine access layer. External Connectors/adapters consume Agent and must not duplicate Hub's relationship graph, provider contracts or business logic.
 7. Hello remains the communication layer for registered users and email campaigns; Hub may provide context or candidate content but must not become a newsletter engine.
 8. IndexNow remains responsible for queueing, deduplication and submission to search engines.
 9. A future common Data/API layer and common Events layer should remain shared Geeklog architecture, not Hub-specific infrastructure.
@@ -56,7 +58,9 @@ Hub should preferentially reuse the conventions documented in the Memorandum, in
 - `plugin_getrelateditems_*()` where available;
 - `plugin_dopluginsearch_*()` where relevant;
 - `PLG_invokeService()` for specialized plugin actions;
-- native feed, sitemap and statistics callbacks where they already exist.
+- native feed, sitemap and statistics callbacks where they already exist;
+- optional `plugin_getcapabilities_*()` declarations from the shared capability contract;
+- optional static `plugin.json` metadata for safe identity/compatibility discovery.
 
 Hub should never introduce a second parallel contract merely because it is a consumer.
 
@@ -131,7 +135,10 @@ This expedited milestone provides an immediately useful subset of the later disc
 - expose a reusable runtime service catalogue with dispatcher presence, supported actions and reflected signatures
 - expose structured render capability where useful
 - provide admin recommendations explaining which interoperability hooks are missing
-- Hub itself advertises its current orchestrator capabilities through the same generic declaration contract
+- Hub itself declares the shared roles `relationship`, `orchestrator`, `service` through the same generic declaration contract
+- never advertise future `hub.*` capabilities before the corresponding Hub service/read surface exists
+- inspect the recommended static `plugin.json` manifest without making it a readiness requirement
+- report shared Item Info collection-contract evidence (`content.collection`, `*`, `since`, `limit`, `order`, optional `hits`/`hits-desc`) without invoking arbitrary provider collections during audit
 
 The long-term goal is a shared capability description usable by:
 
@@ -174,17 +181,20 @@ future external integrations
 - maintain a dependency graph based on stable content identity
 - expose affected-page/context information through a reusable Hub service for administration and future external consumers
 
-Possible Hub service capabilities:
+Shared Hub capability targets from the Memorandum:
 
 ```text
-hub.get_context
-hub.get_related_items
-hub.get_affected_items
-hub.get_integrity_report
-hub.get_suggestions
+hub.context.read
+hub.related.read
+hub.pillar.read
+hub.affected.read
+hub.integrity.summary
+hub.suggestions.read
+hub.interoperability.summary
+dashboard.summary
 ```
 
-These are conceptual service names, not frozen API names.
+These capabilities must be advertised only when the corresponding Hub-owned read/service surface is implemented.
 
 ## 0.6.0 — Services and IndexNow
 
@@ -311,26 +321,19 @@ admin test / validation
 Hello queue and delivery
 ```
 
-## Integration with the future Connector
+## Integration with Agent and external Connectors
 
-The Connector is the secure external gateway for ChatGPT and other authorized clients.
+Agent is the provider-neutral Geeklog machine access layer. It may consume implemented Hub capabilities such as `hub.context.read`, `hub.related.read`, `hub.affected.read`, `hub.integrity.summary` and `hub.suggestions.read` when a machine request needs relationship/context information.
 
-The Connector may expose Hub capabilities such as:
-
-```text
-get_hub_context
-get_related_items
-get_affected_items
-get_integrity_report
-get_suggestions
-```
+External Connectors adapt Agent to ChatGPT, MCP, REST/OpenAPI or another client/protocol.
 
 However:
 
-- Connector must not maintain a second relationship graph;
-- Connector must not calculate Hub-specific orphan or dependency logic independently;
-- Connector must not add Connector-specific callbacks to content plugins when shared Geeklog contracts already provide the information;
-- Hub must remain fully usable without ChatGPT or any external AI provider.
+- Agent and Connectors must not maintain a second relationship graph;
+- they must not calculate Hub-specific orphan or dependency logic independently;
+- they must not add consumer-specific callbacks to content plugins when shared Geeklog contracts already provide the information;
+- protocol-specific names belong to the Connector/adapter, not to Hub's shared capability model;
+- Hub must remain fully usable without Agent, ChatGPT or any external AI provider.
 
 ## Future statistics integration
 
