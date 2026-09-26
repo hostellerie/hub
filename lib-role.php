@@ -104,6 +104,7 @@ function HUB_roleReadiness($row, $role)
         );
         $optional = array(
             'Related Items' => !empty($caps['related_items']),
+            'ID to URL' => !empty($caps['id_to_url']),
             'Services' => !empty($caps['services']),
             'Autotags' => !empty($caps['autotags']),
             'Search' => !empty($caps['search']),
@@ -188,6 +189,9 @@ function HUB_roleRecommendations($row, $role)
         if (!$caps['related_items']) {
             $out[] = 'Optional: implement plugin_getrelateditems_' . $plugin . '() for future Hub suggestions.';
         }
+        if (empty($caps['id_to_url'])) {
+            $out[] = 'Optional: implement plugin_idtourl_' . $plugin . '() when stable type + id resolution is useful beyond Item Info URL lookup.';
+        }
         if (!$caps['services']) {
             $out[] = 'Optional: expose a Geeklog service if another plugin needs specialized actions or rendering.';
         }
@@ -258,15 +262,15 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion)
     $out .= '- Generated: `' . date('c') . "`\n\n";
     $out .= "> Runtime detection, source evidence and inference are intentionally distinguished. Source scanning is not proof that every runtime path emits an event.\n\n";
     $out .= "## Summary\n\n";
-    $out .= "| Plugin | Version | Role | Readiness | Core | Optional | Item Info | Related | Blocks | Autotags | Search | Services |\n";
-    $out .= "| --- | --- | --- | --- | ---: | ---: | :---: | :---: | :---: | :---: | :---: | :---: |\n";
+    $out .= "| Plugin | Version | Role | Readiness | Core | Optional | Item Info | Related | ID→URL | Blocks | Autotags | Search | Services |\n";
+    $out .= "| --- | --- | --- | --- | ---: | ---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n";
     foreach ($rows as $row) {
         $r = $row['role_readiness'];
         $core = $r['core_total'] ? $r['core_score'] . '/' . $r['core_total'] : 'N/A';
         $optional = $r['optional_total'] ? $r['optional_score'] . '/' . $r['optional_total'] : 'N/A';
         $c = $row['caps'];
         $out .= '| ' . HUB_roleMarkdownEscape($row['plugin']) . ' | ' . HUB_roleMarkdownEscape($row['version']) . ' | ' . $row['role']['label'] . ' | ' . $r['label'] . ' | ' . $core . ' | ' . $optional
-            . ' | ' . ($c['item_info'] ? 'Yes' : 'No') . ' | ' . ($c['related_items'] ? 'Yes' : 'No') . ' | ' . ($c['blocks'] ? 'Yes' : 'No') . ' | ' . ($c['autotags'] ? 'Yes' : 'No') . ' | ' . ($c['search'] ? 'Yes' : 'No') . ' | ' . ($c['services'] ? 'Yes' : 'No') . " |\n";
+            . ' | ' . ($c['item_info'] ? 'Yes' : 'No') . ' | ' . ($c['related_items'] ? 'Yes' : 'No') . ' | ' . (!empty($c['id_to_url']) ? 'Yes' : 'No') . ' | ' . ($c['blocks'] ? 'Yes' : 'No') . ' | ' . ($c['autotags'] ? 'Yes' : 'No') . ' | ' . ($c['search'] ? 'Yes' : 'No') . ' | ' . ($c['services'] ? 'Yes' : 'No') . " |\n";
     }
 
     foreach ($rows as $row) {
@@ -296,9 +300,11 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion)
         $out .= "### Hub-relevant capabilities\n\n";
         $out .= "#### Item Info\n" . HUB_roleMarkdownList($row['details']['item_info']) . "\n";
         $out .= "#### Related Items\n" . HUB_roleMarkdownList($row['details']['related_items']) . "\n";
+        $out .= "#### ID to URL\n" . HUB_roleMarkdownList(isset($row['details']['id_to_url']) ? $row['details']['id_to_url'] : array()) . "\n";
         $out .= "#### Services\n" . HUB_roleMarkdownList($row['details']['services']) . "\n";
         $out .= "#### Lifecycle emitter\n" . HUB_roleMarkdownList($row['lifecycle_emitter']) . "\n";
         $out .= "#### Lifecycle listener\n" . HUB_roleMarkdownList($row['lifecycle_listener']) . "\n";
+        $out .= "#### Lifecycle contract\n" . HUB_roleMarkdownList(isset($row['lifecycle_contract']) ? $row['lifecycle_contract'] : array()) . "\n";
         $out .= "#### Object types\n" . HUB_roleMarkdownList($row['object_types']) . "\n";
         $out .= "### Generic capability declaration\n\n";
         $out .= HUB_roleMarkdownList(isset($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array()) . "\n";
@@ -307,6 +313,7 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion)
         $out .= "#### Blocks\n" . HUB_roleMarkdownList($row['details']['blocks']) . "\n";
         $out .= "#### Autotags\n" . HUB_roleMarkdownList($row['details']['autotags']) . "\n";
         $out .= "#### Search\n" . HUB_roleMarkdownList($row['details']['search']) . "\n";
+        $out .= "### Additional Geeklog capabilities\n\n" . HUB_roleMarkdownList(isset($row['additional_capabilities']) ? $row['additional_capabilities'] : array()) . "\n";
         $out .= "### Advanced API surface\n\n" . HUB_roleMarkdownList($row['api_surface']) . "\n";
         $out .= "### Recommendations\n\n";
         if (empty($row['role_recommendations'])) {
