@@ -142,7 +142,7 @@ if (!HUB_serviceHasAction('hubservicetest', 'dashboard_summary')
 
 require_once $root . '/lib-audit.php';
 
-foreach (array('HUB_auditLifecycleCallsFromSource', 'HUB_auditLifecycleListenerDetails', 'HUB_auditPluginApiSurface') as $needle) {
+foreach (array('HUB_auditLifecycleCallsFromSource', 'HUB_auditLifecycleListenerDetails', 'HUB_auditLifecycleContractDetails', 'HUB_auditAdditionalCapabilities', 'HUB_auditPluginApiSurface') as $needle) {
     if (!function_exists($needle)) {
         fwrite(STDERR, "Missing finalized audit capability: $needle\n");
         exit(1);
@@ -153,6 +153,8 @@ function plugin_itemsaved_hubtest($id, $type, $old_id, $sub_type) {}
 function plugin_itemdeleted_hubtest($id, $type, $sub_type) {}
 function plugin_idtourl_hubtest($sub_type, $item_id) {}
 function plugin_getlanguageoverrides_hubtest() {}
+function plugin_itemsaved_hublegacy($id, $type, $old_id) {}
+function plugin_itemdeleted_hublegacy($id, $type) {}
 
 $listenerDetails = HUB_auditLifecycleListenerDetails('hubtest');
 $listenerText = implode(' ', $listenerDetails);
@@ -161,6 +163,29 @@ if (strpos($listenerText, 'plugin_itemsaved_hubtest') === false
     || strpos($listenerText, 'plugin_itemdeleted_hubtest') === false
 ) {
     fwrite(STDERR, "Lifecycle listener signature detection failed\n");
+    exit(1);
+}
+
+$contractDetails = HUB_auditLifecycleContractDetails('hubtest');
+$legacyContractDetails = HUB_auditLifecycleContractDetails('hublegacy');
+if (strpos(implode(' ', $contractDetails), 'sub_type-aware') === false
+    || strpos(implode(' ', $legacyContractDetails), 'legacy/no sub_type') === false
+) {
+    fwrite(STDERR, "Lifecycle contract compatibility detection failed\n");
+    exit(1);
+}
+
+$capabilityDetails = HUB_auditCapabilityDetails('hubtest', array(), array());
+if (empty($capabilityDetails['id_to_url'])
+    || strpos(implode(' ', $capabilityDetails['id_to_url']), 'plugin_idtourl_hubtest') === false
+) {
+    fwrite(STDERR, "ID to URL capability detection failed\n");
+    exit(1);
+}
+
+$additionalCapabilities = HUB_auditAdditionalCapabilities('hubtest');
+if (strpos(implode(' ', $additionalCapabilities), 'Language overrides') === false) {
+    fwrite(STDERR, "Additional Geeklog capability detection failed\n");
     exit(1);
 }
 
