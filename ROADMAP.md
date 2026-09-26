@@ -106,6 +106,7 @@ The audit should not reduce a communication or infrastructure plugin's score sim
 - list only articles without the expected link
 - provide direct View and Edit actions
 - append assigned visible topic links to normal Static Page rendering without modifying stored content
+- allow the administrator to reuse the selected topic URL manually when a link should be placed at a specific position in Static Page content
 - keep this first release read-only: Hub never rewrites article content automatically
 - package an installable development ZIP in `dist/` through GitHub Actions
 
