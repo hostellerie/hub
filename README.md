@@ -2,7 +2,7 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.2.0-dev** keeps the read-only interoperability and article-link audits while adding generic capability and service discovery for reusable Geeklog interoperability.
+Version **0.2.0** keeps the read-only interoperability and article-link audits while adding generic capability and service discovery for reusable Geeklog interoperability.
 
 ## Requirements
 
@@ -38,7 +38,7 @@ These declarations are treated as plugin-supplied metadata only. Hub keeps them 
 
 ## Reusable service catalogue
 
-Hub 0.2.0-dev exposes a reusable runtime catalogue through `HUB_serviceCatalogue()`. It reports whether the plugin service dispatcher is present and lists loaded `service_*_<plugin>()` actions with reflected signatures. The catalogue is descriptive only: Hub does not invoke the service, bypass ACL checks, or take ownership of the service implementation.
+Hub 0.2.0 exposes a reusable runtime catalogue through `HUB_serviceCatalogue()`. It reports whether the plugin service dispatcher is present and lists loaded `service_*_<plugin>()` actions with reflected signatures. The catalogue is descriptive only: Hub does not invoke the service, bypass ACL checks, or take ownership of the service implementation.
 
 Hub itself now advertises its current orchestrator capabilities through `plugin_getcapabilities_hub()`, using the same generic declaration contract consumed from other plugins.
 
@@ -107,4 +107,4 @@ These capabilities are informational interoperability signals. Hub does not read
 
 ## Development archive
 
-The `Build installable archive` GitHub Actions workflow creates `dist/hub-0.2.0-dev.zip`. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+The `Build installable archive` GitHub Actions workflow creates `dist/hub-0.2.0.zip`. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
