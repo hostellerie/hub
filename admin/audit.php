@@ -99,6 +99,7 @@ function HUB_adminDetails($row)
     $lifecycleContract = isset($row['lifecycle_contract']) && is_array($row['lifecycle_contract']) ? $row['lifecycle_contract'] : array();
     $objectTypes = isset($row['object_types']) && is_array($row['object_types']) ? $row['object_types'] : array();
     $additionalCapabilities = isset($row['additional_capabilities']) && is_array($row['additional_capabilities']) ? $row['additional_capabilities'] : array();
+    $declaredCapabilities = isset($row['capability_declaration_details']) && is_array($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array();
     $apiSurface = isset($row['api_surface']) && is_array($row['api_surface']) ? $row['api_surface'] : array();
     $recommendations = isset($row['role_recommendations']) && is_array($row['role_recommendations']) ? $row['role_recommendations'] : array();
 
@@ -129,6 +130,12 @@ function HUB_adminDetails($row)
     $out .= HUB_adminCard('Autotags', $details['autotags'], empty($details['autotags']) ? 'Missing' : 'Runtime');
     $out .= HUB_adminCard('Search', $details['search'], empty($details['search']) ? 'Missing' : 'Runtime');
     $out .= '</div>';
+
+    $out .= '<h4>Generic capability declaration</h4>';
+    $out .= HUB_adminList($declaredCapabilities);
+    if (!empty($declaredCapabilities)) {
+        $out .= '<div class="hub-note">This declaration is plugin-supplied metadata. Hub keeps it distinct from runtime detection and source evidence.</div>';
+    }
 
     $out .= '<h4>Additional Geeklog capabilities</h4>';
     $out .= HUB_adminList($additionalCapabilities);
