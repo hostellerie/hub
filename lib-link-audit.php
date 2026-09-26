@@ -52,8 +52,16 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
          . "ON ta.type = 'article' AND ta.id = s.sid "
          . "INNER JOIN {$_TABLES['topics']} AS t ON t.tid = ta.tid "
          . "WHERE ta.tid IN (" . $quotedTopicIds . ") "
-         . "AND s.draft_flag = 0 AND s.date <= NOW() "
-         . "ORDER BY s.date DESC, t.topic ASC";
+         . "AND s.draft_flag = 0 AND s.date <= NOW() ";
+
+    if (function_exists('COM_getPermSQL')) {
+        $sql .= COM_getPermSQL('AND', 0, 2, 's');
+    }
+    if (function_exists('COM_getTopicSQL')) {
+        $sql .= COM_getTopicSQL('AND', 0, 'ta');
+    }
+
+    $sql .= " ORDER BY s.date DESC, t.topic ASC";
 
     $result = DB_query($sql, 1);
     if ($result === false) {
