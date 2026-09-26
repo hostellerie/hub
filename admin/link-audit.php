@@ -38,7 +38,7 @@ $content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-fo
 $content .= '</style>';
 $content .= '<nav class="hub-nav"><a href="audit.php">Plugin interoperability audit</a><strong>Article link audit</strong></nav>';
 $content .= '<h2>Articles without a link to a static page</h2>';
-$content .= '<p>Select a Static Page. Hub discovers its assigned topics automatically, gathers published articles from those topics, and lists the articles that do not currently contain a link to the selected page.</p>';
+$content .= '<p>Select a Static Page. Hub uses only specific Geeklog topics as editorial context. The native <strong>All</strong> and <strong>Home page only</strong> assignments are treated as placement options and are never interpreted as editorial topics.</p>';
 
 if (empty($hubStaticPageRows)) {
     $content .= '<p class="hub-warning">No static page could be loaded. Check that the Static Pages plugin is installed and enabled.</p>';
@@ -59,7 +59,10 @@ if (!empty($hubStaticPageRows)) {
 }
 
 if ($hubRunAudit && !empty($hubStaticPageRows)) {
-    $hubAssignedTopics = HUB_staticPageTopics($hubSelectedPageId);
+    $hubTopicContext = HUB_staticPageTopicContext($hubSelectedPageId);
+    $hubAssignedTopics = isset($hubTopicContext['specific_topics']) && is_array($hubTopicContext['specific_topics'])
+        ? $hubTopicContext['specific_topics']
+        : array();
     $hubTopicIds = array();
     foreach ($hubAssignedTopics as $hubAssignedTopic) {
         if (isset($hubAssignedTopic['tid']) && $hubAssignedTopic['tid'] !== '') {
@@ -86,23 +89,39 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
             . HUB_linkAuditAdminEscape($hubTopicName) . '</a>';
     }
 
-    $content .= '<div class="hub-summary"><strong>' . count($hubMissingArticles) . '</strong> possible link(s) to review out of <strong>' . count($hubAllArticles) . '</strong> published article(s) found in the Static Page\'s assigned topics.'
+    $content .= '<div class="hub-summary"><strong>' . count($hubMissingArticles) . '</strong> possible link(s) to review out of <strong>' . count($hubAllArticles) . '</strong> published article(s) found in the Static Page\'s specific Geeklog topics.'
         . '<br><span class="hub-url">Target: <a href="' . $hubEscapedTargetUrl . '" target="_blank" rel="noopener">' . $hubEscapedTargetUrl . '</a></span>';
 
     if (!empty($hubTopicLinks)) {
-        $content .= '<br><span>Assigned topics: ' . implode(' &middot; ', $hubTopicLinks) . '</span>';
+        $content .= '<br><span>Specific Geeklog topics: ' . implode(' &middot; ', $hubTopicLinks) . '</span>';
     } else {
-        $content .= '<p class="hub-warning">This Static Page has no visible assigned topics, so there are no topic-related articles to audit.</p>';
+        if (!empty($hubTopicContext['placement_only'])) {
+            $hubPlacementLabels = array();
+            if (!empty($hubTopicContext['all'])) {
+                $hubPlacementLabels[] = 'All';
+            }
+            if (!empty($hubTopicContext['homeonly'])) {
+                $hubPlacementLabels[] = 'Home page only';
+            }
+            $content .= '<p class="hub-warning">This Static Page only uses Geeklog placement assignment(s): <strong>'
+                . HUB_linkAuditAdminEscape(implode(', ', $hubPlacementLabels))
+                . '</strong>. Hub does not interpret these placement options as editorial topics, so there are no topic-based article suggestions.</p>';
+        } else {
+            $content .= '<p class="hub-warning">This Static Page has no visible specific Geeklog topic. Hub therefore has no topic-based article suggestions for it.</p>';
+        }
     }
 
-    $content .= '<p class="hub-topic-note">Hub automatically adds the assigned topic links at the bottom of the Static Page. You can also edit the page and place any of these topic links manually at the most relevant position in the page content.</p></div>';
+    if (!empty($hubTopicLinks)) {
+        $content .= '<p class="hub-topic-note">Hub displays links only for the specific Geeklog topics assigned to this Static Page. The native All/Home page only placement options are never rendered as editorial topic links.</p>';
+    }
+    $content .= '</div>';
 
     if (empty($hubMissingArticles)) {
         if (!empty($hubTopicIds)) {
             $content .= '<p class="hub-empty-result">No missing contextual links were found among published articles in the assigned topics.</p>';
         }
     } else {
-        $content .= '<p>The articles below belong to one or more topics assigned to this Static Page but do not currently link back to it. Review them to decide whether adding a contextual link is appropriate.</p>';
+        $content .= '<p>The articles below share one or more <strong>specific Geeklog topics</strong> with this Static Page but do not currently link back to it. This is a suggestion signal only; review each article before deciding whether a contextual link is editorially appropriate.</p>';
         $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>Matched topics</th><th>ID</th><th>Published</th><th>Actions</th></tr></thead><tbody>';
         foreach ($hubMissingArticles as $hubArticleRow) {
             $hubSid = isset($hubArticleRow['sid']) ? $hubArticleRow['sid'] : '';
@@ -131,6 +150,6 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
     }
 }
 
-$hubVersion = function_exists('plugin_chkVersion_hub') ? plugin_chkVersion_hub() : '0.1.1-dev';
+$hubVersion = function_exists('plugin_chkVersion_hub') ? plugin_chkVersion_hub() : '0.2.0-dev';
 $display = COM_startBlock('Hub ' . HUB_linkAuditAdminEscape($hubVersion)) . $content . COM_endBlock();
 COM_output(COM_createHTMLDocument($display));
