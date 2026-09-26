@@ -19,6 +19,17 @@ When Hub is enabled, normal Static Page rendering also appends the visible topic
 
 The audit does not modify article content. This first implementation targets Geeklog core articles and Static Pages only.
 
+## Static Page topic semantics
+
+Geeklog Static Pages historically use topic assignments partly as placement rules, especially for center-block display. Hub therefore distinguishes **specific Geeklog topics** from the native **All** and **Home page only** placement options.
+
+- `All` and `Home page only` are never treated as editorial topic relationships.
+- Specific topic assignments may be used by Hub as a discovery/suggestion signal.
+- A shared Geeklog topic is not an approved editorial relationship.
+- Future Hub pillar/relationship records remain explicit and independent from Static Page placement settings.
+
+Hub does not require existing Static Pages to be reconfigured merely to satisfy Hub.
+
 ## Generic capability declarations
 
 Hub now detects optional generic `plugin_getcapabilities_*()` declarations when a plugin exposes them. The expected declaration is versioned with a `schema` value and may advertise generic `roles` and `capabilities`.
@@ -63,9 +74,15 @@ The audit includes Hub itself, exposes detected callback/function names and auto
 
 Hub infers a plugin role from existing Geeklog capabilities before scoring interoperability: **Content**, **Presentation**, **Service**, **Infrastructure**, or **Orchestrator**. Content plugins are evaluated on Item Info, stable object types and save/delete lifecycle emission; presentation and service plugins are evaluated against their own role; infrastructure plugins are not penalized for missing content APIs.
 
+## Audit cache
+
+The Plugin Interoperability Audit caches its normalized audit data for 10 minutes through Geeklog's native cache API. The cache is keyed by a fingerprint containing the active plugin list and versions plus the Hub, Geeklog and PHP versions. The administration page provides **Refresh audit** to bypass the cache explicitly, which is especially useful during plugin development when source code changes without a version bump.
+
+The HTML audit and Markdown export consume the same cached dataset.
+
 ## Markdown export
 
-The administration audit includes **Export audit as Markdown (.md)**. The report contains environment information, the summary matrix, inferred roles, role-aware readiness, callbacks, lifecycle evidence, object types, service signatures, advanced API surface and developer recommendations. It can be attached directly to an issue or sent to a plugin maintainer.
+The administration audit includes **Export audit as Markdown (.md)**. The export filename and report title identify the audited site using Geeklog's configured site name. The report contains environment information, the summary matrix, inferred roles, role-aware readiness, callbacks, lifecycle evidence, object types, service signatures, advanced API surface and developer recommendations. It can be attached directly to an issue or sent to a plugin maintainer.
 
 ### Final 0.1.0 audit additions
 
