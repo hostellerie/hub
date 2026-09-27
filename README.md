@@ -2,14 +2,14 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.3.0** adds persistent editorial pillars and manual relationships on top of the finalized 0.2.0 interoperability foundation.
+Version **0.4.0** builds public bidirectional navigation on top of the finalized 0.3.0 pillar and relationship model.
 
 ## Requirements
 
 - Geeklog 2.1.1 or newer
 - PHP 5.6 or newer
 
-## Pillars and manual relations (0.3.0)
+## Pillars and manual relations (finalized in 0.3.0)
 
 From **Hub administration → Pillars & manual relations**, an administrator can create a Hub pillar from a Geeklog Static Page and attach complementary content by stable `type + id` identity.
 
@@ -32,6 +32,14 @@ Saved relations display integrity diagnostics when an identity can no longer be 
 The **Find suggestions** mode adds a deliberately small 0.3.0 editorial aid. Hub can suggest Static Pages as pillar candidates when they have specific Geeklog topics with matching published articles, and can suggest article relations for an existing Static Page pillar when those articles share one or more specific topics. Each suggestion explains the topic signal and requires an explicit **Add** action. This does not replace the broader cross-plugin discovery and ranking work planned for 0.8.0.
 
 All Hub administration pages share the same navigation between the Hub home, pillars/relations, interoperability audit and article link audit.
+
+## Public relationship navigation (0.4.0)
+
+On an enabled Static Page pillar, Hub now resolves enabled relations at render time and appends a crawlable **Related content / Contenus liés** section. The stored Static Page body is never rewritten. Relationship order follows the administrator-defined `position`, while missing, disabled or unresolved targets are omitted from public output.
+
+Hub also exposes `plugin_itemdisplay_hub()`. When a core or plugin content renderer calls Geeklog's `PLG_itemDisplay($id, $type)`, Hub can return a **Part of / Dans ce dossier** backlink to the enabled pillar. This keeps backlinks generic and avoids provider-specific database access. Providers that do not render `PLG_itemDisplay()` fragments may require a later fallback adapter.
+
+The SEO value comes from the resulting HTML links, not from the database relationship alone: approved relationships become an explicit internal-link graph between a central pillar and complementary content. A future optional relationship-role field may classify links as guide, tutorial, video, download, discussion, case study or reference so public navigation can be grouped semantically without changing the stable `type + id` identity.
 
 ## Article link audit (introduced in 0.1.1)
 
@@ -109,7 +117,7 @@ This reconciliation is diagnostic only. A missing or ambiguous implementation su
 
 Runtime-detected callbacks are kept distinct from source evidence, provider declarations and inference. Hub never presents source scanning as proof that every mutation path emits a lifecycle notification. The full runtime `plugin_*_<plugin>()` surface remains available under the collapsed **Advanced API surface** section.
 
-See `ROADMAP.md` for the current 0.3.0 pillar/relationship milestone and later navigation/lifecycle work.
+See `ROADMAP.md` for the current 0.4.0 bidirectional-navigation milestone and later lifecycle/discovery work.
 
 ## 0.1.0 audit details
 
@@ -154,4 +162,4 @@ These capabilities are informational interoperability signals. Hub does not read
 
 ## Development archive
 
-The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.3.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.4.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
