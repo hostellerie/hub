@@ -270,55 +270,16 @@ function HUB_relationObjectTypes()
         'staticpages' => true,
     );
 
-    if (!is_array($_PLUGINS)) {
-        return array_keys($types);
-    }
-
-    foreach ($_PLUGINS as $plugin) {
-        $plugin = HUB_normalizeObjectType($plugin);
-        if ($plugin === '') {
-            continue;
-        }
-
-        $searchTypesFunction = 'plugin_searchtypes_' . $plugin;
-        if (function_exists($searchTypesFunction)) {
-            $canCall = true;
-            if (class_exists('ReflectionFunction')) {
-                try {
-                    $reflection = new ReflectionFunction($searchTypesFunction);
-                    $canCall = ($reflection->getNumberOfRequiredParameters() === 0);
-                } catch (Exception $e) {
-                    $canCall = false;
-                }
+    if (is_array($_PLUGINS)) {
+        foreach ($_PLUGINS as $plugin) {
+            $plugin = HUB_normalizeObjectType($plugin);
+            if ($plugin === '') {
+                continue;
             }
 
-            if ($canCall) {
-                try {
-                    $searchTypes = call_user_func($searchTypesFunction);
-                } catch (Exception $e) {
-                    $searchTypes = array();
-                }
-
-                if (is_array($searchTypes)) {
-                    foreach ($searchTypes as $key => $value) {
-                        $candidate = '';
-                        if (is_string($key) && !is_numeric($key)) {
-                            $candidate = $key;
-                        } elseif (is_string($value)) {
-                            $candidate = $value;
-                        }
-
-                        $candidate = HUB_normalizeObjectType($candidate);
-                        if ($candidate !== '') {
-                            $types[$candidate] = true;
-                        }
-                    }
-                }
+            if (function_exists('plugin_getiteminfo_' . $plugin)) {
+                $types[$plugin] = true;
             }
-        }
-
-        if (function_exists('plugin_getiteminfo_' . $plugin)) {
-            $types[$plugin] = true;
         }
     }
 
@@ -326,6 +287,123 @@ function HUB_relationObjectTypes()
     sort($types, SORT_STRING);
 
     return $types;
+}
+
+function HUB_relationCollectionSupported($type)
+{
+    $type = HUB_normalizeObjectType($type);
+    if ($type === '' || !function_exists('PLG_getItemInfo')) {
+        return false;
+    }
+
+    if (function_exists('HUB_contentContractEvidence')) {
+        $evidence = HUB_contentContractEvidence($type);
+        if (!empty($evidence['collection_declared']) || !empty($evidence['collection_source'])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function HUB_relationNormalizeInfoRecord($record, $fallbackId = '')
+{
+    $normalized = array(
+        'id' => (string) $fallbackId,
+        'title' => (string) $fallbackId,
+        'url' => '',
+    );
+
+    if (!is_array($record)) {
+        return $normalized;
+    }
+
+    if (isset($record['id']) || isset($record['title']) || isset($record['url'])) {
+        if (isset($record['id']) && (string) $record['id'] !== '') {
+            $normalized['id'] = (string) $record['id'];
+        }
+        if (isset($record['title']) && (string) $record['title'] !== '') {
+            $normalized['title'] = (string) $record['title'];
+        }
+        if (isset($record['url'])) {
+            $normalized['url'] = (string) $record['url'];
+        }
+        if ($normalized['title'] === '' && $normalized['id'] !== '') {
+            $normalized['title'] = $normalized['id'];
+        }
+
+        return $normalized;
+    }
+
+    if (isset($record[0]) && (string) $record[0] !== '') {
+        $normalized['id'] = (string) $record[0];
+    }
+    if (isset($record[1]) && (string) $record[1] !== '') {
+        $normalized['title'] = (string) $record[1];
+    }
+    if (isset($record[2])) {
+        $normalized['url'] = (string) $record[2];
+    }
+    if ($normalized['title'] === '' && $normalized['id'] !== '') {
+        $normalized['title'] = $normalized['id'];
+    }
+
+    return $normalized;
+}
+
+function HUB_relationObjectOptions($type, $limit = 100)
+{
+    $type = HUB_normalizeObjectType($type);
+    $limit = max(1, min(200, (int) $limit));
+
+    if (!HUB_relationCollectionSupported($type)) {
+        return array(
+            'supported' => false,
+            'items' => array(),
+            'message' => 'This provider does not expose the shared Item Info collection contract. Enter the item ID manually.',
+        );
+    }
+
+    try {
+        $items = PLG_getItemInfo(
+            $type,
+            '*',
+            'id,title,url',
+            0,
+            array('limit' => $limit, 'order' => 'modified-desc')
+        );
+    } catch (Exception $e) {
+        $items = array();
+    }
+
+    if (!is_array($items)) {
+        $items = array();
+    }
+
+    $normalized = array();
+    foreach ($items as $record) {
+        $item = HUB_relationNormalizeInfoRecord($record);
+        $item['id'] = HUB_normalizeObjectId($item['id']);
+        if ($item['id'] === '') {
+            continue;
+        }
+        if ($item['title'] === '') {
+            $item['title'] = $item['id'];
+        }
+        $normalized[$item['id']] = $item;
+    }
+
+    uasort($normalized, function ($left, $right) {
+        return strcasecmp((string) $left['title'], (string) $right['title']);
+    });
+
+    return array(
+        'supported' => true,
+        'items' => array_values($normalized),
+        'message' => empty($normalized)
+            ? 'The provider supports collections but returned no selectable items.'
+            : '',
+    );
 }
 
 function HUB_resolveObject($type, $id)
@@ -358,13 +436,16 @@ function HUB_resolveObject($type, $id)
     $resolved['provider_available'] = function_exists($callback);
 
     $info = PLG_getItemInfo($type, $id, 'id,title,url');
-    if (is_array($info) && count($info) >= 3 && (string) $info[0] !== '') {
-        $resolved['exists'] = true;
-        $resolved['status'] = 'resolved';
-        $resolved['id'] = (string) $info[0];
-        $resolved['title'] = (string) $info[1] !== '' ? (string) $info[1] : $id;
-        $resolved['url'] = (string) $info[2];
-        return $resolved;
+    if (is_array($info) && !empty($info)) {
+        $normalized = HUB_relationNormalizeInfoRecord($info, $id);
+        if ($normalized['id'] !== '') {
+            $resolved['exists'] = true;
+            $resolved['status'] = 'resolved';
+            $resolved['id'] = $normalized['id'];
+            $resolved['title'] = $normalized['title'] !== '' ? $normalized['title'] : $id;
+            $resolved['url'] = $normalized['url'];
+            return $resolved;
+        }
     }
 
     $resolved['diagnostic'] = $resolved['provider_available']
