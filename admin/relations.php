@@ -348,6 +348,28 @@ if (empty($pillars)) {
                 . HUB_relAdminEscape($resolvedPillar['diagnostic']) . '</div>';
         }
 
+        $publicDiag = HUB_pillarRenderDiagnostics($pillar['source_type'], $pillar['source_id']);
+        $content .= '<div class="hub-rel-integrity"><strong>Public rendering:</strong> '
+            . (int) $publicDiag['renderable_count'] . ' / ' . (int) $publicDiag['relation_count']
+            . ' enabled relation(s) renderable for the current user.';
+        if (!empty($publicDiag['relations'])) {
+            $content .= '<ul style="margin:.4rem 0 0 1.2rem">';
+            foreach ($publicDiag['relations'] as $diagRelation) {
+                $content .= '<li><code>'
+                    . HUB_relAdminEscape($diagRelation['type'] . ':' . $diagRelation['id'])
+                    . '</code> — '
+                    . (!empty($diagRelation['renderable'])
+                        ? 'renderable'
+                        : 'skipped: ' . HUB_relAdminEscape($diagRelation['diagnostic']));
+                if (!empty($diagRelation['url'])) {
+                    $content .= ' · <a href="' . HUB_relAdminEscape($diagRelation['url']) . '">View</a>';
+                }
+                $content .= '</li>';
+            }
+            $content .= '</ul>';
+        }
+        $content .= '</div>';
+
         $content .= '<form method="post" action="relations.php">' . HUB_relAdminTokenField();
         $content .= '<input type="hidden" name="hub_action" value="save_pillar">';
         $content .= '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">';
