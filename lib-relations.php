@@ -263,36 +263,66 @@ function HUB_deleteRelation($relationId)
 
 function HUB_relationObjectTypes()
 {
-    $types = array('article', 'staticpages');
+    global $_PLUGINS;
 
-    if (function_exists('HUB_auditCachedRows')) {
-        $meta = array();
-        $rows = HUB_auditCachedRows(false, 600, $meta);
-        foreach ($rows as $row) {
-            if (!is_array($row)) {
-                continue;
+    $types = array(
+        'article' => true,
+        'staticpages' => true,
+    );
+
+    if (!is_array($_PLUGINS)) {
+        return array_keys($types);
+    }
+
+    foreach ($_PLUGINS as $plugin) {
+        $plugin = HUB_normalizeObjectType($plugin);
+        if ($plugin === '') {
+            continue;
+        }
+
+        $searchTypesFunction = 'plugin_searchtypes_' . $plugin;
+        if (function_exists($searchTypesFunction)) {
+            $canCall = true;
+            if (class_exists('ReflectionFunction')) {
+                try {
+                    $reflection = new ReflectionFunction($searchTypesFunction);
+                    $canCall = ($reflection->getNumberOfRequiredParameters() === 0);
+                } catch (Exception $e) {
+                    $canCall = false;
+                }
             }
 
-            if (!empty($row['object_types']) && is_array($row['object_types'])) {
-                foreach ($row['object_types'] as $type) {
-                    $type = HUB_normalizeObjectType($type);
-                    if ($type !== '') {
-                        $types[] = $type;
+            if ($canCall) {
+                try {
+                    $searchTypes = call_user_func($searchTypesFunction);
+                } catch (Exception $e) {
+                    $searchTypes = array();
+                }
+
+                if (is_array($searchTypes)) {
+                    foreach ($searchTypes as $key => $value) {
+                        $candidate = '';
+                        if (is_string($key) && !is_numeric($key)) {
+                            $candidate = $key;
+                        } elseif (is_string($value)) {
+                            $candidate = $value;
+                        }
+
+                        $candidate = HUB_normalizeObjectType($candidate);
+                        if ($candidate !== '') {
+                            $types[$candidate] = true;
+                        }
                     }
                 }
             }
+        }
 
-            $caps = isset($row['caps']) && is_array($row['caps']) ? $row['caps'] : array();
-            if (!empty($caps['item_info']) && !empty($row['plugin'])) {
-                $pluginType = HUB_normalizeObjectType($row['plugin']);
-                if ($pluginType !== '') {
-                    $types[] = $pluginType;
-                }
-            }
+        if (function_exists('plugin_getiteminfo_' . $plugin)) {
+            $types[$plugin] = true;
         }
     }
 
-    $types = array_values(array_unique($types));
+    $types = array_keys($types);
     sort($types, SORT_STRING);
 
     return $types;
