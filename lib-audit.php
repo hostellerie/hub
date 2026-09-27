@@ -7,6 +7,9 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 if (!function_exists('HUB_capabilityDeclaration')) {
     require_once __DIR__ . '/lib-capabilities.php';
 }
+if (!function_exists('HUB_capabilityImplementationEvidence')) {
+    require_once __DIR__ . '/lib-capability-evidence.php';
+}
 if (!function_exists('HUB_serviceCatalogue')) {
     require_once __DIR__ . '/lib-services.php';
 }
@@ -632,6 +635,15 @@ function HUB_auditPlugin($plugin)
         'search' => HUB_auditFunctionExists('plugin_dopluginsearch_', $plugin),
         'services' => HUB_auditFunctionExists('plugin_wsEnabled_', $plugin) || !empty($services),
     );
+    $capabilityEvidence = HUB_capabilityImplementationEvidence(
+        $plugin,
+        $capabilityDeclaration,
+        $caps,
+        $sourceFacts,
+        $serviceCatalogue,
+        $contentContract
+    );
+
     $score = 0;
     foreach ($caps as $value) {
         if ($value) {
@@ -653,6 +665,9 @@ function HUB_auditPlugin($plugin)
         'render_catalogue_details' => HUB_renderCatalogueDetails($renderCatalogue),
         'capability_declaration' => $capabilityDeclaration,
         'capability_declaration_details' => HUB_capabilityDeclarationDetails($capabilityDeclaration),
+        'capability_implementation_evidence' => $capabilityEvidence,
+        'capability_implementation_details' => isset($capabilityEvidence['details']) ? $capabilityEvidence['details'] : array(),
+        'capability_implementation_recommendations' => isset($capabilityEvidence['recommendations']) ? $capabilityEvidence['recommendations'] : array(),
         'content_contract' => $contentContract,
         'content_contract_details' => HUB_contentContractDetails($contentContract),
         'metadata_manifest' => $metadataManifest,
