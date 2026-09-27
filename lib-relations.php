@@ -406,7 +406,7 @@ function HUB_relationObjectOptions($type, $limit = 100)
     );
 }
 
-function HUB_resolveObject($type, $id)
+function HUB_resolveObject($type, $id, $uid = 0)
 {
     $type = HUB_normalizeObjectType($type);
     $id = HUB_normalizeObjectId($id);
@@ -435,7 +435,8 @@ function HUB_resolveObject($type, $id)
     $callback = 'plugin_getiteminfo_' . $type;
     $resolved['provider_available'] = function_exists($callback);
 
-    $info = PLG_getItemInfo($type, $id, 'id,title,url');
+    $uid = max(0, (int) $uid);
+    $info = PLG_getItemInfo($type, $id, 'id,title,url', $uid);
     if (is_array($info) && !empty($info)) {
         $normalized = HUB_relationNormalizeInfoRecord($info, $id);
         if ($normalized['id'] !== '') {
@@ -453,7 +454,7 @@ function HUB_resolveObject($type, $id)
     // permission-aware Geeklog API.
     if ($resolved['provider_available']) {
         if ($resolved['title'] === $id || $resolved['title'] === '') {
-            $title = PLG_getItemInfo($type, $id, 'title');
+            $title = PLG_getItemInfo($type, $id, 'title', $uid);
             if (is_string($title) && $title !== '') {
                 $resolved['title'] = $title;
                 $resolved['exists'] = true;
@@ -462,7 +463,7 @@ function HUB_resolveObject($type, $id)
         }
 
         if ($resolved['url'] === '') {
-            $url = PLG_getItemInfo($type, $id, 'url');
+            $url = PLG_getItemInfo($type, $id, 'url', $uid);
             if (is_string($url) && $url !== '') {
                 $resolved['url'] = $url;
                 $resolved['exists'] = true;
@@ -559,7 +560,7 @@ function HUB_publicText($key)
     return isset($strings[$family][$key]) ? $strings[$family][$key] : $key;
 }
 
-function HUB_pillarRenderDiagnostics($sourceType, $sourceId)
+function HUB_pillarRenderDiagnostics($sourceType, $sourceId, $uid = 0)
 {
     $diagnostics = array(
         'pillar_found' => false,
@@ -584,7 +585,7 @@ function HUB_pillarRenderDiagnostics($sourceType, $sourceId)
     $diagnostics['relation_count'] = count($relations);
 
     foreach ($relations as $relation) {
-        $resolved = HUB_resolveObject($relation['item_type'], $relation['item_id']);
+        $resolved = HUB_resolveObject($relation['item_type'], $relation['item_id'], $uid);
         $renderable = !empty($resolved['exists']) && !empty($resolved['url']);
         if ($renderable) {
             $diagnostics['renderable_count']++;
