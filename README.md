@@ -19,9 +19,9 @@ Hub stores:
 - related items as `item_type + item_id`;
 - manual order;
 - enabled/disabled state;
-- optional pillar title override.
+- source titles resolved dynamically from the owning content provider.
 
-Hub does **not** store another plugin's canonical URL as source of truth. Titles and URLs are resolved dynamically through `PLG_getItemInfo()` when available, so ownership remains with the source plugin.
+Hub does **not** store another plugin's canonical URL or a separate public title as source of truth. Titles and URLs are resolved dynamically through `PLG_getItemInfo()` when available, so ownership remains with the source plugin.
 
 The initial 0.3.0 target is deliberately limited to Static Pages as pillars. Relations may point to any provider/object identity that Geeklog can resolve. Static Page topic assignments remain a discovery signal only and are independent from explicit Hub relationships.
 
