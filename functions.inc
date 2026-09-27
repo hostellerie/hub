@@ -232,6 +232,20 @@ function plugin_templatesetvars_hub($templatename, &$template)
  */
 function plugin_itemdisplay_hub($id, $type)
 {
+    $type = HUB_normalizeObjectType($type);
+    $id = HUB_normalizeObjectId($id);
+
+    if ($type === 'story') {
+        $type = 'article';
+    }
+
+    // Articles and Static Pages already have dedicated Hub integration paths.
+    // Do not emit the same backlink again if one of those providers also calls
+    // PLG_itemDisplay(), otherwise themes may display duplicate Hub blocks.
+    if ($type === 'article' || $type === 'staticpages' || $type === '' || $id === '') {
+        return array(true);
+    }
+
     $html = HUB_renderItemPillarBacklinks($type, $id);
 
     if ($html === '') {
