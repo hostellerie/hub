@@ -348,35 +348,7 @@ if (empty($pillars)) {
                 . HUB_relAdminEscape($resolvedPillar['diagnostic']) . '</div>';
         }
 
-        $publicDiagCurrent = HUB_pillarRenderDiagnostics($pillar['source_type'], $pillar['source_id'], 0);
-        $publicDiagAnon = HUB_pillarRenderDiagnostics($pillar['source_type'], $pillar['source_id'], 1);
-        $content .= '<div class="hub-rel-integrity"><strong>Public rendering:</strong> current user '
-            . (int) $publicDiagCurrent['renderable_count'] . ' / ' . (int) $publicDiagCurrent['relation_count']
-            . ' · anonymous/SEO '
-            . (int) $publicDiagAnon['renderable_count'] . ' / ' . (int) $publicDiagAnon['relation_count']
-            . ' enabled relation(s) renderable.';
-        if (!empty($publicDiagCurrent['relations'])) {
-            $content .= '<ul style="margin:.4rem 0 0 1.2rem">';
-            foreach ($publicDiagCurrent['relations'] as $index => $diagRelation) {
-                $anonRelation = isset($publicDiagAnon['relations'][$index]) ? $publicDiagAnon['relations'][$index] : array();
-                $content .= '<li><code>'
-                    . HUB_relAdminEscape($diagRelation['type'] . ':' . $diagRelation['id'])
-                    . '</code> — current: '
-                    . (!empty($diagRelation['renderable'])
-                        ? 'renderable'
-                        : 'skipped: ' . HUB_relAdminEscape($diagRelation['diagnostic']))
-                    . ' · anonymous/SEO: '
-                    . (!empty($anonRelation['renderable'])
-                        ? 'renderable'
-                        : 'skipped: ' . HUB_relAdminEscape(isset($anonRelation['diagnostic']) ? $anonRelation['diagnostic'] : 'not resolved'));
-                if (!empty($diagRelation['url'])) {
-                    $content .= ' · <a href="' . HUB_relAdminEscape($diagRelation['url']) . '">View</a>';
-                }
-                $content .= '</li>';
-            }
-            $content .= '</ul>';
-        }
-        $content .= '</div>';
+
 
         $content .= '<form method="post" action="relations.php">' . HUB_relAdminTokenField();
         $content .= '<input type="hidden" name="hub_action" value="save_pillar">';
@@ -422,6 +394,36 @@ if (empty($pillars)) {
             }
             $content .= '</tbody></table>';
         }
+
+        $publicDiagCurrent = HUB_pillarRenderDiagnostics($pillar['source_type'], $pillar['source_id'], 0);
+        $publicDiagAnon = HUB_pillarRenderDiagnostics($pillar['source_type'], $pillar['source_id'], 1);
+        $content .= '<div class="hub-rel-integrity"><strong>Public rendering:</strong> current user '
+            . (int) $publicDiagCurrent['renderable_count'] . ' / ' . (int) $publicDiagCurrent['relation_count']
+            . ' · anonymous/SEO '
+            . (int) $publicDiagAnon['renderable_count'] . ' / ' . (int) $publicDiagAnon['relation_count']
+            . ' enabled relation(s) renderable.';
+        if (!empty($publicDiagCurrent['relations'])) {
+            $content .= '<ul style="margin:.4rem 0 0 1.2rem">';
+            foreach ($publicDiagCurrent['relations'] as $index => $diagRelation) {
+                $anonRelation = isset($publicDiagAnon['relations'][$index]) ? $publicDiagAnon['relations'][$index] : array();
+                $content .= '<li><code>'
+                    . HUB_relAdminEscape($diagRelation['type'] . ':' . $diagRelation['id'])
+                    . '</code> — current: '
+                    . (!empty($diagRelation['renderable'])
+                        ? 'renderable'
+                        : 'skipped: ' . HUB_relAdminEscape($diagRelation['diagnostic']))
+                    . ' · anonymous/SEO: '
+                    . (!empty($anonRelation['renderable'])
+                        ? 'renderable'
+                        : 'skipped: ' . HUB_relAdminEscape(isset($anonRelation['diagnostic']) ? $anonRelation['diagnostic'] : 'not resolved'));
+                if (!empty($diagRelation['url'])) {
+                    $content .= ' · <a href="' . HUB_relAdminEscape($diagRelation['url']) . '">View</a>';
+                }
+                $content .= '</li>';
+            }
+            $content .= '</ul>';
+        }
+        $content .= '</div>';
 
         if ($showSuggestions) {
             $articleSuggestions = HUB_relAdminSuggestedArticles($pillar, $relations, 10);
