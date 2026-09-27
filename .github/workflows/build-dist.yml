@@ -56,7 +56,7 @@ jobs:
 
           rm -rf build-package
           mkdir -p build-package/hub dist
-          rm -f dist/hub-*.zip
+          rm -f "dist/${archive}"
 
           rsync -a ./ build-package/hub/ \
             --exclude '.git/' \
@@ -82,6 +82,10 @@ jobs:
             hub/lib-content-contract.php \
             hub/lib-metadata.php \
             hub/lib-render.php \
+            hub/lib-relations.php \
+            hub/install_updates.php \
+            hub/admin/relations.php \
+            hub/sql/mysql_install.php \
             hub/public_html/hub.css
           do
             printf '%s\n' "$archive_files" | grep -Fxq "$required_file" || {
