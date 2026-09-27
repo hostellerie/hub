@@ -21,13 +21,41 @@ require_once $hub_path . 'lib-link-audit.php';
 require_once $hub_path . 'lib-relations.php';
 require_once $hub_path . 'lib-staticpages.php';
 
+/**
+ * Return the Hub icon used by Geeklog administration UIs.
+ *
+ * Hub does not ship a dedicated raster icon yet, so use Geeklog's native
+ * generic plugin icon. This keeps Command & Control / Modern Workspace
+ * integration theme-compatible on Geeklog 2.1.1 and 2.2.x.
+ *
+ * @return string
+ */
+function plugin_geticon_hub()
+{
+    global $_CONF;
+
+    return $_CONF['layout_url'] . '/images/icons/plugins.png';
+}
+
+/**
+ * Expose Hub in Geeklog Command & Control.
+ *
+ * @return array
+ */
 function plugin_cclabel_hub()
 {
     global $_CONF;
+
     if (!SEC_hasRights('hub.admin')) {
         return array();
     }
-    return array('Hub', $_CONF['site_admin_url'] . '/plugins/hub/index.php', '');
+
+    return array(
+        'Hub',
+        $_CONF['site_admin_url'] . '/plugins/hub/index.php',
+        plugin_geticon_hub(),
+        'plugins'
+    );
 }
 
 function plugin_getcapabilities_hub()
