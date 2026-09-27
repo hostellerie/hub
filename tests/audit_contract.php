@@ -52,8 +52,8 @@ if (strpos($configSource, "'pi_version'    => '0.3.0'") === false
     || strpos($autoinstallSource, "'hub_relations'") === false
     || strpos($functionsSource, 'HUB_updateSchema_0_3_0') === false
     || strpos($functionsSource, "'hub_pillars', 'hub_relations'") === false
-    || strpos($sqlSource, "CREATE TABLE {$_TABLES['hub_pillars']}") === false
-    || strpos($sqlSource, "CREATE TABLE {$_TABLES['hub_relations']}") === false
+    || strpos($sqlSource, "CREATE TABLE {\$_TABLES['hub_pillars']}") === false
+    || strpos($sqlSource, "CREATE TABLE {\$_TABLES['hub_relations']}") === false
     || strpos($upgradeSource, 'CREATE TABLE IF NOT EXISTS') === false
 ) {
     fwrite(STDERR, "Hub 0.3.0 storage contract missing\n");
