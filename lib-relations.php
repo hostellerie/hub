@@ -763,6 +763,18 @@ function HUB_renderPillarRelations($sourceType, $sourceId)
         . '</ul></section>';
 }
 
+function HUB_itemDisplayBacklinkTypes()
+{
+    return array(
+        'forum',
+        'documents',
+        'videos',
+        'maps',
+        'mediagallery',
+        'polls',
+    );
+}
+
 function HUB_backlinkIntegrationStatus($itemType)
 {
     $itemType = HUB_normalizeObjectType($itemType);
@@ -777,6 +789,24 @@ function HUB_backlinkIntegrationStatus($itemType)
             'mode' => 'core-template-fallback',
             'label' => 'Core article fallback',
             'detail' => 'Full article pages expose PLG_templateSetVars() and Hub appends one server-rendered backlink inside the article body.',
+        );
+    }
+
+    if ($itemType === 'staticpages') {
+        return array(
+            'supported' => true,
+            'mode' => 'staticpage-template-hook',
+            'label' => 'Static Page template hook',
+            'detail' => 'Hub integrates directly with the Static Pages template hook and does not require PLG_itemDisplay() for its current public pillar rendering.',
+        );
+    }
+
+    if (in_array($itemType, HUB_itemDisplayBacklinkTypes(), true)) {
+        return array(
+            'supported' => true,
+            'mode' => 'generic-itemdisplay-provider',
+            'label' => 'Generic PLG_itemDisplay provider hook',
+            'detail' => 'Hub supplies the pillar backlink through plugin_itemdisplay_hub() when the provider calls PLG_itemDisplay($id, $type) on its full public item view.',
         );
     }
 
