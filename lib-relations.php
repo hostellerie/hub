@@ -784,7 +784,7 @@ function HUB_backlinkIntegrationStatus($itemType)
         'supported' => false,
         'mode' => 'provider-hook-unconfirmed',
         'label' => 'Provider hook not confirmed',
-        'detail' => 'Hub can render the forward link on the pillar, but this provider does not currently expose a confirmed generic public placement hook for the backlink.',
+        'detail' => 'Hub can render the forward link on the pillar, but no confirmed generic public placement hook is available for this provider. Hub does not use provider-specific DOM or private-table fallbacks.',
     );
 }
 
