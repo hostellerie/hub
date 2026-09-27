@@ -71,6 +71,8 @@ if (strpos($sqlSource, 'source_url') !== false
 
 if (strpos($relationsSource, 'function HUB_savePillar') === false
     || strpos($relationsSource, 'function HUB_saveRelation') === false
+    || strpos($relationsSource, 'function HUB_relationCoreArticleOptions') === false
+    || strpos($relationsSource, "if (\$type === 'article')") === false
     || strpos($relationsSource, 'function HUB_resolveObject') === false
     || strpos($relationsSource, 'PLG_getItemInfo') === false
     || strpos($relationsAdminSource, 'Pillars &amp; manual relations') === false
