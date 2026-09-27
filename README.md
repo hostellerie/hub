@@ -25,7 +25,11 @@ Hub does **not** store another plugin's canonical URL as source of truth. Titles
 
 The initial 0.3.0 target is deliberately limited to Static Pages as pillars. Relations may point to any provider/object identity that Geeklog can resolve. Static Page topic assignments remain a discovery signal only and are independent from explicit Hub relationships.
 
-The relation editor now suggests known object types discovered through shared Geeklog Item Info/object-type contracts without reading plugin-private tables. The object ID remains editable so providers without a generic collection endpoint are still usable. Saved relations display integrity diagnostics when an identity can no longer be resolved; Hub keeps the stable identity instead of deleting it automatically because a provider may simply be disabled or temporarily unavailable.
+The relation editor now lists only active, resolvable Geeklog Item Info provider types. When the selected provider exposes the shared `content.collection` / `plugin_getiteminfo_*('*', ...)` contract, Hub loads up to 100 selectable objects dynamically and stores only the selected stable ID. Providers without a generic collection remain usable through an explicit manual-ID fallback. Hub does not query plugin-private tables.
+
+Saved relations display integrity diagnostics when an identity can no longer be resolved; Hub keeps the stable identity instead of deleting it automatically because a provider may simply be disabled or temporarily unavailable.
+
+The **Find suggestions** mode adds a deliberately small 0.3.0 editorial aid. Hub can suggest Static Pages as pillar candidates when they have specific Geeklog topics with matching published articles, and can suggest article relations for an existing Static Page pillar when those articles share one or more specific topics. Each suggestion explains the topic signal and requires an explicit **Add** action. This does not replace the broader cross-plugin discovery and ranking work planned for 0.8.0.
 
 All Hub administration pages share the same navigation between the Hub home, pillars/relations, interoperability audit and article link audit.
 
