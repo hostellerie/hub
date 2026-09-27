@@ -207,15 +207,18 @@ Implemented foundation:
 - keep public presentation theme-neutral through Hub CSS
 - no stored-content rewriting
 
-Remaining 0.4.0 work:
+0.4.0 validation and known provider gaps:
 
 - public pillar/backlink rendering smoke-tested under Geeklog 2.1.1 and 2.2.2
-- verify which major content providers actually place `PLG_itemDisplay()` fragments and document gaps
-- current source review: Core articles expose reusable template hooks and are covered; Forum, Documents, Videos and Maps do not currently expose a generic `PLG_itemDisplay()` placement or equivalent Hub-usable public render hook
+- Core articles expose reusable template hooks and are covered with one server-rendered backlink in the article body
+- source review completed for Forum, Documents, Videos and Maps: none currently invokes `PLG_itemDisplay()` or exposes an equivalent generic Hub-usable public render hook
+- Hub deliberately does not inject provider-specific DOM/JavaScript or query provider-private tables just to force backlinks
+- those providers remain fully usable as forward-linked pillar relations; reciprocal backlink rendering becomes available when a normal shared Geeklog rendering hook exists
 - prefer adding/reusing generic Geeklog rendering hooks in those providers over Hub-specific integration
-- add fallback adapters only when a provider cannot expose normal Geeklog rendering hooks
 - do not duplicate specialized plugin rendering when a reusable plugin renderer or service exists
 - keep output permission-aware by relying on provider resolution rather than reading provider-private tables
+
+**0.4.0 functional scope is complete.** Additional provider-specific public placement belongs to shared provider interoperability work, not to a Hub-only fallback.
 
 Relationship-role evolution to prepare before richer grouped rendering:
 
