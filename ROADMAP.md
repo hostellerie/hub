@@ -116,6 +116,10 @@ The audit should not reduce a communication or infrastructure plugin's score sim
 - list only articles without the expected link
 - provide direct View and Edit actions
 - expose article view/comment counts in the audit to help administrators prioritize contextual-link reviews
+- sort audit candidates by transparent signals: views, comments, matched-topic count, publication date or title
+- show article age alongside the publication date
+- allow direct creation of an article relation when the selected Static Page is already a Hub pillar
+- mark existing Hub article relations instead of offering duplicate creation
 - append assigned visible topic links to normal Static Page rendering without modifying stored content, reusing Geeklog's native `TOPIC_relatedTopics()` renderer and `topicrelated.thtml` markup
 - expose specific Geeklog topic context as a suggestion signal while treating All/Home page only assignments strictly as placement options
 - keep this first release read-only: Hub never rewrites article content automatically
