@@ -45,6 +45,14 @@ $functionsSource = file_get_contents($root . '/functions.inc');
 $sqlSource = file_get_contents($root . '/sql/mysql_install.php');
 $upgradeSource = file_get_contents($root . '/install_updates.php');
 $relationsSource = file_get_contents($root . '/lib-relations.php');
+$relationsApiSource = file_get_contents($root . '/lib-relations.php');
+if (strpos($relationsApiSource, 'function HUB_savePillar($pillarId, $sourceType, $sourceId, $isEnabled = 1, $ownerId = 0)') === false
+    || strpos($relationsApiSource, '$titleOverride') !== false
+) {
+    fwrite(STDERR, "Obsolete pillar title override API still present\n");
+    exit(1);
+}
+
 $relationsAdminSource = file_get_contents($root . '/admin/relations.php');
 
 if (strpos($configSource, "'pi_version'    => '0.4.0'") === false
