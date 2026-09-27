@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-capability-evidence.php', 'lib-content-contract.php', 'lib-metadata.php', 'lib-services.php', 'lib-render.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'plugin.json', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-capability-evidence.php', 'lib-content-contract.php', 'lib-metadata.php', 'lib-services.php', 'lib-render.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'lib-relations.php', 'install_updates.php', 'sql/mysql_install.php', 'plugin.json', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'admin/relations.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -39,6 +39,56 @@ foreach ($iterator as $fileInfo) {
 $readme = file_get_contents($root . '/README.md');
 $roadmap = file_get_contents($root . '/ROADMAP.md');
 $libAudit = file_get_contents($root . '/lib-audit.php');
+$configSource = file_get_contents($root . '/config.php');
+$autoinstallSource = file_get_contents($root . '/autoinstall.php');
+$functionsSource = file_get_contents($root . '/functions.inc');
+$sqlSource = file_get_contents($root . '/sql/mysql_install.php');
+$upgradeSource = file_get_contents($root . '/install_updates.php');
+$relationsSource = file_get_contents($root . '/lib-relations.php');
+$relationsAdminSource = file_get_contents($root . '/admin/relations.php');
+
+if (strpos($configSource, "'pi_version'    => '0.3.0'") === false
+    || strpos($autoinstallSource, "'hub_pillars'") === false
+    || strpos($autoinstallSource, "'hub_relations'") === false
+    || strpos($functionsSource, 'HUB_updateSchema_0_3_0') === false
+    || strpos($functionsSource, "'hub_pillars', 'hub_relations'") === false
+    || strpos($sqlSource, "CREATE TABLE {$_TABLES['hub_pillars']}") === false
+    || strpos($sqlSource, "CREATE TABLE {$_TABLES['hub_relations']}") === false
+    || strpos($upgradeSource, 'CREATE TABLE IF NOT EXISTS') === false
+) {
+    fwrite(STDERR, "Hub 0.3.0 storage contract missing\n");
+    exit(1);
+}
+
+if (strpos($sqlSource, 'source_url') !== false
+    || strpos($sqlSource, 'item_url') !== false
+    || strpos($relationsSource, 'source_url') !== false
+    || strpos($relationsSource, 'item_url') !== false
+) {
+    fwrite(STDERR, "Hub 0.3.0 must not persist canonical URLs\n");
+    exit(1);
+}
+
+if (strpos($relationsSource, 'function HUB_savePillar') === false
+    || strpos($relationsSource, 'function HUB_saveRelation') === false
+    || strpos($relationsSource, 'function HUB_resolveObject') === false
+    || strpos($relationsSource, 'PLG_getItemInfo') === false
+    || strpos($relationsAdminSource, 'Pillars &amp; manual relations') === false
+    || strpos($relationsAdminSource, 'save_relation') === false
+) {
+    fwrite(STDERR, "Hub 0.3.0 relationship API/admin contract missing\n");
+    exit(1);
+}
+
+require_once $root . '/lib-relations.php';
+if (HUB_normalizeObjectType('Maps.Marker') !== 'mapsmarker'
+    || HUB_normalizeObjectType('STATICPAGES') !== 'staticpages'
+    || HUB_normalizeObjectId('  page-1  ') !== 'page-1'
+) {
+    fwrite(STDERR, "Hub relationship identity normalization failed\n");
+    exit(1);
+}
+
 
 if (strpos($readme, 'selected topic URL') !== false) {
     fwrite(STDERR, "README still contains obsolete selected-topic wording\n");
@@ -53,6 +103,9 @@ if (strpos($libAudit, 'current 0.1.0 audit milestone') !== false) {
     exit(1);
 }
 if (strpos($readme, 'Shared Memorandum alignment') === false
+    || strpos($readme, 'Pillars and manual relations (0.3.0)') === false
+    || strpos($roadmap, '0.2.0 — Generic capability discovery — completed') === false
+    || strpos($roadmap, 'Current development milestone:** `0.3.0`') === false
     || strpos($roadmap, 'hub.context.read') === false
     || strpos($roadmap, 'Agent is the provider-neutral Geeklog machine access layer') === false
 ) {
@@ -517,7 +570,7 @@ if ($hubRole['name'] !== 'orchestrator'
     exit(1);
 }
 
-$siteAwareMarkdown = HUB_roleMarkdown(array(), '2.2.2', '8.1.0', '0.2.0', 'Ecologie Pratique');
+$siteAwareMarkdown = HUB_roleMarkdown(array(), '2.2.2', '8.1.0', '0.3.0', 'Ecologie Pratique');
 if (strpos($siteAwareMarkdown, '# Ecologie Pratique — Plugin Interoperability Audit') === false
     || strpos($siteAwareMarkdown, '- Site: `Ecologie Pratique`') === false
 ) {
