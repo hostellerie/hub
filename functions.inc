@@ -136,11 +136,40 @@ function plugin_templatesetvars_hub($templatename, &$template)
         return;
     }
 
-    $topicsHtml = HUB_renderStaticPageTopics($pageId);
-    if ($topicsHtml === '') {
-        return;
+    $content = (string) $template->get_var('content');
+    $append = array();
+
+    $relationsHtml = HUB_renderPillarRelations('staticpages', $pageId);
+    if ($relationsHtml !== '') {
+        $append[] = $relationsHtml;
     }
 
-    $content = (string) $template->get_var('content');
-    $template->set_var('content', $content . "\n" . $topicsHtml);
+    $topicsHtml = HUB_renderStaticPageTopics($pageId);
+    if ($topicsHtml !== '') {
+        $append[] = $topicsHtml;
+    }
+
+    if (!empty($append)) {
+        $template->set_var('content', $content . "\n" . implode("\n", $append));
+    }
+}
+
+/**
+ * Add a backlink to an enabled Hub pillar when the host content renderer calls
+ * PLG_itemDisplay(). The host remains responsible for deciding where plugin
+ * item-display fragments appear.
+ *
+ * @param string $id
+ * @param string $type
+ * @return array
+ */
+function plugin_itemdisplay_hub($id, $type)
+{
+    $html = HUB_renderItemPillarBacklinks($type, $id);
+
+    if ($html === '') {
+        return array(true);
+    }
+
+    return array(true, $html);
 }
