@@ -547,6 +547,9 @@ if (strpos($sourceFilesFunction, "\$maxFiles = 800;") === false
     || strpos($sourceFilesFunction, "stripos(\$source, 'PLG_itemDisplay(')") === false
     || strpos($sourceFilesFunction, 'function HUB_auditProviderItemDisplayProbe') === false
     || strpos($sourceFilesFunction, "Direct Forum probe: include/viewtopic_core.php") === false
+    || strpos($sourceFilesFunction, "Direct Forum candidate:") === false
+    || strpos($sourceFilesFunction, "viewtopic_core.php") === false
+    || strpos($sourceFilesFunction, "viewtopic.php") === false
 ) {
     fwrite(STDERR, "Prioritized provider source scan contract missing\n");
     exit(1);
