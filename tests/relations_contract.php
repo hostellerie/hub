@@ -95,9 +95,23 @@ $articleBacklink = HUB_backlinkIntegrationStatus('article');
 hubAssert(!empty($articleBacklink['supported']), 'article backlink fallback is supported');
 hubAssert($articleBacklink['mode'] === 'core-template-fallback', 'article backlink mode is explicit');
 
-$forumBacklink = HUB_backlinkIntegrationStatus('forum');
-hubAssert(empty($forumBacklink['supported']), 'unconfirmed provider backlink is not advertised as supported');
-hubAssert($forumBacklink['mode'] === 'provider-hook-unconfirmed', 'unconfirmed provider backlink mode is explicit');
+$providerBacklinkTypes = array('forum', 'documents', 'videos', 'maps', 'mediagallery', 'polls');
+foreach ($providerBacklinkTypes as $providerBacklinkType) {
+    $providerBacklink = HUB_backlinkIntegrationStatus($providerBacklinkType);
+    hubAssert(!empty($providerBacklink['supported']), $providerBacklinkType . ' generic item-display backlink is supported');
+    hubAssert(
+        $providerBacklink['mode'] === 'generic-itemdisplay-provider',
+        $providerBacklinkType . ' generic item-display backlink mode is explicit'
+    );
+}
+
+$staticPageBacklink = HUB_backlinkIntegrationStatus('staticpages');
+hubAssert(!empty($staticPageBacklink['supported']), 'Static Pages backlink integration remains supported');
+hubAssert($staticPageBacklink['mode'] === 'staticpage-template-hook', 'Static Pages backlink mode is explicit');
+
+$unknownBacklink = HUB_backlinkIntegrationStatus('events');
+hubAssert(empty($unknownBacklink['supported']), 'unknown provider backlink is not advertised as supported');
+hubAssert($unknownBacklink['mode'] === 'provider-hook-unconfirmed', 'unknown provider backlink mode is explicit');
 
 $types = HUB_relationObjectTypes();
 hubAssert(in_array('article', $types, true), 'article is always suggested');
@@ -113,6 +127,11 @@ foreach (array($installSql, $upgradeSql) as $sqlSource) {
     hubAssert(strpos($sqlSource, 'UNIQUE KEY pillar_item (pillar_id, item_type, item_id)') !== false, 'relation identity uniqueness is enforced');
     hubAssert(strpos($sqlSource, 'KEY pillar_order (pillar_id, is_enabled, position, id)') !== false, 'relation ordering index is present');
 }
+
+$functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
+hubAssert(strpos($functionsSource, "function plugin_itemdisplay_hub") !== false, 'Hub item-display callback is exposed');
+hubAssert(strpos($functionsSource, "\$type === 'article' || \$type === 'staticpages'") !== false, 'dedicated article/staticpage paths avoid duplicate item-display backlinks');
+hubAssert(strpos($functionsSource, "HUB_renderItemPillarBacklinks(\$type, \$id)") !== false, 'provider item-display callback renders pillar backlinks generically');
 
 $relationsSource = file_get_contents(dirname(__DIR__) . '/lib-relations.php');
 hubAssert(strpos($relationsSource, 'ORDER BY position ASC, id ASC') !== false, 'relation retrieval order is deterministic');
