@@ -664,6 +664,14 @@ $linkAuditLibSource = file_get_contents($root . '/lib-link-audit.php');
 $linkAuditSource = file_get_contents($root . '/admin/link-audit.php');
 $auditCacheSource = file_get_contents($root . '/lib-audit-cache.php');
 
+if (strpos($linkAuditSource, 'hub-topic-link') === false
+    || strpos($linkAuditSource, 'text-overflow:ellipsis') === false
+    || strpos($linkAuditSource, 'title="' ) === false
+) {
+    fwrite(STDERR, "Hub compact topic label contract missing\n");
+    exit(1);
+}
+
 if (strpos($linkAuditSource, 'hub-audit-table') === false
     || strpos($linkAuditSource, '<th>Engagement</th>') === false
     || strpos($linkAuditSource, '<th>Topics</th>') === false
