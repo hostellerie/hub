@@ -261,6 +261,43 @@ function HUB_deleteRelation($relationId)
     return !DB_error();
 }
 
+function HUB_relationObjectTypes()
+{
+    $types = array('article', 'staticpages');
+
+    if (function_exists('HUB_auditCachedRows')) {
+        $meta = array();
+        $rows = HUB_auditCachedRows(false, 600, $meta);
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            if (!empty($row['object_types']) && is_array($row['object_types'])) {
+                foreach ($row['object_types'] as $type) {
+                    $type = HUB_normalizeObjectType($type);
+                    if ($type !== '') {
+                        $types[] = $type;
+                    }
+                }
+            }
+
+            $caps = isset($row['caps']) && is_array($row['caps']) ? $row['caps'] : array();
+            if (!empty($caps['item_info']) && !empty($row['plugin'])) {
+                $pluginType = HUB_normalizeObjectType($row['plugin']);
+                if ($pluginType !== '') {
+                    $types[] = $pluginType;
+                }
+            }
+        }
+    }
+
+    $types = array_values(array_unique($types));
+    sort($types, SORT_STRING);
+
+    return $types;
+}
+
 function HUB_resolveObject($type, $id)
 {
     $type = HUB_normalizeObjectType($type);
@@ -272,19 +309,37 @@ function HUB_resolveObject($type, $id)
         'title' => $id,
         'url' => '',
         'exists' => false,
+        'status' => 'unresolved',
+        'diagnostic' => '',
+        'provider_available' => false,
     );
 
-    if ($type === '' || $id === '' || !function_exists('PLG_getItemInfo')) {
+    if ($type === '' || $id === '') {
+        $resolved['diagnostic'] = 'Invalid or empty type + id identity.';
         return $resolved;
     }
 
+    if (!function_exists('PLG_getItemInfo')) {
+        $resolved['diagnostic'] = 'Geeklog Item Info dispatcher is unavailable.';
+        return $resolved;
+    }
+
+    $callback = 'plugin_getiteminfo_' . $type;
+    $resolved['provider_available'] = function_exists($callback);
+
     $info = PLG_getItemInfo($type, $id, 'id,title,url');
-    if (is_array($info) && count($info) >= 3) {
-        $resolved['exists'] = ((string) $info[0] !== '');
+    if (is_array($info) && count($info) >= 3 && (string) $info[0] !== '') {
+        $resolved['exists'] = true;
+        $resolved['status'] = 'resolved';
         $resolved['id'] = (string) $info[0];
         $resolved['title'] = (string) $info[1] !== '' ? (string) $info[1] : $id;
         $resolved['url'] = (string) $info[2];
+        return $resolved;
     }
+
+    $resolved['diagnostic'] = $resolved['provider_available']
+        ? 'The provider is available but did not resolve this object identity.'
+        : 'No loaded Item Info provider resolved this object type. The plugin may be disabled, unavailable, or may not expose Item Info.';
 
     return $resolved;
 }
