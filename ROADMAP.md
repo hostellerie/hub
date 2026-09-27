@@ -170,7 +170,7 @@ Implemented foundation:
 - no stored internal URL as source of truth
 - dynamic title/URL resolution through `PLG_getItemInfo()` when available
 - manual ordering and enable/disable state
-- optional pillar title override
+- source-owned pillar titles resolved dynamically; no separate Hub title override
 - direct self-relations rejected
 - install and upgrade path from 0.2.0
 - administrator UI for creating/removing pillars and adding/updating/removing manual relations
