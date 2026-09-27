@@ -527,6 +527,16 @@ if (empty($itemDisplayRealFacts['found'])
     exit(1);
 }
 
+$functionsSource = file_get_contents($root . '/functions.inc');
+if (strpos($functionsSource, 'function plugin_geticon_hub()') === false
+    || strpos($functionsSource, 'function plugin_cclabel_hub()') === false
+    || strpos($functionsSource, "plugin_geticon_hub(),") === false
+    || strpos($functionsSource, "'plugins'") === false
+) {
+    fwrite(STDERR, "Hub Command & Control integration contract missing\n");
+    exit(1);
+}
+
 $sourceFilesFunction = file_get_contents($root . '/lib-audit.php');
 if (strpos($sourceFilesFunction, "\$maxFiles = 800;") === false
     || strpos($sourceFilesFunction, "'include'") === false
@@ -535,6 +545,8 @@ if (strpos($sourceFilesFunction, "\$maxFiles = 800;") === false
     || strpos($sourceFilesFunction, "'source_roots'") === false
     || strpos($sourceFilesFunction, "'item_display_text_fallback'") === false
     || strpos($sourceFilesFunction, "stripos(\$source, 'PLG_itemDisplay(')") === false
+    || strpos($sourceFilesFunction, 'function HUB_auditProviderItemDisplayProbe') === false
+    || strpos($sourceFilesFunction, "Direct Forum probe: include/viewtopic_core.php") === false
 ) {
     fwrite(STDERR, "Prioritized provider source scan contract missing\n");
     exit(1);
