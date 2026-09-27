@@ -189,6 +189,27 @@ function HUB_getRelations($pillarId, $includeDisabled = true)
     return $rows;
 }
 
+function HUB_invalidateRelationshipCaches($pillarId, $itemType = '', $itemId = '')
+{
+    $pillarId = (int) $pillarId;
+    $itemType = HUB_normalizeObjectType($itemType);
+    $itemId = HUB_normalizeObjectId($itemId);
+
+    if (function_exists('CACHE_remove_instance')) {
+        if ($itemType === 'article' && $itemId !== '') {
+            CACHE_remove_instance('article__' . $itemId . '_');
+        }
+
+        $pillar = HUB_getPillar($pillarId);
+        if ($pillar && isset($pillar['source_type'], $pillar['source_id'])
+            && (string) $pillar['source_type'] === 'staticpages'
+            && (string) $pillar['source_id'] !== ''
+        ) {
+            CACHE_remove_instance('staticpage__' . (string) $pillar['source_id'] . '__');
+        }
+    }
+}
+
 function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position = 0, $isEnabled = 1, $ownerId = 0)
 {
     global $_TABLES, $_USER;
@@ -199,6 +220,17 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
     $itemId = HUB_normalizeObjectId($itemId);
     $position = max(0, min(65535, (int) $position));
     $isEnabled = $isEnabled ? 1 : 0;
+
+    $oldRelation = null;
+    if ($relationId > 0) {
+        $oldResult = DB_query(
+            "SELECT pillar_id, item_type, item_id FROM {$_TABLES['hub_relations']} WHERE id = " . $relationId,
+            1
+        );
+        if ($oldResult !== false) {
+            $oldRelation = DB_fetchArray($oldResult);
+        }
+    }
 
     $pillar = HUB_getPillar($pillarId);
     if ($pillarId < 1 || $itemType === '' || $itemId === '' || !$pillar) {
@@ -229,7 +261,20 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
             1
         );
 
-        return DB_error() ? false : $relationId;
+        if (DB_error()) {
+            return false;
+        }
+
+        if (is_array($oldRelation)) {
+            HUB_invalidateRelationshipCaches(
+                isset($oldRelation['pillar_id']) ? (int) $oldRelation['pillar_id'] : 0,
+                isset($oldRelation['item_type']) ? (string) $oldRelation['item_type'] : '',
+                isset($oldRelation['item_id']) ? (string) $oldRelation['item_id'] : ''
+            );
+        }
+        HUB_invalidateRelationshipCaches($pillarId, $itemType, $itemId);
+
+        return $relationId;
     }
 
     DB_query(
@@ -244,6 +289,8 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
         return false;
     }
 
+    HUB_invalidateRelationshipCaches($pillarId, $itemType, $itemId);
+
     return (int) DB_insertId();
 }
 
@@ -256,9 +303,29 @@ function HUB_deleteRelation($relationId)
         return false;
     }
 
-    DB_query("DELETE FROM {$_TABLES['hub_relations']} WHERE id = " . $relationId, 1);
+    $relation = null;
+    $result = DB_query(
+        "SELECT pillar_id, item_type, item_id FROM {$_TABLES['hub_relations']} WHERE id = " . $relationId,
+        1
+    );
+    if ($result !== false) {
+        $relation = DB_fetchArray($result);
+    }
 
-    return !DB_error();
+    DB_query("DELETE FROM {$_TABLES['hub_relations']} WHERE id = " . $relationId, 1);
+    if (DB_error()) {
+        return false;
+    }
+
+    if (is_array($relation)) {
+        HUB_invalidateRelationshipCaches(
+            isset($relation['pillar_id']) ? (int) $relation['pillar_id'] : 0,
+            isset($relation['item_type']) ? (string) $relation['item_type'] : '',
+            isset($relation['item_id']) ? (string) $relation['item_id'] : ''
+        );
+    }
+
+    return true;
 }
 
 function HUB_relationObjectTypes()
