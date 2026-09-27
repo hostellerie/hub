@@ -91,6 +91,14 @@ hubAssert(empty($missingProvider['exists']), 'unknown provider object remains un
 hubAssert(empty($missingProvider['provider_available']), 'unknown provider is reported unavailable');
 hubAssert(strpos($missingProvider['diagnostic'], 'No loaded Item Info provider') !== false, 'missing provider diagnostic is specific');
 
+$articleBacklink = HUB_backlinkIntegrationStatus('article');
+hubAssert(!empty($articleBacklink['supported']), 'article backlink fallback is supported');
+hubAssert($articleBacklink['mode'] === 'core-template-fallback', 'article backlink mode is explicit');
+
+$forumBacklink = HUB_backlinkIntegrationStatus('forum');
+hubAssert(empty($forumBacklink['supported']), 'unconfirmed provider backlink is not advertised as supported');
+hubAssert($forumBacklink['mode'] === 'provider-hook-unconfirmed', 'unconfirmed provider backlink mode is explicit');
+
 $types = HUB_relationObjectTypes();
 hubAssert(in_array('article', $types, true), 'article is always suggested');
 hubAssert(in_array('staticpages', $types, true), 'staticpages is always suggested');
