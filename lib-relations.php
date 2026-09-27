@@ -640,6 +640,31 @@ function HUB_renderPillarRelations($sourceType, $sourceId)
         . '</ul></section>';
 }
 
+function HUB_backlinkIntegrationStatus($itemType)
+{
+    $itemType = HUB_normalizeObjectType($itemType);
+
+    if ($itemType === 'story') {
+        $itemType = 'article';
+    }
+
+    if ($itemType === 'article') {
+        return array(
+            'supported' => true,
+            'mode' => 'core-template-fallback',
+            'label' => 'Core article fallback',
+            'detail' => 'Full article pages expose PLG_templateSetVars() and Hub fills plugin_itemdisplay.',
+        );
+    }
+
+    return array(
+        'supported' => false,
+        'mode' => 'provider-hook-unconfirmed',
+        'label' => 'Provider hook not confirmed',
+        'detail' => 'Hub can render the forward link on the pillar, but this provider does not currently expose a confirmed generic public placement hook for the backlink.',
+    );
+}
+
 function HUB_renderItemPillarBacklinks($itemType, $itemId)
 {
     $links = array();
