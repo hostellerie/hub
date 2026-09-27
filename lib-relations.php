@@ -454,3 +454,150 @@ function HUB_resolveObject($type, $id)
 
     return $resolved;
 }
+
+
+function HUB_findPillarsForItem($itemType, $itemId, $includeDisabled = false)
+{
+    global $_TABLES;
+
+    $itemType = HUB_normalizeObjectType($itemType);
+    $itemId = HUB_normalizeObjectId($itemId);
+    if ($itemType === '' || $itemId === '') {
+        return array();
+    }
+
+    $sql = "SELECT p.* FROM {$_TABLES['hub_relations']} AS r "
+         . "INNER JOIN {$_TABLES['hub_pillars']} AS p ON p.id = r.pillar_id "
+         . "WHERE r.item_type = '" . DB_escapeString($itemType) . "' "
+         . "AND r.item_id = '" . DB_escapeString($itemId) . "'";
+
+    if (!$includeDisabled) {
+        $sql .= " AND r.is_enabled = 1 AND p.is_enabled = 1";
+    }
+
+    $sql .= " ORDER BY p.modified DESC, p.id DESC";
+
+    $rows = array();
+    $result = DB_query($sql, 1);
+    if ($result === false) {
+        return $rows;
+    }
+
+    while ($row = DB_fetchArray($result)) {
+        if (is_array($row)) {
+            $rows[] = $row;
+        }
+    }
+
+    return $rows;
+}
+
+function HUB_publicText($key)
+{
+    global $_CONF;
+
+    $language = isset($_CONF['language']) ? strtolower((string) $_CONF['language']) : 'english';
+
+    $strings = array(
+        'english' => array(
+            'related_content' => 'Related content',
+            'part_of' => 'Part of',
+        ),
+        'french' => array(
+            'related_content' => 'Contenus liés',
+            'part_of' => 'Dans ce dossier',
+        ),
+        'german' => array(
+            'related_content' => 'Verwandte Inhalte',
+            'part_of' => 'Teil von',
+        ),
+        'italian' => array(
+            'related_content' => 'Contenuti correlati',
+            'part_of' => 'Fa parte di',
+        ),
+        'spanish' => array(
+            'related_content' => 'Contenido relacionado',
+            'part_of' => 'Forma parte de',
+        ),
+    );
+
+    $family = 'english';
+    foreach (array_keys($strings) as $candidate) {
+        if (strpos($language, $candidate) === 0) {
+            $family = $candidate;
+            break;
+        }
+    }
+
+    return isset($strings[$family][$key]) ? $strings[$family][$key] : $key;
+}
+
+function HUB_renderPillarRelations($sourceType, $sourceId)
+{
+    $pillar = HUB_findPillar($sourceType, $sourceId);
+    if (!$pillar || empty($pillar['is_enabled'])) {
+        return '';
+    }
+
+    $links = array();
+    foreach (HUB_getRelations($pillar['id'], false) as $relation) {
+        $resolved = HUB_resolveObject($relation['item_type'], $relation['item_id']);
+        if (empty($resolved['exists']) || empty($resolved['url'])) {
+            continue;
+        }
+
+        $links[] = '<li class="hub-related-item hub-related-type-'
+            . htmlspecialchars($relation['item_type'], ENT_QUOTES, 'UTF-8')
+            . '"><a href="'
+            . htmlspecialchars($resolved['url'], ENT_QUOTES, 'UTF-8')
+            . '">'
+            . htmlspecialchars($resolved['title'], ENT_QUOTES, 'UTF-8')
+            . '</a></li>';
+    }
+
+    if (empty($links)) {
+        return '';
+    }
+
+    return '<section class="hub-related-content" aria-label="'
+        . htmlspecialchars(HUB_publicText('related_content'), ENT_QUOTES, 'UTF-8')
+        . '"><h2>'
+        . htmlspecialchars(HUB_publicText('related_content'), ENT_QUOTES, 'UTF-8')
+        . '</h2><ul>'
+        . implode('', $links)
+        . '</ul></section>';
+}
+
+function HUB_renderItemPillarBacklinks($itemType, $itemId)
+{
+    $links = array();
+
+    foreach (HUB_findPillarsForItem($itemType, $itemId, false) as $pillar) {
+        $resolved = HUB_resolveObject($pillar['source_type'], $pillar['source_id']);
+        if (empty($resolved['exists']) || empty($resolved['url'])) {
+            continue;
+        }
+
+        $title = trim((string) $pillar['title_override']) !== ''
+            ? (string) $pillar['title_override']
+            : (string) $resolved['title'];
+
+        $links[] = '<li><a href="'
+            . htmlspecialchars($resolved['url'], ENT_QUOTES, 'UTF-8')
+            . '">'
+            . htmlspecialchars($title, ENT_QUOTES, 'UTF-8')
+            . '</a></li>';
+    }
+
+    if (empty($links)) {
+        return '';
+    }
+
+    return '<aside class="hub-pillar-backlinks" aria-label="'
+        . htmlspecialchars(HUB_publicText('part_of'), ENT_QUOTES, 'UTF-8')
+        . '"><strong>'
+        . htmlspecialchars(HUB_publicText('part_of'), ENT_QUOTES, 'UTF-8')
+        . '</strong><ul>'
+        . implode('', $links)
+        . '</ul></aside>';
+}
