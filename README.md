@@ -2,12 +2,28 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.2.0** keeps the read-only interoperability and article-link audits while aligning capability, service, content-contract and metadata discovery with the shared Geeklog Memorandum contracts.
+Version **0.3.0** adds persistent editorial pillars and manual relationships on top of the finalized 0.2.0 interoperability foundation.
 
 ## Requirements
 
 - Geeklog 2.1.1 or newer
 - PHP 5.6 or newer
+
+## Pillars and manual relations (0.3.0)
+
+From **Hub administration → Pillars & manual relations**, an administrator can create a Hub pillar from a Geeklog Static Page and attach complementary content by stable `type + id` identity.
+
+Hub stores:
+
+- the pillar source as `source_type + source_id`;
+- related items as `item_type + item_id`;
+- manual order;
+- enabled/disabled state;
+- optional pillar title override.
+
+Hub does **not** store another plugin's canonical URL as source of truth. Titles and URLs are resolved dynamically through `PLG_getItemInfo()` when available, so ownership remains with the source plugin.
+
+The initial 0.3.0 target is deliberately limited to Static Pages as pillars. Relations may point to any provider/object identity that Geeklog can resolve. Static Page topic assignments remain a discovery signal only and are independent from explicit Hub relationships.
 
 ## Article link audit (introduced in 0.1.1)
 
@@ -85,7 +101,7 @@ This reconciliation is diagnostic only. A missing or ambiguous implementation su
 
 Runtime-detected callbacks are kept distinct from source evidence, provider declarations and inference. Hub never presents source scanning as proof that every mutation path emits a lifecycle notification. The full runtime `plugin_*_<plugin>()` surface remains available under the collapsed **Advanced API surface** section.
 
-See `ROADMAP.md` for the planned pillar/relationship implementation.
+See `ROADMAP.md` for the current 0.3.0 pillar/relationship milestone and later navigation/lifecycle work.
 
 ## 0.1.0 audit details
 
@@ -130,4 +146,4 @@ These capabilities are informational interoperability signals. Hub does not read
 
 ## Development archive
 
-The `Build installable archive` GitHub Actions workflow creates `dist/hub-0.2.0.zip`. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.3.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
