@@ -13,3 +13,27 @@
 .hub-staticpage-topics .related-topics a + a{
     margin-left:.65rem;
 }
+
+
+.hub-related-content{
+    margin-top:1.5rem;
+    padding-top:1rem;
+    border-top:1px solid rgba(127,127,127,.25);
+}
+.hub-related-content h2{
+    margin:0 0 .75rem;
+}
+.hub-related-content ul,
+.hub-pillar-backlinks ul{
+    margin:.4rem 0 0;
+    padding-left:1.25rem;
+}
+.hub-related-content li,
+.hub-pillar-backlinks li{
+    margin:.25rem 0;
+}
+.hub-pillar-backlinks{
+    margin-top:1rem;
+    padding:.75rem 1rem;
+    border-left:3px solid rgba(127,127,127,.35);
+}
