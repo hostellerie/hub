@@ -53,6 +53,8 @@ When Hub is enabled, normal Static Page rendering also appends the visible topic
 
 The audit does not modify article content. This first implementation targets Geeklog core articles and Static Pages only.
 
+The audit also exposes **Views, comments, matched-topic count, article age and publication date** as transparent prioritization signals. Results can be sorted by views, comments, matched topics, publication date or title. When the selected Static Page is already a Hub pillar, an administrator can create the corresponding article relation directly from the audit; existing Hub relations are marked **Already related** instead of offering a duplicate action.
+
 ## Static Page topic semantics
 
 Geeklog Static Pages historically use topic assignments partly as placement rules, especially for center-block display. Hub therefore distinguishes **specific Geeklog topics** from the native **All** and **Home page only** placement options.
