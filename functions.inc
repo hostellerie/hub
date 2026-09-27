@@ -142,6 +142,11 @@ function plugin_templatesetvars_hub($templatename, &$template)
             return;
         }
 
+        $pillar = HUB_findPillar('staticpages', $pageId);
+        if (!$pillar || empty($pillar['is_enabled'])) {
+            return;
+        }
+
         $content = (string) $template->get_var('content');
         $append = array();
 
@@ -201,19 +206,9 @@ function plugin_templatesetvars_hub($templatename, &$template)
             return;
         }
 
-        // Preferred Geeklog placement: existing plugin_itemdisplay footer slot.
-        $pluginDisplay = (string) $template->get_var('plugin_itemdisplay');
-        if (strpos($pluginDisplay, 'hub-pillar-backlinks') === false) {
-            $template->set_var(
-                'plugin_itemdisplay',
-                $pluginDisplay === '' ? $backlinksHtml : $pluginDisplay . "\n" . $backlinksHtml
-            );
-            $template->set_var('feedback_list', true);
-            $template->set_var('story_footer', true);
-        }
-
-        // Theme-neutral fallback for themes that do not render
-        // plugin_itemdisplay reliably.
+        // Render the Hub backlink once inside the article body. The Core
+        // plugin_itemdisplay footer slot remains untouched to avoid duplicate
+        // output on themes that render both locations.
         $storyText = (string) $template->get_var('story_text_no_br');
         if ($storyText !== '' && strpos($storyText, 'hub-pillar-backlinks') === false) {
             $template->set_var('story_text_no_br', $storyText . "\n" . $backlinksHtml);
