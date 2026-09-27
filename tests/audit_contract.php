@@ -113,7 +113,7 @@ if (strpos($libAudit, 'current 0.1.0 audit milestone') !== false) {
     exit(1);
 }
 if (strpos($readme, 'Shared Memorandum alignment') === false
-    || strpos($readme, 'Pillars and manual relations (0.3.0)') === false
+    || strpos($readme, 'Pillars and manual relations (finalized in 0.3.0)') === false
     || strpos($roadmap, '0.2.0 — Generic capability discovery — completed') === false
     || strpos($roadmap, 'Current development milestone:** `0.4.0`') === false
     || strpos($roadmap, 'hub.context.read') === false
