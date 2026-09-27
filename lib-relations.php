@@ -351,10 +351,69 @@ function HUB_relationNormalizeInfoRecord($record, $fallbackId = '')
     return $normalized;
 }
 
+function HUB_relationCoreArticleOptions($limit = 100)
+{
+    global $_TABLES;
+
+    $limit = max(1, min(200, (int) $limit));
+    if (empty($_TABLES['stories'])) {
+        return array();
+    }
+
+    $sql = "SELECT s.sid, s.title FROM {$_TABLES['stories']} AS s "
+         . "WHERE s.draft_flag = 0 AND s.date <= NOW() ";
+
+    if (function_exists('COM_getPermSQL')) {
+        $sql .= COM_getPermSQL('AND', 0, 2, 's');
+    }
+    if (function_exists('COM_getLangSQL')) {
+        $sql .= COM_getLangSQL('sid', 'AND', 's');
+    }
+
+    $sql .= " ORDER BY s.date DESC, s.title ASC LIMIT " . $limit;
+
+    $rows = array();
+    $result = DB_query($sql, 1);
+    if ($result === false) {
+        return $rows;
+    }
+
+    while ($row = DB_fetchArray($result)) {
+        if (!is_array($row) || empty($row['sid'])) {
+            continue;
+        }
+
+        $sid = (string) $row['sid'];
+        $title = isset($row['title']) && (string) $row['title'] !== ''
+            ? (string) $row['title']
+            : $sid;
+
+        $rows[] = array(
+            'id' => $sid,
+            'title' => $title,
+            'url' => '',
+        );
+    }
+
+    return $rows;
+}
+
 function HUB_relationObjectOptions($type, $limit = 100)
 {
     $type = HUB_normalizeObjectType($type);
     $limit = max(1, min(200, (int) $limit));
+
+    if ($type === 'article') {
+        $articles = HUB_relationCoreArticleOptions($limit);
+
+        return array(
+            'supported' => true,
+            'items' => $articles,
+            'message' => empty($articles)
+                ? 'No published article is currently selectable.'
+                : '',
+        );
+    }
 
     if (!HUB_relationCollectionSupported($type)) {
         return array(
