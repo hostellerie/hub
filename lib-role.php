@@ -215,9 +215,15 @@ function HUB_roleReadiness($row, $role)
     );
 
     if ($role['name'] === 'orchestrator') {
-        $result['status'] = 'native';
-        $result['label'] = 'Native';
-        $result['notes'][] = 'Hub is not scored as a content provider.';
+        if (isset($row['plugin']) && $row['plugin'] === 'hub') {
+            $result['status'] = 'native';
+            $result['label'] = 'Native';
+            $result['notes'][] = 'Hub is the relationship/context orchestrator and is not scored as a content provider.';
+        } else {
+            $result['status'] = 'role_ok';
+            $result['label'] = 'Role OK';
+            $result['notes'][] = 'Orchestrator is a descriptive provider role; no generic content checklist is imposed.';
+        }
         return $result;
     }
 
@@ -287,7 +293,14 @@ function HUB_roleReadiness($row, $role)
 
     $result['status'] = 'role_ok';
     $result['label'] = 'Role OK';
-    $result['notes'][] = 'Infrastructure plugins are not expected to expose Hub content APIs.';
+
+    if (in_array($role['name'], array('relationship', 'diagnostic', 'navigation', 'communication', 'infrastructure'), true)) {
+        $result['notes'][] = HUB_roleLabel($role['name'])
+            . ' providers are not expected to expose the normal content-owner baseline unless they also own addressable content.';
+    } else {
+        $result['notes'][] = 'This provider role has no generic content-readiness checklist.';
+    }
+
     return $result;
 }
 
@@ -299,7 +312,10 @@ function HUB_roleRecommendations($row, $role)
     $out = array();
 
     if ($role['name'] === 'orchestrator') {
-        return array('Hub is the orchestrator. It audits interoperability, renders assigned Static Page topics, suggests article-to-Static-Page links, and discovers reusable plugin capabilities without acting as a content provider.');
+        if ($plugin === 'hub') {
+            return array('Hub is the relationship/context orchestrator. It consumes shared Geeklog contracts without acting as a content provider.');
+        }
+        return array();
     }
 
     if ($role['name'] === 'content') {
@@ -347,7 +363,7 @@ function HUB_roleRecommendations($row, $role)
         return $out;
     }
 
-    return array('No content-specific recommendation for the inferred infrastructure role.');
+    return array();
 }
 
 function HUB_roleEnrichRows($rows)
