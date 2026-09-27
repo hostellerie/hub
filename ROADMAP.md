@@ -209,9 +209,9 @@ Implemented foundation:
 
 Remaining 0.4.0 work:
 
-- smoke-test public pillar rendering under Geeklog 2.1.1 and 2.2.2
+- public pillar/backlink rendering smoke-tested under Geeklog 2.1.1 and 2.2.2
 - verify which major content providers actually place `PLG_itemDisplay()` fragments and document gaps
-- current source review: Core articles expose a reusable template hook; Forum, Documents, Videos and Maps do not currently expose a generic `PLG_itemDisplay()` placement or equivalent Hub-usable public render hook
+- current source review: Core articles expose reusable template hooks and are covered; Forum, Documents, Videos and Maps do not currently expose a generic `PLG_itemDisplay()` placement or equivalent Hub-usable public render hook
 - prefer adding/reusing generic Geeklog rendering hooks in those providers over Hub-specific integration
 - add fallback adapters only when a provider cannot expose normal Geeklog rendering hooks
 - do not duplicate specialized plugin rendering when a reusable plugin renderer or service exists
