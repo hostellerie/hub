@@ -1,6 +1,6 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.3.0` (in development)
+**Current development milestone:** `0.4.0` (in development)
 
 ## Vision
 
@@ -153,7 +153,7 @@ Search / Recommendations
 future external integrations
 ```
 
-## 0.3.0 — Pillars and manual relations
+## 0.3.0 — Pillars and manual relations — completed 2026-09-27
 
 Implemented foundation:
 
@@ -180,19 +180,41 @@ Implemented foundation:
 - upgrade behavior validated on Geeklog 2.1.1/PHP 5.6 and Geeklog 2.2.2/PHP 8.x
 - ownership of every related item remains with its source plugin
 
-Remaining 0.3.0 hardening:
+Final 0.3.0 hardening completed:
 
-- run final administration UI smoke tests with representative article and plugin-owned relations, including collection-backed selectors
-- keep broader cross-plugin discovery/ranking in 0.8.0; 0.3.0 suggestions remain limited to existing explicit Geeklog topic signals
-- keep public rendering/backlinks out of 0.3.0; those belong to 0.4.0
+- administration UI smoke-tested with article and plugin-owned relations
+- collection-backed selectors and manual-ID fallback validated
+- destructive actions grouped and confirmed
+- relation editor layout simplified to Order / Relation / Enabled / Actions
+- broader cross-plugin discovery/ranking remains scheduled for 0.8.0
 
 ## 0.4.0 — Bidirectional navigation
 
-- render complementary items on pillar pages
-- add backlink from related objects where the host calls `PLG_itemDisplay()`
-- permission-aware output
-- fallback adapters only when a plugin does not expose normal Geeklog APIs
+Implemented foundation:
+
+- render enabled complementary items as normal crawlable HTML links on enabled Static Page pillars
+- preserve administrator-defined relation order in public rendering
+- resolve every title and URL dynamically through Geeklog Item Info at render time
+- skip unresolved or URL-less related objects rather than emitting broken public links
+- add generic backlink fragments through `plugin_itemdisplay_hub()` when the host renderer calls `PLG_itemDisplay()`
+- localize the initial public labels for English, French, German, Italian and Spanish
+- keep public presentation theme-neutral through Hub CSS
+- no stored-content rewriting
+
+Remaining 0.4.0 work:
+
+- smoke-test public pillar rendering under Geeklog 2.1.1 and 2.2.2
+- verify which major content providers actually place `PLG_itemDisplay()` fragments and document gaps
+- add fallback adapters only when a provider cannot expose normal Geeklog rendering hooks
 - do not duplicate specialized plugin rendering when a reusable plugin renderer or service exists
+- keep output permission-aware by relying on provider resolution rather than reading provider-private tables
+
+Relationship-role evolution to prepare before richer grouped rendering:
+
+- keep the stable relationship identity as `type + id`
+- optionally add editorial role metadata such as `guide`, `tutorial`, `video`, `download`, `discussion`, `case-study` or `reference`
+- use roles to group public sections without changing content ownership
+- never infer or overwrite an administrator-approved role silently
 
 ## 0.5.0 — Lifecycle and dependency graph
 
