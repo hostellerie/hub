@@ -75,6 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $relationId = isset($_POST['relation_id']) ? (int) $_POST['relation_id'] : 0;
             $pillarId = isset($_POST['pillar_id']) ? (int) $_POST['pillar_id'] : 0;
             $itemType = isset($_POST['item_type']) ? (string) $_POST['item_type'] : '';
+            if ($itemType === '__custom__') {
+                $itemType = isset($_POST['item_type_custom']) ? (string) $_POST['item_type_custom'] : '';
+            }
             $itemId = isset($_POST['item_id']) ? (string) $_POST['item_id'] : '';
             $position = isset($_POST['position']) ? (int) $_POST['position'] : 0;
             $enabled = !empty($_POST['is_enabled']) ? 1 : 0;
@@ -114,12 +117,7 @@ $content .= HUB_adminNavigation('relations');
 
 $content .= '<h1>Pillars &amp; manual relations</h1>';
 $content .= '<p>Hub 0.3.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
-$content .= '<p class="hub-rel-muted">Known relation types are suggested from shared Geeklog Item Info/object-type contracts. Hub does not query plugin-private tables, and a custom type can still be entered.</p>';
-$content .= '<datalist id="hub-relation-types">';
-foreach ($objectTypes as $objectType) {
-    $content .= '<option value="' . HUB_relAdminEscape($objectType) . '">';
-}
-$content .= '</datalist>';
+$content .= '<p class="hub-rel-muted">Known relation types are discovered from active Geeklog providers and their standard <code>plugin_searchtypes_*()</code> / Item Info callbacks. Hub does not query plugin-private tables. Choose <em>Custom / other…</em> only when a provider type is not listed.</p>';
 $content .= $message;
 
 $content .= '<div class="hub-rel-card"><h2>Add Static Page pillar</h2>';
@@ -210,7 +208,15 @@ if (empty($pillars)) {
         $content .= '<input type="hidden" name="relation_id" value="0">';
         $content .= '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">';
         $content .= '<div class="hub-rel-grid">';
-        $content .= '<label>Item type<input type="text" name="item_type" list="hub-relation-types" maxlength="64" placeholder="article, maps, videos..." autocomplete="off" required></label>';
+        $hubTypeSelectId = 'hub-item-type-' . (int) $pillar['id'];
+        $hubTypeCustomId = 'hub-item-type-custom-' . (int) $pillar['id'];
+        $content .= '<label>Item type<select class="hub-rel-type-select" id="' . $hubTypeSelectId . '" name="item_type" data-custom-id="' . $hubTypeCustomId . '" required>';
+        $content .= '<option value="">Select a type</option>';
+        foreach ($objectTypes as $objectType) {
+            $content .= '<option value="' . HUB_relAdminEscape($objectType) . '">' . HUB_relAdminEscape($objectType) . '</option>';
+        }
+        $content .= '<option value="__custom__">Custom / other…</option></select></label>';
+        $content .= '<label id="' . $hubTypeCustomId . '-wrap" style="display:none">Custom type<input type="text" id="' . $hubTypeCustomId . '" name="item_type_custom" maxlength="64" autocomplete="off"></label>';
         $content .= '<label>Item id<input type="text" name="item_id" maxlength="128" required></label>';
         $content .= '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (count($relations) * 10 + 10) . '"></label>';
         $content .= '<label><input type="checkbox" name="is_enabled" value="1" checked> Enabled</label>';
@@ -226,6 +232,19 @@ if (empty($pillars)) {
         $content .= '</div>';
     }
 }
+
+$content .= '<script>(function(){'
+    . 'var selects=document.querySelectorAll(".hub-rel-type-select");'
+    . 'for(var i=0;i<selects.length;i++){(function(select){'
+    . 'var customId=select.getAttribute("data-custom-id");'
+    . 'var input=document.getElementById(customId);'
+    . 'var wrap=document.getElementById(customId+"-wrap");'
+    . 'function sync(){var custom=select.value==="__custom__";'
+    . 'if(wrap){wrap.style.display=custom?"block":"none";}'
+    . 'if(input){input.required=custom;if(!custom){input.value="";}}}'
+    . 'select.addEventListener("change",sync);sync();'
+    . '})(selects[i]);}'
+    . '})();</script>';
 
 $display = COM_startBlock('Hub 0.3.0') . $content . COM_endBlock();
 COM_output(COM_createHTMLDocument($display));
