@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $hubStaticPageRows = HUB_linkAuditStaticPages();
 
 $content = '<style>';
-$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-topic-note{margin:10px 0 0}.hub-topic-note a{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-sortbar{display:flex;gap:.65rem;align-items:end;flex-wrap:wrap;margin:14px 0}.hub-sortbar label{font-weight:bold}.hub-sortbar select{min-height:34px}.hub-metric{white-space:nowrap;text-align:right}.hub-count{font-weight:bold}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
+$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-topic-note{margin:10px 0 0}.hub-topic-note a{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-sortbar{display:flex;gap:.65rem;align-items:end;flex-wrap:wrap;margin:14px 0}.hub-sortbar label{font-weight:bold}.hub-sortbar select{min-height:34px}.hub-audit-table th,.hub-audit-table td{vertical-align:top}.hub-article-meta,.hub-topic-meta,.hub-engagement{font-size:.9em;opacity:.82}.hub-article-meta{margin-top:.35rem}.hub-topic-meta{margin-top:.25rem}.hub-engagement{display:flex;gap:.8rem;flex-wrap:wrap}.hub-actions{display:flex;gap:.45rem;align-items:center;flex-wrap:wrap}.hub-actions form{display:inline;margin:0}.hub-count{font-weight:bold}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
 $content .= '</style>';
 $content .= HUB_adminNavigation('link-audit');
 $content .= $hubMessage;
@@ -225,7 +225,7 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
             . '</select></label>'
             . '<button class="hub-submit" type="submit">Apply sort</button></form>';
 
-        $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>Matched topics</th><th>Views</th><th>Comments</th><th>Age</th><th>Published</th><th>ID</th><th>Actions</th></tr></thead><tbody>';
+        $content .= '<div style="overflow-x:auto"><table class="admin-list hub-audit-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>Topics</th><th>Engagement</th><th>Actions</th></tr></thead><tbody>';
         foreach ($hubMissingArticles as $hubArticleRow) {
             $hubSid = isset($hubArticleRow['sid']) ? $hubArticleRow['sid'] : '';
             $hubTitle = isset($hubArticleRow['title']) ? $hubArticleRow['title'] : $hubSid;
@@ -254,29 +254,36 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
                 ? '&mdash;'
                 : implode('<br>', $hubMatchedTopicLinks);
 
-            $hubActions = '<a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a> &middot; <a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a>';
+            $hubActions = '<div class="hub-actions">'
+                . '<a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a>'
+                . '<a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a>';
             if (isset($hubExistingArticleRelations[$hubSid])) {
-                $hubActions .= ' &middot; <strong>Already related</strong>';
+                $hubActions .= '<strong>Already related</strong>';
             } elseif ($hubPillar) {
                 $hubActions .= '<form method="post" action="link-audit.php?page_id='
                     . rawurlencode($hubSelectedPageId) . '&amp;sort=' . rawurlencode($hubSort)
                     . '&amp;dir=' . rawurlencode($hubDirection)
-                    . '" style="display:inline;margin-left:.5rem">'
+                    . '">'
                     . HUB_linkAuditTokenField()
                     . '<input type="hidden" name="hub_action" value="add_article_relation">'
                     . '<input type="hidden" name="page_id" value="' . HUB_linkAuditAdminEscape($hubSelectedPageId) . '">'
                     . '<input type="hidden" name="sid" value="' . HUB_linkAuditAdminEscape($hubSid) . '">'
                     . '<button type="submit" class="uk-button">Add relation</button></form>';
             }
+            $hubActions .= '</div>';
 
-            $content .= '<tr><td><strong>' . HUB_linkAuditAdminEscape($hubTitle) . '</strong></td>'
-                . '<td><span class="hub-count">' . $hubTopicCount . '</span><br>' . $hubMatchedTopicsHtml . '</td>'
-                . '<td class="hub-metric">' . $hubHits . '</td>'
-                . '<td class="hub-metric">' . $hubComments . '</td>'
-                . '<td>' . HUB_linkAuditAdminEscape($hubAge) . '</td>'
-                . '<td>' . HUB_linkAuditAdminEscape($hubDate) . '</td>'
-                . '<td><code>' . HUB_linkAuditAdminEscape($hubSid) . '</code></td>'
-                . '<td>' . $hubActions . '</td></tr>';
+            $content .= '<tr>'
+                . '<td><strong>' . HUB_linkAuditAdminEscape($hubTitle) . '</strong>'
+                . '<div class="hub-article-meta"><code>' . HUB_linkAuditAdminEscape($hubSid) . '</code>'
+                . ' · ' . HUB_linkAuditAdminEscape($hubDate)
+                . ($hubAge !== '' ? ' · ' . HUB_linkAuditAdminEscape($hubAge) : '')
+                . '</div></td>'
+                . '<td><span class="hub-count">' . $hubTopicCount . '</span> matched'
+                . '<div class="hub-topic-meta">' . $hubMatchedTopicsHtml . '</div></td>'
+                . '<td><div class="hub-engagement"><span><strong>' . $hubHits . '</strong> views</span>'
+                . '<span><strong>' . $hubComments . '</strong> comments</span></div></td>'
+                . '<td>' . $hubActions . '</td>'
+                . '</tr>';
         }
         $content .= '</tbody></table></div>';
     }
