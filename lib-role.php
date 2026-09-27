@@ -30,18 +30,82 @@ function HUB_roleHasObjectType($row)
     return false;
 }
 
+function HUB_roleDeclaredRoles($row)
+{
+    if (empty($row['capability_declaration'])
+        || !is_array($row['capability_declaration'])
+        || empty($row['capability_declaration']['valid'])
+        || empty($row['capability_declaration']['roles'])
+        || !is_array($row['capability_declaration']['roles'])
+    ) {
+        return array();
+    }
+
+    return array_values(array_unique($row['capability_declaration']['roles']));
+}
+
+function HUB_roleLabel($role)
+{
+    $labels = array(
+        'content' => 'Content',
+        'service' => 'Service',
+        'presentation' => 'Presentation',
+        'infrastructure' => 'Infrastructure',
+        'orchestrator' => 'Orchestrator',
+        'navigation' => 'Navigation',
+        'relationship' => 'Relationship',
+        'diagnostic' => 'Diagnostic',
+        'communication' => 'Communication',
+    );
+
+    if (isset($labels[$role])) {
+        return $labels[$role];
+    }
+
+    return ucwords(str_replace(array('-', '_'), ' ', (string) $role));
+}
+
+function HUB_rolePrimaryDeclared($roles)
+{
+    if (empty($roles) || !is_array($roles)) {
+        return '';
+    }
+
+    $priority = array(
+        'content',
+        'orchestrator',
+        'relationship',
+        'diagnostic',
+        'navigation',
+        'communication',
+        'presentation',
+        'service',
+        'infrastructure',
+    );
+
+    foreach ($priority as $role) {
+        if (in_array($role, $roles, true)) {
+            return $role;
+        }
+    }
+
+    return (string) reset($roles);
+}
+
 function HUB_roleInfer($row)
 {
     $plugin = $row['plugin'];
     $caps = $row['caps'];
     $facts = isset($row['source_facts']) ? $row['source_facts'] : array();
+    $declaredRoles = HUB_roleDeclaredRoles($row);
     $evidence = array();
 
-    if ($plugin === 'hub') {
-        return array('name' => 'orchestrator', 'label' => 'Orchestrator', 'evidence' => array('Hub is the interoperability orchestrator.'));
-    }
+    $hasContentEvidence = !empty($caps['item_info'])
+        || HUB_roleHasObjectType($row)
+        || !empty($facts['item_saved'])
+        || !empty($facts['item_deleted']);
 
-    if (!empty($caps['item_info']) || HUB_roleHasObjectType($row) || !empty($facts['item_saved']) || !empty($facts['item_deleted'])) {
+    if ($hasContentEvidence) {
         if (!empty($caps['item_info'])) {
             $evidence[] = 'addressable content metadata via Item Info';
         }
@@ -51,11 +115,60 @@ function HUB_roleInfer($row)
         if (!empty($facts['item_saved']) || !empty($facts['item_deleted'])) {
             $evidence[] = 'content lifecycle emission found in source';
         }
-        return array('name' => 'content', 'label' => 'Content', 'evidence' => $evidence);
+        if (!empty($declaredRoles)) {
+            $evidence[] = 'provider-declared roles: ' . implode(', ', $declaredRoles);
+        }
+
+        return array(
+            'name' => 'content',
+            'label' => HUB_roleLabel('content'),
+            'evidence' => $evidence,
+            'declared_roles' => $declaredRoles,
+            'source' => in_array('content', $declaredRoles, true) ? 'declared+inferred' : 'inferred',
+        );
+    }
+
+    if (!empty($declaredRoles)) {
+        $primary = HUB_rolePrimaryDeclared($declaredRoles);
+        $evidence[] = 'provider-declared roles: ' . implode(', ', $declaredRoles);
+
+        if (!empty($caps['services'])) {
+            $evidence[] = 'service/webservice entry points detected';
+        }
+        if (HUB_roleApiContains($row, 'plugin_getmenuitems_')) {
+            $evidence[] = 'menu contribution callback detected';
+        }
+        if (!empty($caps['blocks']) || !empty($caps['autotags'])) {
+            $evidence[] = 'presentation/embed callbacks detected';
+        }
+
+        return array(
+            'name' => $primary,
+            'label' => HUB_roleLabel($primary),
+            'evidence' => $evidence,
+            'declared_roles' => $declaredRoles,
+            'source' => 'declared',
+        );
+    }
+
+    if ($plugin === 'hub') {
+        return array(
+            'name' => 'orchestrator',
+            'label' => HUB_roleLabel('orchestrator'),
+            'evidence' => array('Hub is the interoperability orchestrator.'),
+            'declared_roles' => array(),
+            'source' => 'built-in fallback',
+        );
     }
 
     if (!empty($caps['services'])) {
-        return array('name' => 'service', 'label' => 'Service', 'evidence' => array('service/webservice entry points detected'));
+        return array(
+            'name' => 'service',
+            'label' => HUB_roleLabel('service'),
+            'evidence' => array('service/webservice entry points detected'),
+            'declared_roles' => array(),
+            'source' => 'inferred',
+        );
     }
 
     if (!empty($caps['blocks']) || !empty($caps['autotags']) || HUB_roleApiContains($row, 'plugin_getmenuitems_') || HUB_roleApiContains($row, 'plugin_centerblock_')) {
@@ -71,10 +184,23 @@ function HUB_roleInfer($row)
         if (HUB_roleApiContains($row, 'plugin_centerblock_')) {
             $evidence[] = 'center-block rendering callback detected';
         }
-        return array('name' => 'presentation', 'label' => 'Presentation', 'evidence' => $evidence);
+
+        return array(
+            'name' => 'presentation',
+            'label' => HUB_roleLabel('presentation'),
+            'evidence' => $evidence,
+            'declared_roles' => array(),
+            'source' => 'inferred',
+        );
     }
 
-    return array('name' => 'infrastructure', 'label' => 'Infrastructure', 'evidence' => array('no addressable-content, service or presentation contract detected'));
+    return array(
+        'name' => 'infrastructure',
+        'label' => HUB_roleLabel('infrastructure'),
+        'evidence' => array('no addressable-content, service or presentation contract detected'),
+        'declared_roles' => array(),
+        'source' => 'inferred',
+    );
 }
 
 function HUB_roleReadiness($row, $role)
