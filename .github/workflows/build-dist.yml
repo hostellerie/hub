@@ -78,6 +78,7 @@ jobs:
             hub/autoinstall.php \
             hub/functions.inc \
             hub/plugin.json \
+            hub/lib-capability-evidence.php \
             hub/lib-content-contract.php \
             hub/lib-metadata.php \
             hub/lib-render.php \
