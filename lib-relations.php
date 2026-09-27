@@ -801,9 +801,13 @@ function HUB_renderItemPillarBacklinks($itemType, $itemId)
             continue;
         }
 
-        $title = trim((string) $pillar['title_override']) !== ''
-            ? (string) $pillar['title_override']
-            : (string) $resolved['title'];
+        // Public backlink anchors should describe the actual target page.
+        // Keep title_override for Hub administration/pillar presentation, but
+        // do not let it silently replace the resolved source title in links.
+        $title = (string) $resolved['title'];
+        if ($title === '') {
+            $title = trim((string) $pillar['title_override']);
+        }
 
         $links[] = '<li><a href="'
             . htmlspecialchars($resolved['url'], ENT_QUOTES, 'UTF-8')
