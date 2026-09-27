@@ -69,6 +69,14 @@ if (strpos($sqlSource, 'source_url') !== false
     exit(1);
 }
 
+if (strpos($relationsAdminSource, '<details class="hub-rel-card hub-rel-pillar">') === false
+    || strpos($relationsAdminSource, 'details.hub-rel-pillar') === false
+    || strpos($relationsAdminSource, 'pillars[p].open=false') === false
+) {
+    fwrite(STDERR, "Hub collapsed pillar administration contract missing\n");
+    exit(1);
+}
+
 if (strpos($relationsSource, 'function HUB_savePillar') === false
     || strpos($relationsSource, 'function HUB_saveRelation') === false
     || strpos($relationsSource, 'function HUB_relationCoreArticleOptions') === false
@@ -86,7 +94,7 @@ if (strpos($relationsSource, 'function HUB_renderPillarRelations') === false
     || strpos($relationsSource, 'function HUB_renderItemPillarBacklinks') === false
     || strpos($functionsSource, 'function plugin_itemdisplay_hub') === false
     || strpos($functionsSource, "story_display_type") === false
-    || strpos($functionsSource, "story_text_no_br") === false
+    || strpos($functionsSource, "story_bodyhtml") === false
     || strpos($functionsSource, "hub-pillar-backlinks") === false
     || strpos($functionsSource, "HUB_renderItemPillarBacklinks('article', \$storyId)") === false
     || strpos($functionsSource, "HUB_renderPillarRelations('staticpages', \$pageId)") === false
