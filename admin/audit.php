@@ -135,12 +135,14 @@ function HUB_adminDetails($row)
     $declaredCapabilities = isset($row['capability_declaration_details']) && is_array($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array();
     $capabilityEvidence = isset($row['capability_implementation_details']) && is_array($row['capability_implementation_details']) ? $row['capability_implementation_details'] : array();
     $renderCapabilities = isset($row['render_catalogue_details']) && is_array($row['render_catalogue_details']) ? $row['render_catalogue_details'] : array();
+    $itemDisplayProvider = isset($row['item_display_provider_details']) && is_array($row['item_display_provider_details']) ? $row['item_display_provider_details'] : array();
+    $itemDisplayConsumer = isset($row['item_display_consumer_details']) && is_array($row['item_display_consumer_details']) ? $row['item_display_consumer_details'] : array();
     $contentContract = isset($row['content_contract_details']) && is_array($row['content_contract_details']) ? $row['content_contract_details'] : array();
     $metadataManifest = isset($row['metadata_manifest_details']) && is_array($row['metadata_manifest_details']) ? $row['metadata_manifest_details'] : array();
     $apiSurface = isset($row['api_surface']) && is_array($row['api_surface']) ? $row['api_surface'] : array();
     $recommendations = isset($row['role_recommendations']) && is_array($row['role_recommendations']) ? $row['role_recommendations'] : array();
 
-    $out = '<tr class="hub-details-row"><td colspan="11"><details class="hub-details"><summary>Details / Recommendations</summary><div class="hub-details-body">';
+    $out = '<tr class="hub-details-row"><td colspan="13"><details class="hub-details"><summary>Details / Recommendations</summary><div class="hub-details-body">';
     $out .= '<div class="hub-role"><strong>Primary role:</strong> ' . HUB_adminEscape($role['label'])
         . ' <span class="hub-badge">' . HUB_adminEscape($role['source']) . '</span>';
     if (!empty($role['declared_roles'])) {
@@ -176,6 +178,10 @@ function HUB_adminDetails($row)
     $out .= HUB_adminCard('Search', $details['search'], empty($details['search']) ? 'Missing' : 'Runtime');
     $out .= '</div>';
 
+    $out .= '<h4>Public item extension point</h4><div class="hub-grid">';
+    $out .= HUB_adminCard('Provider placement', $itemDisplayProvider, !empty($row['item_display_provider']) ? 'Source detected' : 'Not detected');
+    $out .= HUB_adminCard('Consumer callback', $itemDisplayConsumer, !empty($row['item_display_consumer']) ? 'Runtime' : 'Not detected');
+    $out .= '</div>';
     $out .= '<h4>Shared capability declaration</h4>';
     $out .= HUB_adminList($declaredCapabilities);
     $out .= '<h4>Capability implementation evidence</h4>';
@@ -220,10 +226,10 @@ $hubCacheLabel = !empty($hubAuditCacheMeta['cached'])
     : 'Fresh audit';
 $content .= '<span class="hub-cache-status">' . HUB_adminEscape($hubCacheLabel) . ' · cache TTL 10 min</span>';
 $content .= '<p><strong>Geeklog:</strong> ' . HUB_adminEscape(defined('VERSION') ? VERSION : '-') . ' &nbsp; <strong>PHP:</strong> ' . HUB_adminEscape(PHP_VERSION) . ' &nbsp; <strong>Hub:</strong> ' . HUB_adminEscape(plugin_chkVersion_hub()) . '</p>';
-$content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Plugin</th><th>Version</th><th>Role</th><th>Item Info</th><th>Related Items</th><th>ID&rarr;URL</th><th>Blocks</th><th>Autotags</th><th>Search</th><th>Services</th><th>Readiness</th></tr></thead><tbody>';
+$content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Plugin</th><th>Version</th><th>Role</th><th>Item Info</th><th>Related Items</th><th>ID&rarr;URL</th><th>Display point</th><th>Display callback</th><th>Blocks</th><th>Autotags</th><th>Search</th><th>Services</th><th>Readiness</th></tr></thead><tbody>';
 
 if (empty($rows)) {
-    $content .= '<tr><td colspan="11">No active plugins were detected.</td></tr>';
+    $content .= '<tr><td colspan="13">No active plugins were detected.</td></tr>';
 } else {
     foreach ($rows as $row) {
         $c = isset($row['caps']) && is_array($row['caps']) ? $row['caps'] : array();
@@ -239,11 +245,13 @@ if (empty($rows)) {
         $role = isset($row['role']) && is_array($row['role']) ? $row['role'] : array('label' => 'Unknown');
         $roleLabel = isset($role['label']) ? $role['label'] : 'Unknown';
         $content .= '<tr><td><strong>' . HUB_adminEscape(isset($row['plugin']) ? $row['plugin'] : '') . '</strong></td><td>' . HUB_adminEscape(isset($row['version']) ? $row['version'] : '') . '</td><td>' . HUB_adminEscape($roleLabel) . '</td>';
-        $content .= '<td style="text-align:center">' . HUB_adminYesNo($c['item_info']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['related_items']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['id_to_url']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['blocks']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['autotags']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['search']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['services']) . '</td><td>' . HUB_adminReadiness(isset($row['role_readiness']) ? $row['role_readiness'] : array()) . '</td></tr>';
+        $content .= '<td style="text-align:center">' . HUB_adminYesNo($c['item_info']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['related_items']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['id_to_url']) . '</td>';
+        $content .= '<td style="text-align:center">' . HUB_adminYesNo(!empty($row['item_display_provider'])) . '</td><td style="text-align:center">' . HUB_adminYesNo(!empty($row['item_display_consumer'])) . '</td>';
+        $content .= '<td style="text-align:center">' . HUB_adminYesNo($c['blocks']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['autotags']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['search']) . '</td><td style="text-align:center">' . HUB_adminYesNo($c['services']) . '</td><td>' . HUB_adminReadiness(isset($row['role_readiness']) ? $row['role_readiness'] : array()) . '</td></tr>';
         $content .= HUB_adminDetails($row);
     }
 }
 $content .= '</tbody></table></div>';
-$content .= '<h3>Audit meaning</h3><p><strong>Role</strong>: inferred from existing Geeklog capabilities. <strong>C</strong>: core score for that role. <strong>O</strong>: optional interoperability score, including ID→URL where available. Statistics are reported separately and do not affect readiness. Runtime, source evidence and inference remain distinct.</p>';
+$content .= '<h3>Audit meaning</h3><p><strong>Role</strong>: inferred from existing Geeklog capabilities. <strong>Display point</strong>: a provider-side PLG_itemDisplay() call was found in scanned source. <strong>Display callback</strong>: plugin_itemdisplay_PLUGIN() is available at runtime. <strong>C</strong>: core score for that role. <strong>O</strong>: optional interoperability score, including ID→URL where available. Statistics are reported separately and do not affect readiness. Runtime, source evidence and inference remain distinct.</p>';
 $display = COM_startBlock('Hub ' . plugin_chkVersion_hub()) . $content . COM_endBlock();
 COM_output(COM_createHTMLDocument($display));
