@@ -197,6 +197,7 @@ Implemented foundation:
 - resolve every title and URL dynamically through Geeklog Item Info at render time
 - skip unresolved or URL-less related objects rather than emitting broken public links
 - add generic backlink fragments through `plugin_itemdisplay_hub()` when the host renderer calls `PLG_itemDisplay()`
+- add a Core article fallback through `PLG_templateSetVars()`: on full article pages Hub fills `plugin_itemdisplay` and re-enables the article footer when a backlink exists
 - localize the initial public labels for English, French, German, Italian and Spanish
 - keep public presentation theme-neutral through Hub CSS
 - no stored-content rewriting
@@ -205,6 +206,8 @@ Remaining 0.4.0 work:
 
 - smoke-test public pillar rendering under Geeklog 2.1.1 and 2.2.2
 - verify which major content providers actually place `PLG_itemDisplay()` fragments and document gaps
+- current source review: Core articles expose a reusable template hook; Forum, Documents, Videos and Maps do not currently expose a generic `PLG_itemDisplay()` placement or equivalent Hub-usable public render hook
+- prefer adding/reusing generic Geeklog rendering hooks in those providers over Hub-specific integration
 - add fallback adapters only when a provider cannot expose normal Geeklog rendering hooks
 - do not duplicate specialized plugin rendering when a reusable plugin renderer or service exists
 - keep output permission-aware by relying on provider resolution rather than reading provider-private tables
