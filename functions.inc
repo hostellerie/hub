@@ -164,18 +164,30 @@ function plugin_templatesetvars_hub($templatename, &$template)
 
     // Article fallback compatible with Geeklog 2.1.1 and 2.2.x.
     //
-    // Geeklog 2.2.x exposes story_display_type, but Geeklog 2.1.1 stable does
-    // not. On 2.1.1 we therefore identify a full article page from article.php
-    // and the current story id. The first storytext hook still runs before the
-    // parent article template is rendered, so story_text_no_br is the most
-    // reliable theme-neutral placement for Eclipse/Denim.
-    if (in_array($templatename, array('storytext', 'featuredstorytext', 'archivestorytext'), true)) {
+    // Geeklog invokes two template-hook families while rendering stories:
+    // storytext/featuredstorytext/archivestorytext and then
+    // article/featuredarticle/archivearticle. Cached stories can skip the
+    // first family, so Hub accepts both.
+    $hubArticleTemplates = array(
+        'storytext',
+        'featuredstorytext',
+        'archivestorytext',
+        'article',
+        'featuredarticle',
+        'archivearticle',
+    );
+
+    if (in_array($templatename, $hubArticleTemplates, true)) {
         $storyId = (string) $template->get_var('story_id');
         if ($storyId === '' && isset($_GET['story'])) {
             $storyId = HUB_normalizeObjectId($_GET['story']);
         }
 
         $displayType = (string) $template->get_var('story_display_type');
+        if ($displayType === '') {
+            $displayType = (string) $template->get_var('display_type');
+        }
+
         $script = isset($_SERVER['PHP_SELF']) ? basename((string) $_SERVER['PHP_SELF']) : '';
         $isFullArticle = ($displayType === 'n')
             || ($displayType === '' && $script === 'article.php');
@@ -189,16 +201,24 @@ function plugin_templatesetvars_hub($templatename, &$template)
             return;
         }
 
-        $storyText = (string) $template->get_var('story_text_no_br');
-        if (strpos($storyText, 'hub-pillar-backlinks') === false) {
+        // Preferred Geeklog placement: existing plugin_itemdisplay footer slot.
+        $pluginDisplay = (string) $template->get_var('plugin_itemdisplay');
+        if (strpos($pluginDisplay, 'hub-pillar-backlinks') === false) {
             $template->set_var(
-                'story_text_no_br',
-                $storyText === '' ? $backlinksHtml : $storyText . "\n" . $backlinksHtml
+                'plugin_itemdisplay',
+                $pluginDisplay === '' ? $backlinksHtml : $pluginDisplay . "\n" . $backlinksHtml
             );
+            $template->set_var('feedback_list', true);
+            $template->set_var('story_footer', true);
         }
 
-        // Keep story_introtext in sync for themes that use that variable
-        // instead of story_text_no_br.
+        // Theme-neutral fallback for themes that do not render
+        // plugin_itemdisplay reliably.
+        $storyText = (string) $template->get_var('story_text_no_br');
+        if ($storyText !== '' && strpos($storyText, 'hub-pillar-backlinks') === false) {
+            $template->set_var('story_text_no_br', $storyText . "\n" . $backlinksHtml);
+        }
+
         $storyIntro = (string) $template->get_var('story_introtext');
         if ($storyIntro !== '' && strpos($storyIntro, 'hub-pillar-backlinks') === false) {
             $template->set_var('story_introtext', $storyIntro . "\n" . $backlinksHtml);
