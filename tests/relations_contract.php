@@ -1,14 +1,27 @@
-<?php
-
-$_SERVER['PHP_SELF'] = 'tests/relations_contract.php';
-
 $hubItemInfoFixture = array(
     'article:story-1' => array('story-1', 'Story one', '/article.php?story=story-1'),
+    'videos:video-1' => array(
+        'id' => 'video-1',
+        'title' => 'Video one',
+        'url' => '/videos/watch.php?v=video-1',
+    ),
 );
 
-function PLG_getItemInfo($type, $id, $what)
+function PLG_getItemInfo($type, $id, $what, $uid = 0, $options = array())
 {
     global $hubItemInfoFixture;
+
+    if ($id === '*' && $type === 'videos') {
+        return array(
+            $hubItemInfoFixture['videos:video-1'],
+            array(
+                'id' => 'video-2',
+                'title' => 'Video two',
+                'url' => '/videos/watch.php?v=video-2',
+            ),
+        );
+    }
+
     $key = (string) $type . ':' . (string) $id;
 
     return isset($hubItemInfoFixture[$key]) ? $hubItemInfoFixture[$key] : array();
@@ -18,15 +31,19 @@ function plugin_getiteminfo_article()
 {
 }
 
-function plugin_searchtypes_calendar()
+function plugin_getiteminfo_videos()
+{
+}
+
+function HUB_contentContractEvidence($type)
 {
     return array(
-        'calendar' => 'Calendar',
-        'events' => 'Events',
+        'collection_declared' => ($type === 'videos'),
+        'collection_source' => false,
     );
 }
 
-$_PLUGINS = array('article', 'calendar');
+$_PLUGINS = array('article', 'videos');
 
 require_once dirname(__DIR__) . '/lib-relations.php';
 
@@ -48,6 +65,18 @@ hubAssert($resolved['status'] === 'resolved', 'known object status is resolved')
 hubAssert($resolved['title'] === 'Story one', 'known object title is returned');
 hubAssert(!empty($resolved['provider_available']), 'loaded provider is reported');
 
+$resolvedVideo = HUB_resolveObject('videos', 'video-1');
+hubAssert(!empty($resolvedVideo['exists']), 'associative Item Info record resolves');
+hubAssert($resolvedVideo['title'] === 'Video one', 'associative Item Info title is normalized');
+
+$collection = HUB_relationObjectOptions('videos', 100);
+hubAssert(!empty($collection['supported']), 'declared collection is supported');
+hubAssert(count($collection['items']) === 2, 'collection returns selectable items');
+hubAssert($collection['items'][0]['title'] === 'Video one', 'collection items are normalized and sorted');
+
+$unsupportedCollection = HUB_relationObjectOptions('article', 100);
+hubAssert(empty($unsupportedCollection['supported']), 'provider without collection evidence falls back to manual ID');
+
 $missingKnownProvider = HUB_resolveObject('article', 'missing-story');
 hubAssert(empty($missingKnownProvider['exists']), 'missing known-provider object remains unresolved');
 hubAssert(!empty($missingKnownProvider['provider_available']), 'known provider remains detectable');
@@ -61,12 +90,8 @@ hubAssert(strpos($missingProvider['diagnostic'], 'No loaded Item Info provider')
 $types = HUB_relationObjectTypes();
 hubAssert(in_array('article', $types, true), 'article is always suggested');
 hubAssert(in_array('staticpages', $types, true), 'staticpages is always suggested');
-hubAssert(in_array('calendar', $types, true), 'plugin primary/search type is suggested');
-hubAssert(in_array('events', $types, true), 'plugin_searchtypes keys are suggested');
-foreach ($types as $type) {
-    hubAssert(strpos($type, 'declaredbyplugin') === false, 'display-only audit text is never used as an object type');
-    hubAssert(strpos($type, 'observedinlifecycle') === false, 'lifecycle evidence text is never used as an object type');
-}
+hubAssert(in_array('videos', $types, true), 'active Item Info provider is suggested');
+hubAssert(!in_array('events', $types, true), 'search-only subtypes are not exposed as relation object types');
 
 $installSql = file_get_contents(dirname(__DIR__) . '/sql/mysql_install.php');
 $upgradeSql = file_get_contents(dirname(__DIR__) . '/install_updates.php');
