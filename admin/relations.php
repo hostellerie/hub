@@ -48,6 +48,19 @@ function HUB_relAdminStaticPages()
     return $rows;
 }
 
+if (isset($_GET['hub_ajax']) && $_GET['hub_ajax'] === 'items') {
+    $type = isset($_GET['type']) ? HUB_normalizeObjectType($_GET['type']) : '';
+    $payload = HUB_relationObjectOptions($type, 100);
+
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=UTF-8');
+        header('X-Content-Type-Options: nosniff');
+    }
+
+    echo json_encode($payload);
+    exit;
+}
+
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -78,7 +91,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($itemType === '__custom__') {
                 $itemType = isset($_POST['item_type_custom']) ? (string) $_POST['item_type_custom'] : '';
             }
-            $itemId = isset($_POST['item_id']) ? (string) $_POST['item_id'] : '';
+            $itemIdChoice = isset($_POST['item_id_choice']) ? (string) $_POST['item_id_choice'] : '';
+            $itemIdManual = isset($_POST['item_id_manual']) ? (string) $_POST['item_id_manual'] : '';
+            $itemId = ($itemIdChoice !== '' && $itemIdChoice !== '__manual__')
+                ? $itemIdChoice
+                : $itemIdManual;
             $position = isset($_POST['position']) ? (int) $_POST['position'] : 0;
             $enabled = !empty($_POST['is_enabled']) ? 1 : 0;
 
@@ -105,7 +122,11 @@ $content = '<style>'
     . '.hub-rel-error{background:#fff1f0;border-left-color:#b00020}'
     . '.hub-rel-card{border:1px solid #d5d8dc;padding:1rem;margin:0 0 1rem;border-radius:4px}'
     . '.hub-rel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;align-items:end}'
-    . '.hub-rel-grid label{display:block;font-weight:600}.hub-rel-grid input,.hub-rel-grid select{box-sizing:border-box;width:100%;padding:.45rem}'
+    . '.hub-rel-grid label{display:block;font-weight:600}.hub-rel-grid input:not([type=checkbox]),.hub-rel-grid select{box-sizing:border-box;width:100%;padding:.45rem}'
+    . '.hub-rel-grid input[type=checkbox]{width:auto;margin:0}'
+    . '.hub-rel-check{display:flex!important;flex-direction:column;justify-content:flex-end;min-height:4.15rem}'
+    . '.hub-rel-check>span:first-child{margin-bottom:.55rem}.hub-rel-check-control{display:flex;align-items:center;min-height:2.45rem}'
+    . '.hub-rel-item-note{display:block;margin-top:.35rem;font-weight:400;opacity:.72;font-size:.88em}'
     . '.hub-rel-table{width:100%;border-collapse:collapse;margin-top:1rem}.hub-rel-table th,.hub-rel-table td{padding:.45rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}'
     . '.hub-rel-actions form{display:inline}.hub-rel-muted{opacity:.7;font-size:.92em}'
     . '.hub-rel-integrity{margin:.55rem 0;padding:.55rem .7rem;border-left:4px solid #d7a900;background:#fffbea}'
@@ -117,7 +138,7 @@ $content .= HUB_adminNavigation('relations');
 
 $content .= '<h1>Pillars &amp; manual relations</h1>';
 $content .= '<p>Hub 0.3.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
-$content .= '<p class="hub-rel-muted">Known relation types are discovered from active Geeklog providers and their standard <code>plugin_searchtypes_*()</code> / Item Info callbacks. Hub does not query plugin-private tables. Choose <em>Custom / other…</em> only when a provider type is not listed.</p>';
+$content .= '<p class="hub-rel-muted">Known relation types are discovered from active Geeklog Item Info providers. When a provider exposes the shared collection contract, Hub can also list its selectable objects without querying plugin-private tables. Choose <em>Custom / other…</em> only when a provider type is not listed.</p>';
 $content .= $message;
 
 $content .= '<div class="hub-rel-card"><h2>Add Static Page pillar</h2>';
@@ -132,7 +153,7 @@ foreach ($staticPages as $page) {
 }
 $content .= '</select></label>';
 $content .= '<label>Optional title override<input type="text" name="title_override" maxlength="255"></label>';
-$content .= '<label><input type="checkbox" name="is_enabled" value="1" checked> Enabled</label>';
+$content .= '<label class="hub-rel-check"><span>Enabled</span><span class="hub-rel-check-control"><input type="checkbox" name="is_enabled" value="1" checked></span></label>';
 $content .= '<div><button type="submit" class="uk-button uk-button-primary">Add pillar</button></div></div></form></div>';
 
 if (empty($pillars)) {
@@ -165,7 +186,7 @@ if (empty($pillars)) {
         $content .= '<input type="hidden" name="source_id" value="' . HUB_relAdminEscape($pillar['source_id']) . '">';
         $content .= '<div class="hub-rel-grid">';
         $content .= '<label>Title override<input type="text" name="title_override" maxlength="255" value="' . HUB_relAdminEscape($pillar['title_override']) . '"></label>';
-        $content .= '<label><input type="checkbox" name="is_enabled" value="1"' . (!empty($pillar['is_enabled']) ? ' checked' : '') . '> Enabled</label>';
+        $content .= '<label class="hub-rel-check"><span>Enabled</span><span class="hub-rel-check-control"><input type="checkbox" name="is_enabled" value="1"' . (!empty($pillar['is_enabled']) ? ' checked' : '') . '></span></label>';
         $content .= '<div><button type="submit" class="uk-button">Update pillar</button></div></div></form>';
 
         $content .= '<h3>Relations</h3>';
@@ -191,7 +212,7 @@ if (empty($pillars)) {
                         ? '<span class="hub-rel-ok">Resolved</span>'
                         : '<span class="hub-rel-unresolved">Unresolved</span> <span class="hub-rel-muted">' . HUB_relAdminEscape($resolved['diagnostic']) . '</span>')
                     . '</div>'
-                    . '<label><input type="checkbox" name="is_enabled" value="1"' . (!empty($relation['is_enabled']) ? ' checked' : '') . '> Enabled</label>'
+                    . '<label class="hub-rel-check"><span>Enabled</span><span class="hub-rel-check-control"><input type="checkbox" name="is_enabled" value="1"' . (!empty($relation['is_enabled']) ? ' checked' : '') . '></span></label>'
                     . '<div><button type="submit" class="uk-button">Update</button></div>'
                     . '</form><form method="post" action="relations.php" style="margin-top:.4rem">'
                     . HUB_relAdminTokenField()
@@ -210,16 +231,24 @@ if (empty($pillars)) {
         $content .= '<div class="hub-rel-grid">';
         $hubTypeSelectId = 'hub-item-type-' . (int) $pillar['id'];
         $hubTypeCustomId = 'hub-item-type-custom-' . (int) $pillar['id'];
-        $content .= '<label>Item type<select class="hub-rel-type-select" id="' . $hubTypeSelectId . '" name="item_type" data-custom-id="' . $hubTypeCustomId . '" required>';
+        $hubItemSelectId = 'hub-item-id-' . (int) $pillar['id'];
+        $hubItemManualId = 'hub-item-id-manual-' . (int) $pillar['id'];
+        $hubItemNoteId = 'hub-item-note-' . (int) $pillar['id'];
+        $content .= '<label>Item type<select class="hub-rel-type-select" id="' . $hubTypeSelectId . '" name="item_type"'
+            . ' data-custom-id="' . $hubTypeCustomId . '" data-item-select-id="' . $hubItemSelectId . '"'
+            . ' data-item-manual-id="' . $hubItemManualId . '" data-note-id="' . $hubItemNoteId . '" required>';
         $content .= '<option value="">Select a type</option>';
         foreach ($objectTypes as $objectType) {
             $content .= '<option value="' . HUB_relAdminEscape($objectType) . '">' . HUB_relAdminEscape($objectType) . '</option>';
         }
         $content .= '<option value="__custom__">Custom / other…</option></select></label>';
         $content .= '<label id="' . $hubTypeCustomId . '-wrap" style="display:none">Custom type<input type="text" id="' . $hubTypeCustomId . '" name="item_type_custom" maxlength="64" autocomplete="off"></label>';
-        $content .= '<label>Item id<input type="text" name="item_id" maxlength="128" required></label>';
+        $content .= '<label id="' . $hubItemSelectId . '-wrap">Item<select class="hub-rel-item-select" id="' . $hubItemSelectId . '" name="item_id_choice" disabled><option value="">Select a type first</option></select>'
+            . '<span class="hub-rel-item-note" id="' . $hubItemNoteId . '"></span></label>';
+        $content .= '<label id="' . $hubItemManualId . '-wrap" style="display:none">Item id<input type="text" id="' . $hubItemManualId . '" name="item_id_manual" maxlength="128" autocomplete="off">'
+            . '<span class="hub-rel-item-note">Manual fallback for providers without a collection or for an ID not listed above.</span></label>';
         $content .= '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (count($relations) * 10 + 10) . '"></label>';
-        $content .= '<label><input type="checkbox" name="is_enabled" value="1" checked> Enabled</label>';
+        $content .= '<label class="hub-rel-check"><span>Enabled</span><span class="hub-rel-check-control"><input type="checkbox" name="is_enabled" value="1" checked></span></label>';
         $content .= '<div><button type="submit" class="uk-button uk-button-primary">Add relation</button></div>';
         $content .= '</div></form>';
 
@@ -234,16 +263,35 @@ if (empty($pillars)) {
 }
 
 $content .= '<script>(function(){'
-    . 'var selects=document.querySelectorAll(".hub-rel-type-select");'
-    . 'for(var i=0;i<selects.length;i++){(function(select){'
-    . 'var customId=select.getAttribute("data-custom-id");'
-    . 'var input=document.getElementById(customId);'
-    . 'var wrap=document.getElementById(customId+"-wrap");'
-    . 'function sync(){var custom=select.value==="__custom__";'
-    . 'if(wrap){wrap.style.display=custom?"block":"none";}'
-    . 'if(input){input.required=custom;if(!custom){input.value="";}}}'
-    . 'select.addEventListener("change",sync);sync();'
-    . '})(selects[i]);}'
+    . 'function byId(id){return document.getElementById(id);}'
+    . 'function setManual(input,wrap,on){if(wrap){wrap.style.display=on?"block":"none";}if(input){input.required=on;if(!on){input.value="";}}}'
+    . 'function resetItems(select,note,text){select.innerHTML="";var option=document.createElement("option");option.value="";option.textContent=text||"Select an item";select.appendChild(option);select.disabled=true;if(note){note.textContent="";}}'
+    . 'var types=document.querySelectorAll(".hub-rel-type-select");'
+    . 'for(var i=0;i<types.length;i++){(function(typeSelect){'
+    . 'var customId=typeSelect.getAttribute("data-custom-id"),customInput=byId(customId),customWrap=byId(customId+"-wrap");'
+    . 'var itemId=typeSelect.getAttribute("data-item-select-id"),itemSelect=byId(itemId),itemWrap=byId(itemId+"-wrap");'
+    . 'var manualId=typeSelect.getAttribute("data-item-manual-id"),manualInput=byId(manualId),manualWrap=byId(manualId+"-wrap");'
+    . 'var note=byId(typeSelect.getAttribute("data-note-id"));'
+    . 'function showManual(message){if(itemWrap){itemWrap.style.display="none";}setManual(manualInput,manualWrap,true);if(note){note.textContent=message||"";}}'
+    . 'function loadItems(){var type=typeSelect.value,custom=type==="__custom__";'
+    . 'if(customWrap){customWrap.style.display=custom?"block":"none";}if(customInput){customInput.required=custom;if(!custom){customInput.value="";}}'
+    . 'resetItems(itemSelect,note,"Loading…");setManual(manualInput,manualWrap,false);if(itemWrap){itemWrap.style.display=custom?"none":"block";}'
+    . 'if(!type){resetItems(itemSelect,note,"Select a type first");return;}'
+    . 'if(custom){showManual("Enter the provider type and item ID manually.");return;}'
+    . 'fetch("relations.php?hub_ajax=items&type="+encodeURIComponent(type),{credentials:"same-origin"})'
+    . '.then(function(response){if(!response.ok){throw new Error("HTTP "+response.status);}return response.json();})'
+    . '.then(function(data){itemSelect.innerHTML="";'
+    . 'if(!data||!data.supported){showManual(data&&data.message?data.message:"Collection unavailable; enter the item ID manually.");return;}'
+    . 'if(itemWrap){itemWrap.style.display="block";}var first=document.createElement("option");first.value="";first.textContent=data.items&&data.items.length?"Select an item":"No selectable item";itemSelect.appendChild(first);'
+    . 'if(data.items){for(var j=0;j<data.items.length;j++){var row=data.items[j],opt=document.createElement("option");opt.value=row.id;opt.textContent=(row.title||row.id)+" ["+row.id+"]";itemSelect.appendChild(opt);}}'
+    . 'var manual=document.createElement("option");manual.value="__manual__";manual.textContent="Enter ID manually…";itemSelect.appendChild(manual);itemSelect.disabled=false;'
+    . 'if(note){note.textContent=data.message||((data.items&&data.items.length)?data.items.length+" selectable item(s).":"");}'
+    . '})'
+    . '.catch(function(){showManual("Unable to load the provider collection; enter the item ID manually.");});'
+    . '}'
+    . 'itemSelect.addEventListener("change",function(){var manual=itemSelect.value==="__manual__";setManual(manualInput,manualWrap,manual);if(manualInput&&manual){manualInput.focus();}});'
+    . 'typeSelect.addEventListener("change",loadItems);loadItems();'
+    . '})(types[i]);}'
     . '})();</script>';
 
 $display = COM_startBlock('Hub 0.3.0') . $content . COM_endBlock();
