@@ -93,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $staticPages = HUB_relAdminStaticPages();
+$objectTypes = HUB_relationObjectTypes();
 $pillars = HUB_getPillars(true);
 
 $content = '<style>'
@@ -104,12 +105,21 @@ $content = '<style>'
     . '.hub-rel-grid label{display:block;font-weight:600}.hub-rel-grid input,.hub-rel-grid select{box-sizing:border-box;width:100%;padding:.45rem}'
     . '.hub-rel-table{width:100%;border-collapse:collapse;margin-top:1rem}.hub-rel-table th,.hub-rel-table td{padding:.45rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}'
     . '.hub-rel-actions form{display:inline}.hub-rel-muted{opacity:.7;font-size:.92em}'
+    . '.hub-rel-integrity{margin:.55rem 0;padding:.55rem .7rem;border-left:4px solid #d7a900;background:#fffbea}'
+    . '.hub-rel-ok{display:inline-block;padding:.12rem .45rem;border-radius:10px;background:#edf7ed;font-size:.86em}'
+    . '.hub-rel-unresolved{display:inline-block;padding:.12rem .45rem;border-radius:10px;background:#fff1f0;font-size:.86em}'
     . '</style>';
 
 $content .= HUB_adminNavigation('relations');
 
 $content .= '<h1>Pillars &amp; manual relations</h1>';
 $content .= '<p>Hub 0.3.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
+$content .= '<p class="hub-rel-muted">Known relation types are suggested from shared Geeklog Item Info/object-type contracts. Hub does not query plugin-private tables, and a custom type can still be entered.</p>';
+$content .= '<datalist id="hub-relation-types">';
+foreach ($objectTypes as $objectType) {
+    $content .= '<option value="' . HUB_relAdminEscape($objectType) . '">';
+}
+$content .= '</datalist>';
 $content .= $message;
 
 $content .= '<div class="hub-rel-card"><h2>Add Static Page pillar</h2>';
@@ -146,6 +156,10 @@ if (empty($pillars)) {
             $content .= ' · <a href="' . HUB_relAdminEscape($resolvedPillar['url']) . '">View source</a>';
         }
         $content .= '</p>';
+        if (empty($resolvedPillar['exists'])) {
+            $content .= '<div class="hub-rel-integrity"><strong>Pillar source unresolved.</strong> '
+                . HUB_relAdminEscape($resolvedPillar['diagnostic']) . '</div>';
+        }
 
         $content .= '<form method="post" action="relations.php">' . HUB_relAdminTokenField();
         $content .= '<input type="hidden" name="hub_action" value="save_pillar">';
@@ -174,7 +188,10 @@ if (empty($pillars)) {
                     . '<div><strong><code>' . HUB_relAdminEscape($relation['item_type']) . ':' . HUB_relAdminEscape($relation['item_id']) . '</code></strong><br>'
                     . HUB_relAdminEscape($resolved['title'])
                     . (!empty($resolved['url']) ? ' · <a href="' . HUB_relAdminEscape($resolved['url']) . '">View</a>' : '')
-                    . (empty($resolved['exists']) ? ' <span class="hub-rel-muted">(not resolved)</span>' : '')
+                    . '<br>'
+                    . (!empty($resolved['exists'])
+                        ? '<span class="hub-rel-ok">Resolved</span>'
+                        : '<span class="hub-rel-unresolved">Unresolved</span> <span class="hub-rel-muted">' . HUB_relAdminEscape($resolved['diagnostic']) . '</span>')
                     . '</div>'
                     . '<label><input type="checkbox" name="is_enabled" value="1"' . (!empty($relation['is_enabled']) ? ' checked' : '') . '> Enabled</label>'
                     . '<div><button type="submit" class="uk-button">Update</button></div>'
@@ -193,7 +210,7 @@ if (empty($pillars)) {
         $content .= '<input type="hidden" name="relation_id" value="0">';
         $content .= '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">';
         $content .= '<div class="hub-rel-grid">';
-        $content .= '<label>Item type<input type="text" name="item_type" maxlength="64" placeholder="article, maps, videos..." required></label>';
+        $content .= '<label>Item type<input type="text" name="item_type" list="hub-relation-types" maxlength="64" placeholder="article, maps, videos..." autocomplete="off" required></label>';
         $content .= '<label>Item id<input type="text" name="item_id" maxlength="128" required></label>';
         $content .= '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (count($relations) * 10 + 10) . '"></label>';
         $content .= '<label><input type="checkbox" name="is_enabled" value="1" checked> Enabled</label>';
