@@ -292,32 +292,63 @@ queue / deduplicate / submit
 - support plugin-rendered and Hub-rendered sections
 - reuse existing engines behind Blocks or Autotags rather than duplicate them
 
-## 0.8.0 — Discovery and suggestions
+## 0.8.0 — Discovery, editorial inventory and suggestions
 
 - extend the 0.1.1 topic audit beyond core articles
 - use topics, keywords and `PLG_getRelatedItems()`
+- build a continuously refreshed editorial inventory from the real Hub relationship graph
+- expose a pillar → satellites → missing links → candidate content view comparable to the manually maintained editorial inventory used in `hostellerie/ecologie`
+- flag satellites that belong to a pillar but do not contain a contextual link back to it
+- flag pillars that do not point to their strongest or most useful approved satellites
+- detect thematically close content that is not yet connected to the relevant pillar or cluster
+- distinguish explicit Hub relations from inferred thematic proximity
+- show why a candidate was detected: shared topics, keywords, related-items provider, existing links, engagement, or other transparent evidence
 - suggest complementary content without automatically changing editorial relationships
-- explain why an item was suggested
+- allow administrators to approve, dismiss or defer suggestions so repeated audits remain useful
+- export the normalized inventory as Markdown and structured JSON for documentation or external consumers
+- keep GitHub synchronization outside Hub itself: Agent/Connector or another external integration may publish/update an exported inventory in a repository
 - allow future semantic or AI-assisted ranking only as an optional layer
 - AI suggestions must not silently create editorial relationships
+
+Suggested inventory model:
+
+```text
+Pillar
+├── approved satellites
+│   ├── backlink to pillar: yes/no
+│   └── pillar links back: yes/no
+├── strong satellite candidates not yet related
+├── thematically close content
+├── missing / broken relationships
+└── editorial gaps / content opportunities
+```
 
 Possible future flow:
 
 ```text
-Hub finds candidate items
+Hub builds the site relationship graph
+        ↓
+deterministic signals
+(topics / links / related items / metadata / engagement)
+        ↓
+editorial inventory + explainable gaps
         ↓
 optional external/AI analysis
         ↓
-ranked suggestion + explanation
+suggestion + explanation
         ↓
 human/editorial decision
         ↓
 Hub stores approved relationship
 ```
 
-## 0.9.0 — SEO and integrity
+## 0.9.0 — SEO, cluster health and integrity
 
 - extend the 0.1.1 link audit to saved Hub relationships and plugin-owned content
+- report cluster health per pillar: satellites, reciprocal links, unresolved objects and unlinked candidates
+- identify satellites without a backlink to their pillar
+- identify pillars that omit important approved satellites from their outgoing links
+- identify related content clusters with weak or missing internal-link connections
 - orphaned-item checks
 - broken/missing object checks
 - sitemap/feed integration opportunities
