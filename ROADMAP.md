@@ -236,6 +236,9 @@ Relationship-role evolution to prepare before richer grouped rendering:
 - detect Static Pages affected when an assigned topic is renamed, removed or otherwise changes its public label/URL
 - invalidate relevant Hub caches
 - maintain a dependency graph based on stable content identity
+- keep the dependency/editorial model graph-shaped rather than enforcing a single-parent tree: a content object may participate in several approved contexts
+- support multi-level editorial structures such as hub → pillar → sub-pillar → satellite and pillar → map → marker without changing source ownership
+- keep graph edges explicit and typed so a sub-pillar can itself be a pillar in another approved context
 - expose affected-page/context information through a reusable Hub service for administration and future external consumers
 
 Shared Hub capability targets from the Memorandum:
@@ -309,6 +312,9 @@ queue / deduplicate / submit
 - detect thematically close content that is not yet connected to the relevant pillar or cluster
 - distinguish explicit Hub relations from inferred thematic proximity
 - show why a candidate was detected: shared topics, keywords, related-items provider, existing links, engagement, or other transparent evidence
+- use provider-exposed engagement signals such as views or comments only as prioritization evidence, never as automatic editorial approval
+- surface temporal signals such as publication/update age and obvious year/version markers so stale or strongly time-bound content can be reviewed
+- allow explainable semantic-proximity / potential-cannibalization warnings as suggestions only; Hub must not auto-merge, redirect or rewrite content
 - suggest complementary content without automatically changing editorial relationships
 - allow administrators to approve, dismiss or defer suggestions so repeated audits remain useful
 - generate an editorial roadmap directly from the current inventory and relationship graph
@@ -320,6 +326,9 @@ queue / deduplicate / submit
 - keep GitHub synchronization outside Hub itself: Agent/Connector or another external integration may publish/update an exported roadmap in a repository
 - allow future semantic or AI-assisted ranking only as an optional layer
 - AI suggestions must not silently create editorial relationships
+- extend optional editorial-role metadata beyond presentation labels when useful, with generic roles such as `hub`, `pillar`, `sub-pillar`, `satellite`, `archive`, `news` and `resource`
+- keep editorial roles optional, administrator-approved and independent from the provider's own content type
+- never infer or overwrite an approved editorial role silently
 
 Suggested inventory model:
 
@@ -340,11 +349,14 @@ Suggested roadmap output:
 Editorial roadmap
 ├── Executive summary
 ├── Existing pillars
-│   ├── current satellites
-│   ├── missing backlinks
-│   ├── missing pillar → satellite links
+│   ├── sub-pillars
+│   ├── approved satellites
+│   ├── missing reciprocal links
+│   ├── orphan / weakly connected content
 │   └── strongest new candidates
 ├── New pillar opportunities
+├── Potential cannibalization / close-content review
+├── Stale or strongly dated content
 ├── Content gaps to create or refresh
 ├── Internal-link actions
 ├── Broken/unresolved relationships
@@ -399,6 +411,19 @@ Hub stores approved relationship
 - relationship graph diagnostics
 - canonical URL consistency checks
 - expose normalized diagnostics so Connector or administration tools can report them without reimplementing Hub logic
+
+## 0.10.0 — Multisite and multilingual context
+
+This phase remains secondary to the single-site relationship graph and should reuse shared provider metadata rather than introduce Hub-specific translation or SEO contracts.
+
+- keep site/domain identity available as relationship context in multisite deployments without merging provider-owned databases or identities
+- allow approved cross-site relationships when the source and destination objects are resolvable through shared Geeklog contracts
+- accept optional generic language metadata when exposed by the owning provider
+- allow an optional equivalent-content relation between resolvable objects in different languages or sites
+- expose cross-site / cross-language diagnostics without treating a missing translation as an error
+- allow diagnostics for suspicious cross-domain or cross-language links when the relevant site/language metadata is available
+- keep hreflang generation, translation workflow and language-specific SEO ownership outside Hub; Hub may expose context to the responsible plugin or external consumer
+- keep network-level inventories provider-agnostic and explainable, with each object retaining its owning site/plugin identity
 
 ## 1.0.0 — Stable Hub
 
