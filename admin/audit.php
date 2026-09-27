@@ -119,7 +119,12 @@ function HUB_adminDetails($row)
     ), $details);
 
     $role = isset($row['role']) && is_array($row['role']) ? $row['role'] : array();
-    $role = array_merge(array('label' => 'Unknown', 'evidence' => array()), $role);
+    $role = array_merge(array(
+        'label' => 'Unknown',
+        'evidence' => array(),
+        'declared_roles' => array(),
+        'source' => 'inferred',
+    ), $role);
 
     $lifecycleEmitter = isset($row['lifecycle_emitter']) && is_array($row['lifecycle_emitter']) ? $row['lifecycle_emitter'] : array();
     $lifecycleListener = isset($row['lifecycle_listener']) && is_array($row['lifecycle_listener']) ? $row['lifecycle_listener'] : array();
@@ -134,9 +139,14 @@ function HUB_adminDetails($row)
     $recommendations = isset($row['role_recommendations']) && is_array($row['role_recommendations']) ? $row['role_recommendations'] : array();
 
     $out = '<tr class="hub-details-row"><td colspan="11"><details class="hub-details"><summary>Details / Recommendations</summary><div class="hub-details-body">';
-    $out .= '<div class="hub-role"><strong>Inferred role:</strong> ' . HUB_adminEscape($role['label']);
+    $out .= '<div class="hub-role"><strong>Primary role:</strong> ' . HUB_adminEscape($role['label'])
+        . ' <span class="hub-badge">' . HUB_adminEscape($role['source']) . '</span>';
+    if (!empty($role['declared_roles'])) {
+        $out .= '<br><strong>Declared roles:</strong> '
+            . HUB_adminEscape(implode(', ', $role['declared_roles']));
+    }
     if (!empty($role['evidence'])) {
-        $out .= ' &mdash; ' . HUB_adminEscape(implode('; ', $role['evidence']));
+        $out .= '<br><span>' . HUB_adminEscape(implode('; ', $role['evidence'])) . '</span>';
     }
     $out .= '</div>';
 
