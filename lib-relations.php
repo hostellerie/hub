@@ -110,14 +110,12 @@ function HUB_savePillar($pillarId, $sourceType, $sourceId, $titleOverride = '', 
     $now = time();
     $typeSql = DB_escapeString($sourceType);
     $idSql = DB_escapeString($sourceId);
-    $titleSql = DB_escapeString(substr($titleOverride, 0, 255));
 
     if ($pillarId > 0) {
         DB_query(
             "UPDATE {$_TABLES['hub_pillars']} SET "
             . "source_type = '" . $typeSql . "', "
             . "source_id = '" . $idSql . "', "
-            . "title_override = '" . $titleSql . "', "
             . "is_enabled = " . $isEnabled . ", "
             . "modified = " . $now . " "
             . "WHERE id = " . $pillarId,
@@ -129,8 +127,8 @@ function HUB_savePillar($pillarId, $sourceType, $sourceId, $titleOverride = '', 
 
     DB_query(
         "INSERT INTO {$_TABLES['hub_pillars']} "
-        . "(source_type, source_id, title_override, is_enabled, created, modified, owner_id) VALUES ("
-        . "'" . $typeSql . "', '" . $idSql . "', '" . $titleSql . "', "
+        . "(source_type, source_id, is_enabled, created, modified, owner_id) VALUES ("
+        . "'" . $typeSql . "', '" . $idSql . "', "
         . $isEnabled . ", " . $now . ", " . $now . ", " . (int) $ownerId . ")",
         1
     );
