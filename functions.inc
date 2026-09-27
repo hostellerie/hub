@@ -5,6 +5,7 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 }
 
 $hub_path = $_CONF['path'] . 'plugins/hub/';
+require_once $hub_path . 'config.php';
 require_once $hub_path . 'lib-capabilities.php';
 require_once $hub_path . 'lib-capability-evidence.php';
 require_once $hub_path . 'lib-content-contract.php';
@@ -17,6 +18,7 @@ require_once $hub_path . 'lib-stats.php';
 require_once $hub_path . 'lib-distribution.php';
 require_once $hub_path . 'lib-audit-cache.php';
 require_once $hub_path . 'lib-link-audit.php';
+require_once $hub_path . 'lib-relations.php';
 require_once $hub_path . 'lib-staticpages.php';
 
 function plugin_cclabel_hub()
@@ -73,16 +75,34 @@ function plugin_chkVersion_hub()
 
 function plugin_upgrade_hub()
 {
-    global $_TABLES;
+    global $_CONF, $_TABLES;
+
+    $installedVersion = DB_getItem($_TABLES['plugins'], 'pi_version', "pi_name = 'hub'");
+    if ($installedVersion === false || $installedVersion === '') {
+        $installedVersion = '0.1.0';
+    }
+
+    if (version_compare((string) $installedVersion, '0.3.0', '<')) {
+        require_once $_CONF['path'] . 'plugins/hub/install_updates.php';
+        if (!HUB_updateSchema_0_3_0()) {
+            return false;
+        }
+    }
+
     $codeVersion = plugin_chkVersion_hub();
-    DB_query("UPDATE {$_TABLES['plugins']} SET pi_version = '" . addslashes($codeVersion) . "', pi_gl_version = '2.1.1' WHERE pi_name = 'hub'");
-    return true;
+    DB_query(
+        "UPDATE {$_TABLES['plugins']} SET pi_version = '" . DB_escapeString($codeVersion)
+        . "', pi_gl_version = '2.1.1' WHERE pi_name = 'hub'",
+        1
+    );
+
+    return !DB_error();
 }
 
 function plugin_autouninstall_hub()
 {
     return array(
-        'tables'     => array(),
+        'tables'     => array('hub_pillars', 'hub_relations'),
         'groups'     => array('Hub Admin'),
         'features'   => array('hub.admin'),
         'php_blocks' => array(),
