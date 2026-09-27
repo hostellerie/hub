@@ -432,7 +432,11 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $sit
 
     foreach ($rows as $row) {
         $out .= "\n## " . $row['plugin'] . ' ' . $row['version'] . "\n\n";
-        $out .= '**Role:** ' . $row['role']['label'] . " (inferred)\n\n";
+        $roleSource = isset($row['role']['source']) ? $row['role']['source'] : 'inferred';
+        $out .= '**Primary role:** ' . $row['role']['label'] . ' (' . $roleSource . ")\n\n";
+        if (!empty($row['role']['declared_roles'])) {
+            $out .= '**Declared roles:** ' . implode(', ', $row['role']['declared_roles']) . "\n\n";
+        }
         $out .= "**Role evidence:**\n";
         foreach ($row['role']['evidence'] as $evidence) {
             $out .= '- ' . $evidence . "\n";
