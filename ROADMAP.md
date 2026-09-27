@@ -1,6 +1,6 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.2.0` (in development)
+**Current development milestone:** `0.3.0` (in development)
 
 ## Vision
 
@@ -122,7 +122,7 @@ The audit should not reduce a communication or infrastructure plugin's score sim
 
 This expedited milestone provides an immediately useful subset of the later discovery and SEO-integrity work. It deliberately reads only Geeklog core article, topic and Static Pages tables.
 
-## 0.2.0 — Generic capability discovery
+## 0.2.0 — Generic capability discovery — completed 2026-09-27
 
 - detect and validate existing generic `plugin_getcapabilities_*()` declarations without making them Hub-specific
 - keep declared roles/capabilities visibly distinct from runtime/source evidence and inferred readiness
@@ -155,14 +155,29 @@ future external integrations
 
 ## 0.3.0 — Pillars and manual relations
 
-- create Hub pillar records
+Implemented foundation:
+
+- persistent `hub_pillars` records
+- persistent `hub_relations` records
 - first pillar target: Static Pages
-- Hub pillar/editorial relationships must remain independent from Static Page placement assignments (All/Home page only/specific display context)
-- attach complementary items by stable `item_type + item_id`
+- Hub pillar/editorial relationships remain independent from Static Page placement assignments (All/Home page only/specific display context)
+- complementary items stored by stable `item_type + item_id`
 - no stored internal URL as source of truth
-- resolve title/URL through `PLG_getItemInfo()` where available
+- dynamic title/URL resolution through `PLG_getItemInfo()` when available
 - manual ordering and enable/disable state
-- preserve ownership of every related item in its source plugin
+- optional pillar title override
+- direct self-relations rejected
+- install and upgrade path from 0.2.0
+- administrator UI for creating/removing pillars and adding/updating/removing manual relations
+- ownership of every related item remains with its source plugin
+
+Remaining 0.3.0 hardening:
+
+- validate upgrade behavior on both Geeklog 2.1.1/PHP 5.6 and Geeklog 2.2.2/PHP 8.x
+- improve provider/object selection UX without querying plugin-private tables
+- add integrity indicators for unresolved related objects
+- add focused storage/upgrade tests around duplicate identities and ordering
+- keep public rendering/backlinks out of 0.3.0; those belong to 0.4.0
 
 ## 0.4.0 — Bidirectional navigation
 
