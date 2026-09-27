@@ -379,6 +379,14 @@ function HUB_roleEnrichRows($rows)
                 HUB_capabilityDeclarationRecommendations(isset($row['plugin']) ? $row['plugin'] : '')
             );
         }
+        if (!empty($row['capability_implementation_recommendations'])
+            && is_array($row['capability_implementation_recommendations'])
+        ) {
+            $recommendations = array_merge(
+                $recommendations,
+                $row['capability_implementation_recommendations']
+            );
+        }
         $rows[$key]['role_recommendations'] = array_values(array_unique($recommendations));
     }
     return $rows;
@@ -473,6 +481,9 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $sit
         $out .= "### Shared capability declaration\n\n";
         $out .= HUB_roleMarkdownList(isset($row['capability_declaration_details']) ? $row['capability_declaration_details'] : array()) . "\n";
         $out .= "> Plugin-supplied declaration; kept distinct from runtime detection and source evidence.\n\n";
+        $out .= "### Capability implementation evidence\n\n";
+        $out .= HUB_roleMarkdownList(isset($row['capability_implementation_details']) ? $row['capability_implementation_details'] : array()) . "\n";
+        $out .= "> Cross-check only; declared capabilities remain provider metadata and evidence does not grant authorization.\n\n";
         $out .= "### Plugin-owned render entry points\n\n";
         $out .= HUB_roleMarkdownList(isset($row['render_catalogue_details']) ? $row['render_catalogue_details'] : array()) . "\n";
         $out .= "> Discovery only; the owning plugin remains responsible for arguments, permissions and output.\n\n";
