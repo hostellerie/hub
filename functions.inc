@@ -56,13 +56,13 @@ function plugin_getadminoption_hub()
  */
 function plugin_getheadercode_hub()
 {
-    global $_CONF, $_SCRIPTS;
+    global $_CONF;
 
-    if (isset($_SCRIPTS) && is_object($_SCRIPTS) && method_exists($_SCRIPTS, 'setCSSFile')) {
-        $_SCRIPTS->setCSSFile('hub', rtrim($_CONF['site_url'], '/') . '/hub/hub.css');
-    }
+    $href = rtrim($_CONF['site_url'], '/') . '/hub/hub.css';
 
-    return '';
+    return '<link rel="stylesheet" type="text/css" href="'
+        . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
+        . '">' . PHP_EOL;
 }
 
 function plugin_chkVersion_hub()
