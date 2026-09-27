@@ -222,12 +222,43 @@ function HUB_auditPluginSourceFiles($plugin)
 {
     $files = array();
     $count = 0;
+    $maxFiles = 800;
+
+    /*
+     * Scan likely public-rendering code first. Large plugins such as Forum can
+     * contain more than the historical 200-file audit cap; relying on raw
+     * filesystem traversal order could therefore miss the exact files that
+     * expose PLG_itemDisplay().
+     */
     foreach (HUB_auditPluginSourceRoots($plugin) as $root) {
-        HUB_auditCollectSourceFilesRecursive($root, $files, $count, 200, 0);
-        if ($count >= 200) {
-            break;
+        $priority = array(
+            $root . DIRECTORY_SEPARATOR . 'include',
+            $root . DIRECTORY_SEPARATOR . 'public_html',
+            $root . DIRECTORY_SEPARATOR . 'admin',
+        );
+
+        foreach ($priority as $dir) {
+            if (is_dir($dir)) {
+                HUB_auditCollectSourceFilesRecursive($dir, $files, $count, $maxFiles, 0);
+            }
+        }
+
+        foreach (array('functions.inc', 'index.php') as $entry) {
+            $path = $root . DIRECTORY_SEPARATOR . $entry;
+            if (is_file($path)) {
+                $files[] = $path;
+                $count++;
+            }
         }
     }
+
+    foreach (HUB_auditPluginSourceRoots($plugin) as $root) {
+        if ($count >= $maxFiles) {
+            break;
+        }
+        HUB_auditCollectSourceFilesRecursive($root, $files, $count, $maxFiles, 0);
+    }
+
     return array_values(array_unique($files));
 }
 
@@ -465,11 +496,16 @@ function HUB_auditSourceFacts($plugin)
         'object_types' => array(),
         'item_display' => array(),
         'item_display_types' => array(),
+        'scan_limit' => 800,
+        'scan_truncated' => false,
     );
     $types = array();
     $displayTypes = array();
 
-    foreach (HUB_auditPluginSourceFiles($plugin) as $file) {
+    $sourceFiles = HUB_auditPluginSourceFiles($plugin);
+    $facts['scan_truncated'] = count($sourceFiles) >= $facts['scan_limit'];
+
+    foreach ($sourceFiles as $file) {
         $source = @file_get_contents($file);
         if ($source === false || $source === '') {
             continue;
@@ -691,6 +727,11 @@ function HUB_auditItemDisplayPlacementDetails($sourceFacts)
     } else {
         $details[] = '? No PLG_itemDisplay() provider placement found in scanned source.';
     }
+
+    if (!empty($sourceFacts['scan_truncated'])) {
+        $details[] = '◐ Source scan reached the configured file limit; absence cannot be treated as definitive.';
+    }
+    $details[] = 'Scanned PHP files: ' . (int) $sourceFacts['files_scanned'];
 
     return $details;
 }
