@@ -197,7 +197,7 @@ Implemented foundation:
 - resolve every title and URL dynamically through Geeklog Item Info at render time
 - skip unresolved or URL-less related objects rather than emitting broken public links
 - add generic backlink fragments through `plugin_itemdisplay_hub()` when the host renderer calls `PLG_itemDisplay()`
-- add a Core article fallback through `PLG_templateSetVars()`: on full article pages Hub fills `plugin_itemdisplay` and re-enables the article footer when a backlink exists
+- add a Core article fallback through `PLG_templateSetVars()`: on full article pages Hub appends the backlink to the prepared story body variables, avoiding theme-dependent late footer placement
 - localize the initial public labels for English, French, German, Italian and Spanish
 - keep public presentation theme-neutral through Hub CSS
 - no stored-content rewriting
