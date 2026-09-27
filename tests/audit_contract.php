@@ -532,6 +532,9 @@ if (strpos($sourceFilesFunction, "\$maxFiles = 800;") === false
     || strpos($sourceFilesFunction, "'include'") === false
     || strpos($sourceFilesFunction, "'public_html'") === false
     || strpos($sourceFilesFunction, "'scan_truncated'") === false
+    || strpos($sourceFilesFunction, "'source_roots'") === false
+    || strpos($sourceFilesFunction, "'item_display_text_fallback'") === false
+    || strpos($sourceFilesFunction, "stripos(\$source, 'PLG_itemDisplay(')") === false
 ) {
     fwrite(STDERR, "Prioritized provider source scan contract missing\n");
     exit(1);
