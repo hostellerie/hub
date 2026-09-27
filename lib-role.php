@@ -427,15 +427,17 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $sit
     $out .= '- Generated: `' . date('c') . "`\n\n";
     $out .= "> Runtime detection, source evidence and inference are intentionally distinguished. Source scanning is not proof that every runtime path emits an event.\n\n";
     $out .= "## Summary\n\n";
-    $out .= "| Plugin | Version | Role | Readiness | Core | Optional | Item Info | Related | ID→URL | Blocks | Autotags | Search | Services |\n";
-    $out .= "| --- | --- | --- | --- | ---: | ---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n";
+    $out .= "| Plugin | Version | Role | Readiness | Core | Optional | Item Info | Related | ID→URL | Display point | Display callback | Blocks | Autotags | Search | Services |\n";
+    $out .= "| --- | --- | --- | --- | ---: | ---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n";
     foreach ($rows as $row) {
         $r = $row['role_readiness'];
         $core = $r['core_total'] ? $r['core_score'] . '/' . $r['core_total'] : 'N/A';
         $optional = $r['optional_total'] ? $r['optional_score'] . '/' . $r['optional_total'] : 'N/A';
         $c = $row['caps'];
         $out .= '| ' . HUB_roleMarkdownEscape($row['plugin']) . ' | ' . HUB_roleMarkdownEscape($row['version']) . ' | ' . $row['role']['label'] . ' | ' . $r['label'] . ' | ' . $core . ' | ' . $optional
-            . ' | ' . ($c['item_info'] ? 'Yes' : 'No') . ' | ' . ($c['related_items'] ? 'Yes' : 'No') . ' | ' . (!empty($c['id_to_url']) ? 'Yes' : 'No') . ' | ' . ($c['blocks'] ? 'Yes' : 'No') . ' | ' . ($c['autotags'] ? 'Yes' : 'No') . ' | ' . ($c['search'] ? 'Yes' : 'No') . ' | ' . ($c['services'] ? 'Yes' : 'No') . " |\n";
+            . ' | ' . ($c['item_info'] ? 'Yes' : 'No') . ' | ' . ($c['related_items'] ? 'Yes' : 'No') . ' | ' . (!empty($c['id_to_url']) ? 'Yes' : 'No')
+            . ' | ' . (!empty($row['item_display_provider']) ? 'Yes' : 'No') . ' | ' . (!empty($row['item_display_consumer']) ? 'Yes' : 'No')
+            . ' | ' . ($c['blocks'] ? 'Yes' : 'No') . ' | ' . ($c['autotags'] ? 'Yes' : 'No') . ' | ' . ($c['search'] ? 'Yes' : 'No') . ' | ' . ($c['services'] ? 'Yes' : 'No') . " |\n";
     }
 
     foreach ($rows as $row) {
@@ -475,6 +477,9 @@ function HUB_roleMarkdown($rows, $geeklogVersion, $phpVersion, $hubVersion, $sit
         $out .= "#### Lifecycle listener\n" . HUB_roleMarkdownList($row['lifecycle_listener']) . "\n";
         $out .= "#### Lifecycle contract\n" . HUB_roleMarkdownList(isset($row['lifecycle_contract']) ? $row['lifecycle_contract'] : array()) . "\n";
         $out .= "#### Object types\n" . HUB_roleMarkdownList($row['object_types']) . "\n";
+        $out .= "### Public item extension point\n\n";
+        $out .= "#### Provider placement\n" . HUB_roleMarkdownList(isset($row['item_display_provider_details']) ? $row['item_display_provider_details'] : array()) . "\n";
+        $out .= "#### Consumer callback\n" . HUB_roleMarkdownList(isset($row['item_display_consumer_details']) ? $row['item_display_consumer_details'] : array()) . "\n";
         $out .= "### Shared content contract evidence\n\n";
         $out .= HUB_roleMarkdownList(isset($row['content_contract_details']) ? $row['content_contract_details'] : array()) . "\n";
         $out .= "> Declaration/source evidence only; Hub does not execute arbitrary provider collection queries during audit.\n\n";
