@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sourceId = isset($_POST['source_id']) ? (string) $_POST['source_id'] : '';
             $enabled = !empty($_POST['is_enabled']) ? 1 : 0;
 
-            $saved = HUB_savePillar($pillarId, 'staticpages', $sourceId, '', $enabled);
+            $saved = HUB_savePillar($pillarId, 'staticpages', $sourceId, $enabled);
             $message = $saved
                 ? '<div class="hub-rel-message">Pillar saved.</div>'
                 : '<div class="hub-rel-message hub-rel-error">Unable to save pillar. The Static Page may already be registered.</div>';
