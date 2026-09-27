@@ -129,34 +129,65 @@ function plugin_autouninstall_hub()
  */
 function plugin_templatesetvars_hub($templatename, &$template)
 {
-    if ($templatename !== 'staticpage' || !is_object($template)) {
+    if (!is_object($template)
+        || !method_exists($template, 'get_var')
+        || !method_exists($template, 'set_var')
+    ) {
         return;
     }
 
-    if (!method_exists($template, 'get_var') || !method_exists($template, 'set_var')) {
+    if ($templatename === 'staticpage') {
+        $pageId = (string) $template->get_var('sp_id');
+        if ($pageId === '') {
+            return;
+        }
+
+        $content = (string) $template->get_var('content');
+        $append = array();
+
+        $relationsHtml = HUB_renderPillarRelations('staticpages', $pageId);
+        if ($relationsHtml !== '') {
+            $append[] = $relationsHtml;
+        }
+
+        $topicsHtml = HUB_renderStaticPageTopics($pageId);
+        if ($topicsHtml !== '') {
+            $append[] = $topicsHtml;
+        }
+
+        if (!empty($append)) {
+            $template->set_var('content', $content . "\n" . implode("\n", $append));
+        }
+
         return;
     }
 
-    $pageId = (string) $template->get_var('sp_id');
-    if ($pageId === '') {
-        return;
-    }
+    // Geeklog article rendering exposes story_id and story_display_type through
+    // PLG_templateSetVars(), but does not populate plugin_itemdisplay itself.
+    // Use that generic hook as a Core fallback only on the full article page.
+    if (in_array($templatename, array('storytext', 'featuredstorytext', 'archivestorytext'), true)) {
+        $displayType = (string) $template->get_var('story_display_type');
+        $storyId = (string) $template->get_var('story_id');
 
-    $content = (string) $template->get_var('content');
-    $append = array();
+        if ($displayType !== 'n' || $storyId === '') {
+            return;
+        }
 
-    $relationsHtml = HUB_renderPillarRelations('staticpages', $pageId);
-    if ($relationsHtml !== '') {
-        $append[] = $relationsHtml;
-    }
+        $backlinksHtml = HUB_renderItemPillarBacklinks('article', $storyId);
+        if ($backlinksHtml === '') {
+            return;
+        }
 
-    $topicsHtml = HUB_renderStaticPageTopics($pageId);
-    if ($topicsHtml !== '') {
-        $append[] = $topicsHtml;
-    }
+        $existing = (string) $template->get_var('plugin_itemdisplay');
+        $template->set_var(
+            'plugin_itemdisplay',
+            $existing === '' ? $backlinksHtml : $existing . "\n" . $backlinksHtml
+        );
 
-    if (!empty($append)) {
-        $template->set_var('content', $content . "\n" . implode("\n", $append));
+        // Core computes these flags before PLG_templateSetVars(). Re-enable the
+        // footer when Hub adds the first plugin_itemdisplay fragment.
+        $template->set_var('feedback_list', true);
+        $template->set_var('story_footer', true);
     }
 }
 
