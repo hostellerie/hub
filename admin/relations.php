@@ -48,6 +48,125 @@ function HUB_relAdminStaticPages()
     return $rows;
 }
 
+function HUB_relAdminTopicContext($pageId)
+{
+    $context = function_exists('HUB_staticPageTopicContext')
+        ? HUB_staticPageTopicContext($pageId)
+        : array('specific_topics' => array());
+
+    $topics = isset($context['specific_topics']) && is_array($context['specific_topics'])
+        ? $context['specific_topics']
+        : array();
+
+    $ids = array();
+    $labels = array();
+    foreach ($topics as $topic) {
+        $tid = isset($topic['tid']) ? (string) $topic['tid'] : '';
+        if ($tid === '') {
+            continue;
+        }
+
+        $ids[] = $tid;
+        $labels[$tid] = isset($topic['topic']) && (string) $topic['topic'] !== ''
+            ? (string) $topic['topic']
+            : $tid;
+    }
+
+    return array(
+        'ids' => array_values(array_unique($ids)),
+        'labels' => $labels,
+    );
+}
+
+function HUB_relAdminSuggestedPillars($staticPages, $pillars, $limit = 8)
+{
+    $existing = array();
+    foreach ($pillars as $pillar) {
+        if (isset($pillar['source_type'], $pillar['source_id'])
+            && (string) $pillar['source_type'] === 'staticpages'
+        ) {
+            $existing[(string) $pillar['source_id']] = true;
+        }
+    }
+
+    $suggestions = array();
+    foreach ($staticPages as $page) {
+        $pageId = isset($page['sp_id']) ? (string) $page['sp_id'] : '';
+        if ($pageId === '' || isset($existing[$pageId])) {
+            continue;
+        }
+
+        $topicContext = HUB_relAdminTopicContext($pageId);
+        if (empty($topicContext['ids'])) {
+            continue;
+        }
+
+        $articles = function_exists('HUB_linkAuditArticlesByTopics')
+            ? HUB_linkAuditArticlesByTopics($topicContext['ids'])
+            : array();
+
+        if (empty($articles)) {
+            continue;
+        }
+
+        $suggestions[] = array(
+            'id' => $pageId,
+            'title' => isset($page['sp_title']) && (string) $page['sp_title'] !== ''
+                ? (string) $page['sp_title']
+                : $pageId,
+            'topics' => array_values($topicContext['labels']),
+            'article_count' => count($articles),
+        );
+    }
+
+    usort($suggestions, function ($left, $right) {
+        if ($left['article_count'] === $right['article_count']) {
+            return strcasecmp($left['title'], $right['title']);
+        }
+        return $left['article_count'] > $right['article_count'] ? -1 : 1;
+    });
+
+    return array_slice($suggestions, 0, max(1, (int) $limit));
+}
+
+function HUB_relAdminSuggestedArticles($pillar, $relations, $limit = 10)
+{
+    if (!isset($pillar['source_type'], $pillar['source_id'])
+        || (string) $pillar['source_type'] !== 'staticpages'
+    ) {
+        return array();
+    }
+
+    $topicContext = HUB_relAdminTopicContext($pillar['source_id']);
+    if (empty($topicContext['ids']) || !function_exists('HUB_linkAuditArticlesByTopics')) {
+        return array();
+    }
+
+    $existing = array();
+    foreach ($relations as $relation) {
+        if (isset($relation['item_type'], $relation['item_id'])
+            && (string) $relation['item_type'] === 'article'
+        ) {
+            $existing[(string) $relation['item_id']] = true;
+        }
+    }
+
+    $suggestions = array();
+    foreach (HUB_linkAuditArticlesByTopics($topicContext['ids']) as $article) {
+        $sid = isset($article['sid']) ? (string) $article['sid'] : '';
+        if ($sid === '' || isset($existing[$sid])) {
+            continue;
+        }
+
+        $suggestions[] = $article;
+        if (count($suggestions) >= max(1, (int) $limit)) {
+            break;
+        }
+    }
+
+    return $suggestions;
+}
+
 if (isset($_GET['hub_ajax']) && $_GET['hub_ajax'] === 'items') {
     $type = isset($_GET['type']) ? HUB_normalizeObjectType($_GET['type']) : '';
     $payload = HUB_relationObjectOptions($type, 100);
@@ -115,6 +234,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $staticPages = HUB_relAdminStaticPages();
 $objectTypes = HUB_relationObjectTypes();
 $pillars = HUB_getPillars(true);
+$showSuggestions = isset($_GET['suggest']) && $_GET['suggest'] === '1';
+$pillarSuggestions = $showSuggestions
+    ? HUB_relAdminSuggestedPillars($staticPages, $pillars, 8)
+    : array();
 
 $content = '<style>'
     . '.hub-rel-nav{margin:0 0 1rem}.hub-rel-nav a{margin-right:1rem}'
@@ -127,6 +250,9 @@ $content = '<style>'
     . '.hub-rel-check{display:flex!important;flex-direction:column;justify-content:flex-end;min-height:4.15rem}'
     . '.hub-rel-check>span:first-child{margin-bottom:.55rem}.hub-rel-check-control{display:flex;align-items:center;min-height:2.45rem}'
     . '.hub-rel-item-note{display:block;margin-top:.35rem;font-weight:400;opacity:.72;font-size:.88em}'
+    . '.hub-rel-suggest{background:#f7f9fc}.hub-rel-suggest-row{display:grid;grid-template-columns:minmax(220px,2fr) minmax(220px,3fr) auto;gap:.75rem;align-items:center;padding:.65rem 0;border-bottom:1px solid #e3e6eb}'
+    . '.hub-rel-suggest-row:last-child{border-bottom:0}.hub-rel-reason{font-size:.9em;opacity:.75}'
+    . '@media(max-width:760px){.hub-rel-suggest-row{grid-template-columns:1fr}}'
     . '.hub-rel-table{width:100%;border-collapse:collapse;margin-top:1rem}.hub-rel-table th,.hub-rel-table td{padding:.45rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}'
     . '.hub-rel-actions form{display:inline}.hub-rel-muted{opacity:.7;font-size:.92em}'
     . '.hub-rel-integrity{margin:.55rem 0;padding:.55rem .7rem;border-left:4px solid #d7a900;background:#fffbea}'
@@ -140,6 +266,38 @@ $content .= '<h1>Pillars &amp; manual relations</h1>';
 $content .= '<p>Hub 0.3.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
 $content .= '<p class="hub-rel-muted">Known relation types are discovered from active Geeklog Item Info providers. When a provider exposes the shared collection contract, Hub can also list its selectable objects without querying plugin-private tables. Choose <em>Custom / other…</em> only when a provider type is not listed.</p>';
 $content .= $message;
+
+if ($showSuggestions) {
+    $content .= '<p><a class="uk-button" href="relations.php">Hide suggestions</a></p>';
+} else {
+    $content .= '<p><a class="uk-button" href="relations.php?suggest=1">Find suggestions</a> '
+        . '<span class="hub-rel-muted">Uses specific Geeklog topics as an explainable editorial signal; nothing is added automatically.</span></p>';
+}
+
+if ($showSuggestions) {
+    $content .= '<div class="hub-rel-card hub-rel-suggest"><h2>Suggested pillars</h2>';
+    if (empty($pillarSuggestions)) {
+        $content .= '<p class="hub-rel-muted">No additional Static Page currently has both a specific topic context and matching published articles.</p>';
+    } else {
+        foreach ($pillarSuggestions as $suggestion) {
+            $reason = count($suggestion['topics']) . ' specific topic(s) · '
+                . (int) $suggestion['article_count'] . ' matching published article(s)';
+            $content .= '<div class="hub-rel-suggest-row"><div><strong>'
+                . HUB_relAdminEscape($suggestion['title']) . '</strong><br><code>'
+                . HUB_relAdminEscape($suggestion['id']) . '</code></div><div class="hub-rel-reason">'
+                . HUB_relAdminEscape(implode(', ', $suggestion['topics'])) . '<br>'
+                . HUB_relAdminEscape($reason) . '</div><form method="post" action="relations.php">'
+                . HUB_relAdminTokenField()
+                . '<input type="hidden" name="hub_action" value="save_pillar">'
+                . '<input type="hidden" name="pillar_id" value="0">'
+                . '<input type="hidden" name="source_id" value="' . HUB_relAdminEscape($suggestion['id']) . '">'
+                . '<input type="hidden" name="title_override" value="">'
+                . '<input type="hidden" name="is_enabled" value="1">'
+                . '<button type="submit" class="uk-button">Add as pillar</button></form></div>';
+        }
+    }
+    $content .= '</div>';
+}
 
 $content .= '<div class="hub-rel-card"><h2>Add Static Page pillar</h2>';
 $content .= '<form method="post" action="relations.php">' . HUB_relAdminTokenField();
@@ -221,6 +379,43 @@ if (empty($pillars)) {
                     . '<button type="submit" class="uk-button">Delete</button></form></td></tr>';
             }
             $content .= '</tbody></table>';
+        }
+
+        if ($showSuggestions) {
+            $articleSuggestions = HUB_relAdminSuggestedArticles($pillar, $relations, 10);
+            $content .= '<div class="hub-rel-suggest"><h3>Suggested relations</h3>';
+            if (empty($articleSuggestions)) {
+                $content .= '<p class="hub-rel-muted">No new article relation is suggested from this pillar\'s specific topics.</p>';
+            } else {
+                $suggestionPosition = count($relations) * 10 + 10;
+                foreach ($articleSuggestions as $articleSuggestion) {
+                    $sid = isset($articleSuggestion['sid']) ? (string) $articleSuggestion['sid'] : '';
+                    $title = isset($articleSuggestion['title']) && (string) $articleSuggestion['title'] !== ''
+                        ? (string) $articleSuggestion['title']
+                        : $sid;
+                    $topics = isset($articleSuggestion['hub_topics']) && is_array($articleSuggestion['hub_topics'])
+                        ? array_values($articleSuggestion['hub_topics'])
+                        : array();
+
+                    $content .= '<div class="hub-rel-suggest-row"><div><strong>'
+                        . HUB_relAdminEscape($title) . '</strong><br><code>article:'
+                        . HUB_relAdminEscape($sid) . '</code></div><div class="hub-rel-reason">Shared specific topic'
+                        . (count($topics) === 1 ? ': ' : 's: ')
+                        . HUB_relAdminEscape(implode(', ', $topics))
+                        . '</div><form method="post" action="relations.php">'
+                        . HUB_relAdminTokenField()
+                        . '<input type="hidden" name="hub_action" value="save_relation">'
+                        . '<input type="hidden" name="relation_id" value="0">'
+                        . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
+                        . '<input type="hidden" name="item_type" value="article">'
+                        . '<input type="hidden" name="item_id_manual" value="' . HUB_relAdminEscape($sid) . '">'
+                        . '<input type="hidden" name="position" value="' . (int) $suggestionPosition . '">'
+                        . '<input type="hidden" name="is_enabled" value="1">'
+                        . '<button type="submit" class="uk-button">Add relation</button></form></div>';
+                    $suggestionPosition += 10;
+                }
+            }
+            $content .= '</div>';
         }
 
         $content .= '<h3>Add relation</h3>';
