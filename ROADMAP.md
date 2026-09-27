@@ -136,6 +136,7 @@ This expedited milestone provides an immediately useful subset of the later disc
 - expose a reusable runtime service catalogue with dispatcher presence, supported actions and reflected signatures
 - expose structured render capability where useful
 - provide admin recommendations explaining which interoperability hooks are missing
+- cross-check declared shared capabilities against safely detectable Memorandum implementation surfaces, without treating declarations as authorization or changing readiness automatically
 - Hub itself declares the shared roles `relationship`, `orchestrator`, `service` through the same generic declaration contract
 - never advertise future `hub.*` capabilities before the corresponding Hub service/read surface exists
 - inspect the recommended static `plugin.json` manifest without making it a readiness requirement
