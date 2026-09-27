@@ -191,10 +191,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'save_pillar') {
             $pillarId = isset($_POST['pillar_id']) ? (int) $_POST['pillar_id'] : 0;
             $sourceId = isset($_POST['source_id']) ? (string) $_POST['source_id'] : '';
-            $titleOverride = isset($_POST['title_override']) ? (string) $_POST['title_override'] : '';
             $enabled = !empty($_POST['is_enabled']) ? 1 : 0;
 
-            $saved = HUB_savePillar($pillarId, 'staticpages', $sourceId, $titleOverride, $enabled);
+            $saved = HUB_savePillar($pillarId, 'staticpages', $sourceId, '', $enabled);
             $message = $saved
                 ? '<div class="hub-rel-message">Pillar saved.</div>'
                 : '<div class="hub-rel-message hub-rel-error">Unable to save pillar. The Static Page may already be registered.</div>';
@@ -306,7 +305,7 @@ if ($showSuggestions) {
                 . '<input type="hidden" name="hub_action" value="save_pillar">'
                 . '<input type="hidden" name="pillar_id" value="0">'
                 . '<input type="hidden" name="source_id" value="' . HUB_relAdminEscape($suggestion['id']) . '">'
-                . '<input type="hidden" name="title_override" value="">'
+
                 . '<input type="hidden" name="is_enabled" value="1">'
                 . '<button type="submit" class="uk-button">Add as pillar</button></form></div>';
         }
@@ -325,7 +324,6 @@ foreach ($staticPages as $page) {
         . HUB_relAdminEscape($page['sp_title'] . ' [' . $page['sp_id'] . ']') . '</option>';
 }
 $content .= '</select></label>';
-$content .= '<label>Optional title override<input type="text" name="title_override" maxlength="255"></label>';
 $content .= '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1" checked><span>Enabled</span></label>';
 $content .= '<div><button type="submit" class="uk-button uk-button-primary">Add pillar</button></div></div></form></div>';
 
@@ -334,9 +332,10 @@ if (empty($pillars)) {
 } else {
     foreach ($pillars as $pillar) {
         $resolvedPillar = HUB_resolveObject($pillar['source_type'], $pillar['source_id']);
-        $pillarTitle = trim((string) $pillar['title_override']) !== ''
-            ? $pillar['title_override']
-            : $resolvedPillar['title'];
+        $pillarTitle = (string) $resolvedPillar['title'];
+        if ($pillarTitle === '') {
+            $pillarTitle = (string) $pillar['source_id'];
+        }
         $relations = HUB_getRelations($pillar['id'], true);
 
         $content .= '<details class="hub-rel-card hub-rel-pillar">';
@@ -367,7 +366,6 @@ if (empty($pillars)) {
         $content .= '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">';
         $content .= '<input type="hidden" name="source_id" value="' . HUB_relAdminEscape($pillar['source_id']) . '">';
         $content .= '<div class="hub-rel-grid">';
-        $content .= '<label>Title override<input type="text" name="title_override" maxlength="255" value="' . HUB_relAdminEscape($pillar['title_override']) . '"></label>';
         $content .= '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1"' . (!empty($pillar['is_enabled']) ? ' checked' : '') . '><span>Enabled</span></label>';
         $content .= '<div><button type="submit" class="uk-button">Update pillar</button></div></div></form>';
 
