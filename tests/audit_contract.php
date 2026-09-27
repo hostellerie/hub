@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-content-contract.php', 'lib-metadata.php', 'lib-services.php', 'lib-render.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'plugin.json', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-capability-evidence.php', 'lib-content-contract.php', 'lib-metadata.php', 'lib-services.php', 'lib-render.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'plugin.json', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -15,7 +15,7 @@ foreach (array('HUB_roleInfer', 'HUB_roleReadiness', 'HUB_roleEnrichRows', 'HUB_
         exit(1);
     }
 }
-if (strpos($admin, 'Export audit as Markdown') === false || strpos($admin, '<th>Role</th>') === false || strpos($admin, 'Primary role') === false || strpos($admin, 'ID to URL') === false || strpos($admin, 'Extended Geeklog integration') === false || strpos($admin, 'Shared content contract evidence') === false || strpos($admin, 'Modernization metadata') === false) {
+if (strpos($admin, 'Export audit as Markdown') === false || strpos($admin, '<th>Role</th>') === false || strpos($admin, 'Primary role') === false || strpos($admin, 'ID to URL') === false || strpos($admin, 'Extended Geeklog integration') === false || strpos($admin, 'Capability implementation evidence') === false || strpos($admin, 'Shared content contract evidence') === false || strpos($admin, 'Modernization metadata') === false) {
     fwrite(STDERR, "Missing role-aware/export audit UI\n");
     exit(1);
 }
@@ -205,6 +205,72 @@ if (!HUB_serviceHasAction('hubservicetest', 'dashboard_summary')
     exit(1);
 }
 
+
+require_once $root . '/lib-capability-evidence.php';
+
+$capEvidenceGood = HUB_capabilityImplementationEvidence(
+    'example',
+    array(
+        'valid' => true,
+        'capabilities' => array('content.read', 'content.url.resolve', 'dashboard.summary'),
+    ),
+    array(
+        'item_info' => true,
+        'related_items' => false,
+        'id_to_url' => true,
+        'blocks' => false,
+        'autotags' => false,
+        'search' => false,
+        'services' => true,
+    ),
+    array(
+        'item_saved' => array(),
+        'item_deleted' => array(),
+    ),
+    array(
+        'actions' => array(
+            array('action' => 'dashboard_summary', 'function' => 'service_dashboard_summary_example', 'signature' => 'service_dashboard_summary_example(...)'),
+        ),
+    ),
+    array(
+        'collection_source' => false,
+    )
+);
+$capEvidenceGoodText = implode(' ', $capEvidenceGood['details']);
+if (strpos($capEvidenceGoodText, 'content.read') === false
+    || strpos($capEvidenceGoodText, 'dashboard.summary') === false
+    || !empty($capEvidenceGood['recommendations'])
+) {
+    fwrite(STDERR, "Capability implementation evidence reconciliation failed\n");
+    exit(1);
+}
+
+$capEvidenceMissing = HUB_capabilityImplementationEvidence(
+    'broken',
+    array(
+        'valid' => true,
+        'capabilities' => array('content.read', 'content.lifecycle', 'dashboard.summary'),
+    ),
+    array(
+        'item_info' => false,
+        'related_items' => false,
+        'id_to_url' => false,
+        'blocks' => false,
+        'autotags' => false,
+        'search' => false,
+        'services' => false,
+    ),
+    array(
+        'item_saved' => array(),
+        'item_deleted' => array(),
+    ),
+    array('actions' => array()),
+    array('collection_source' => false)
+);
+if (count($capEvidenceMissing['recommendations']) < 3) {
+    fwrite(STDERR, "Missing declared capability evidence did not produce recommendations\n");
+    exit(1);
+}
 
 require_once $root . '/lib-content-contract.php';
 require_once $root . '/lib-metadata.php';
