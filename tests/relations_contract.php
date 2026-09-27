@@ -78,8 +78,8 @@ hubAssert(!empty($collection['supported']), 'declared collection is supported');
 hubAssert(count($collection['items']) === 2, 'collection returns selectable items');
 hubAssert($collection['items'][0]['title'] === 'Video one', 'collection items are normalized and sorted');
 
-$unsupportedCollection = HUB_relationObjectOptions('article', 100);
-hubAssert(empty($unsupportedCollection['supported']), 'provider without collection evidence falls back to manual ID');
+$articleCollection = HUB_relationObjectOptions('article', 100);
+hubAssert(!empty($articleCollection['supported']), 'Core articles use the dedicated selectable collection fallback');
 
 $missingKnownProvider = HUB_resolveObject('article', 'missing-story');
 hubAssert(empty($missingKnownProvider['exists']), 'missing known-provider object remains unresolved');
