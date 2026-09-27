@@ -87,7 +87,9 @@ The audit includes Hub itself, exposes detected callback/function names and auto
 
 ## Role-aware readiness
 
-Hub infers a plugin role from existing Geeklog capabilities before scoring interoperability: **Content**, **Presentation**, **Service**, **Infrastructure**, or **Orchestrator**. Content plugins are evaluated on Item Info, stable object types and save/delete lifecycle emission; presentation and service plugins are evaluated against their own role; infrastructure plugins are not penalized for missing content APIs.
+Hub combines provider-declared roles from the shared capability contract with technical evidence from existing Geeklog APIs. Addressable-content evidence remains authoritative for identifying a content owner; otherwise an explicit provider role can identify **Orchestrator**, **Relationship**, **Diagnostic**, **Navigation**, **Communication**, **Presentation**, **Service** or **Infrastructure** providers.
+
+The audit records whether the primary role is `declared`, `inferred` or `declared+inferred`, and preserves all declared secondary roles. Content providers are evaluated on Item Info, stable object types and save/delete lifecycle emission. Service and presentation providers retain role-specific checks. Diagnostic, relationship, navigation, communication and infrastructure roles are not penalized for missing content-owner APIs.
 
 ## Audit cache
 
