@@ -123,12 +123,14 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
         }
     } else {
         $content .= '<p>The articles below share one or more <strong>specific Geeklog topics</strong> with this Static Page but do not currently link back to it. This is a suggestion signal only; review each article before deciding whether a contextual link is editorially appropriate.</p>';
-        $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>Matched topics</th><th>ID</th><th>Published</th><th>Actions</th></tr></thead><tbody>';
+        $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>Matched topics</th><th>Views</th><th>Comments</th><th>Published</th><th>ID</th><th>Actions</th></tr></thead><tbody>';
         foreach ($hubMissingArticles as $hubArticleRow) {
             $hubSid = isset($hubArticleRow['sid']) ? $hubArticleRow['sid'] : '';
             $hubTitle = isset($hubArticleRow['title']) ? $hubArticleRow['title'] : $hubSid;
             $hubTitle = html_entity_decode((string) $hubTitle, ENT_QUOTES, 'UTF-8');
             $hubDate = isset($hubArticleRow['date']) ? $hubArticleRow['date'] : '';
+            $hubHits = isset($hubArticleRow['hits']) ? (int) $hubArticleRow['hits'] : 0;
+            $hubComments = isset($hubArticleRow['comments']) ? (int) $hubArticleRow['comments'] : 0;
             $hubArticleUrl = function_exists('COM_buildURL')
                 ? COM_buildURL($_CONF['site_url'] . '/article.php?story=' . rawurlencode($hubSid))
                 : $_CONF['site_url'] . '/article.php?story=' . rawurlencode($hubSid);
@@ -146,7 +148,7 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
                 ? '&mdash;'
                 : implode('<br>', $hubMatchedTopicLinks);
 
-            $content .= '<tr><td><strong>' . HUB_linkAuditAdminEscape($hubTitle) . '</strong></td><td>' . $hubMatchedTopicsHtml . '</td><td><code>' . HUB_linkAuditAdminEscape($hubSid) . '</code></td><td>' . HUB_linkAuditAdminEscape($hubDate) . '</td><td><a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a> &middot; <a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a></td></tr>';
+            $content .= '<tr><td><strong>' . HUB_linkAuditAdminEscape($hubTitle) . '</strong></td><td>' . $hubMatchedTopicsHtml . '</td><td>' . $hubHits . '</td><td>' . $hubComments . '</td><td>' . HUB_linkAuditAdminEscape($hubDate) . '</td><td><code>' . HUB_linkAuditAdminEscape($hubSid) . '</code></td><td><a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a> &middot; <a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a></td></tr>';
         }
         $content .= '</tbody></table></div>';
     }
