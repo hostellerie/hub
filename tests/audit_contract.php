@@ -527,6 +527,16 @@ if (empty($itemDisplayRealFacts['found'])
     exit(1);
 }
 
+$sourceFilesFunction = file_get_contents($root . '/lib-audit.php');
+if (strpos($sourceFilesFunction, "\$maxFiles = 800;") === false
+    || strpos($sourceFilesFunction, "'include'") === false
+    || strpos($sourceFilesFunction, "'public_html'") === false
+    || strpos($sourceFilesFunction, "'scan_truncated'") === false
+) {
+    fwrite(STDERR, "Prioritized provider source scan contract missing\n");
+    exit(1);
+}
+
 require_once $root . '/lib-link-audit.php';
 
 $sortFixture = array(
