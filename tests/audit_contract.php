@@ -464,6 +464,20 @@ if (!$realFacts['item_saved'] || !$realFacts['item_deleted']
 
 require_once $root . '/lib-link-audit.php';
 
+$sortFixture = array(
+    array('title' => 'Older popular', 'hits' => 100, 'comments' => 1, 'date' => '2020-01-01 00:00:00', 'hub_topics' => array('a' => 'A')),
+    array('title' => 'Discussed', 'hits' => 20, 'comments' => 9, 'date' => '2024-01-01 00:00:00', 'hub_topics' => array('a' => 'A', 'b' => 'B')),
+);
+$sortedByViews = HUB_linkAuditSortArticles($sortFixture, 'views', 'desc');
+$sortedByTopics = HUB_linkAuditSortArticles($sortFixture, 'topics', 'desc');
+if ($sortedByViews[0]['title'] !== 'Older popular'
+    || $sortedByTopics[0]['title'] !== 'Discussed'
+    || HUB_linkAuditArticleAge('2025-01-01 00:00:00', strtotime('2026-01-02 00:00:00')) !== '1 year'
+) {
+    fwrite(STDERR, "Link audit sorting/age helpers failed\n");
+    exit(1);
+}
+
 $_CONF = array('site_url' => 'https://example.com');
 
 $target = 'https://example.com/staticpages/index.php?page=page-1';
@@ -628,8 +642,23 @@ if (strpos(implode(' ', $syndication), 'Content Syndication: Full') === false
 }
 
 $staticPageSource = file_get_contents($root . '/lib-staticpages.php');
+$linkAuditLibSource = file_get_contents($root . '/lib-link-audit.php');
 $linkAuditSource = file_get_contents($root . '/admin/link-audit.php');
 $auditCacheSource = file_get_contents($root . '/lib-audit-cache.php');
+
+if (strpos($linkAuditLibSource, 's.hits') === false
+    || strpos($linkAuditLibSource, 's.comments') === false
+    || strpos($linkAuditLibSource, 'function HUB_linkAuditArticleAge') === false
+    || strpos($linkAuditLibSource, 'function HUB_linkAuditSortArticles') === false
+    || strpos($linkAuditSource, '<th>Views</th>') === false
+    || strpos($linkAuditSource, '<th>Comments</th>') === false
+    || strpos($linkAuditSource, '<th>Age</th>') === false
+    || strpos($linkAuditSource, 'add_article_relation') === false
+    || strpos($linkAuditSource, 'Already related') === false
+) {
+    fwrite(STDERR, "Hub article link audit prioritization/actions contract missing\n");
+    exit(1);
+}
 
 if (strpos($staticPageSource, 'function HUB_staticPageTopicContext') === false
     || strpos($staticPageSource, "'placement_only'") === false
