@@ -166,17 +166,22 @@ if (empty($pillars)) {
             $content .= '<table class="hub-rel-table"><thead><tr><th>Order</th><th>Type + id</th><th>Resolved item</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
             foreach ($relations as $relation) {
                 $resolved = HUB_resolveObject($relation['item_type'], $relation['item_id']);
-                $content .= '<tr><td>' . (int) $relation['position'] . '</td>';
-                $content .= '<td><code>' . HUB_relAdminEscape($relation['item_type']) . ':' . HUB_relAdminEscape($relation['item_id']) . '</code></td>';
-                $content .= '<td>' . HUB_relAdminEscape($resolved['title']);
-                if (!empty($resolved['url'])) {
-                    $content .= ' · <a href="' . HUB_relAdminEscape($resolved['url']) . '">View</a>';
-                }
-                if (empty($resolved['exists'])) {
-                    $content .= ' <span class="hub-rel-muted">(not resolved)</span>';
-                }
-                $content .= '</td><td>' . (!empty($relation['is_enabled']) ? 'Enabled' : 'Disabled') . '</td>';
-                $content .= '<td class="hub-rel-actions"><form method="post" action="relations.php">'
+                $content .= '<tr><td colspan="5"><form method="post" action="relations.php" class="hub-rel-grid">'
+                    . HUB_relAdminTokenField()
+                    . '<input type="hidden" name="hub_action" value="save_relation">'
+                    . '<input type="hidden" name="relation_id" value="' . (int) $relation['id'] . '">'
+                    . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
+                    . '<input type="hidden" name="item_type" value="' . HUB_relAdminEscape($relation['item_type']) . '">'
+                    . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($relation['item_id']) . '">'
+                    . '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (int) $relation['position'] . '"></label>'
+                    . '<div><strong><code>' . HUB_relAdminEscape($relation['item_type']) . ':' . HUB_relAdminEscape($relation['item_id']) . '</code></strong><br>'
+                    . HUB_relAdminEscape($resolved['title'])
+                    . (!empty($resolved['url']) ? ' · <a href="' . HUB_relAdminEscape($resolved['url']) . '">View</a>' : '')
+                    . (empty($resolved['exists']) ? ' <span class="hub-rel-muted">(not resolved)</span>' : '')
+                    . '</div>'
+                    . '<label><input type="checkbox" name="is_enabled" value="1"' . (!empty($relation['is_enabled']) ? ' checked' : '') . '> Enabled</label>'
+                    . '<div><button type="submit" class="uk-button">Update</button></div>'
+                    . '</form><form method="post" action="relations.php" style="margin-top:.4rem">'
                     . HUB_relAdminTokenField()
                     . '<input type="hidden" name="hub_action" value="delete_relation">'
                     . '<input type="hidden" name="relation_id" value="' . (int) $relation['id'] . '">'
