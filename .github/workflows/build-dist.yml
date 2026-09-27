@@ -38,7 +38,9 @@ jobs:
 
       - name: Run Hub contract tests
         shell: bash
-        run: php tests/audit_contract.php
+        run: |
+          php tests/audit_contract.php
+          php tests/relations_contract.php
 
       - name: Build Geeklog plugin archive
         id: package
