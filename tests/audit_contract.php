@@ -659,6 +659,18 @@ if (strpos(implode(' ', $syndication), 'Content Syndication: Full') === false
     exit(1);
 }
 
+$relationsAdminSource = file_get_contents($root . '/admin/relations.php');
+$relationsLibSource = file_get_contents($root . '/lib-relations.php');
+$newInstallSqlSource = file_get_contents($root . '/sql/mysql_install.php');
+
+if (stripos($relationsAdminSource, 'title override') !== false
+    || strpos($newInstallSqlSource, 'title_override') !== false
+    || strpos($relationsLibSource, '"title_override = "') !== false
+) {
+    fwrite(STDERR, "Obsolete pillar title override is still active\n");
+    exit(1);
+}
+
 $staticPageSource = file_get_contents($root . '/lib-staticpages.php');
 $linkAuditLibSource = file_get_contents($root . '/lib-link-audit.php');
 $linkAuditSource = file_get_contents($root . '/admin/link-audit.php');
