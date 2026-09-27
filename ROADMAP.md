@@ -211,9 +211,10 @@ Implemented foundation:
 
 - public pillar/backlink rendering smoke-tested under Geeklog 2.1.1 and 2.2.2
 - Core articles expose reusable template hooks and are covered with one server-rendered backlink in the article body
-- source review completed for Forum, Documents, Videos and Maps: none currently invokes `PLG_itemDisplay()` or exposes an equivalent generic Hub-usable public render hook
+- Hub generic backlink rendering now covers Forum, Documents, Videos, Maps, MediaGallery and Polls through `plugin_itemdisplay_hub()`
+- the owning provider must call `PLG_itemDisplay($id, $type)` on the full public item view; Forum support has been implemented in the maintained 2.1.1 and 2.2.2 Forum branches
 - Hub deliberately does not inject provider-specific DOM/JavaScript or query provider-private tables just to force backlinks
-- those providers remain fully usable as forward-linked pillar relations; reciprocal backlink rendering becomes available when a normal shared Geeklog rendering hook exists
+- Articles and Static Pages keep their dedicated rendering paths so generic item-display callbacks cannot duplicate their Hub backlink output
 - prefer adding/reusing generic Geeklog rendering hooks in those providers over Hub-specific integration
 - do not duplicate specialized plugin rendering when a reusable plugin renderer or service exists
 - keep output permission-aware by relying on provider resolution rather than reading provider-private tables
