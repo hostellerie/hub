@@ -94,7 +94,9 @@ function HUB_savePillar($pillarId, $sourceType, $sourceId, $titleOverride = '', 
     $pillarId = (int) $pillarId;
     $sourceType = HUB_normalizeObjectType($sourceType);
     $sourceId = HUB_normalizeObjectId($sourceId);
-    $titleOverride = trim((string) $titleOverride);
+    // title_override is retained only as a legacy schema/API slot during 0.4.x.
+    // Public and admin labels always use the resolved source title.
+    $titleOverride = '';
     $isEnabled = $isEnabled ? 1 : 0;
 
     if ($sourceType === '' || $sourceId === '') {
@@ -806,7 +808,7 @@ function HUB_renderItemPillarBacklinks($itemType, $itemId)
         // do not let it silently replace the resolved source title in links.
         $title = (string) $resolved['title'];
         if ($title === '') {
-            $title = trim((string) $pillar['title_override']);
+            $title = (string) $pillar['source_id'];
         }
 
         $links[] = '<li><a href="'
