@@ -77,6 +77,12 @@ Hub reports native optional/distribution surfaces separately, including Related 
 
 Hub detects the provider-neutral `plugin_getcapabilities_*()` convention, reusable service actions, plugin-owned render entry points and the optional static `plugin.json` manifest. The manifest is validated as modernization metadata but is not a Geeklog Core requirement and does not affect readiness scoring.
 
+### Capability implementation evidence
+
+When a provider declares a shared capability, Hub cross-checks the normal Memorandum implementation surface when it can do so safely. Examples include `content.read` → Item Info, `content.lifecycle` → save/delete lifecycle evidence, `content.url.resolve` → ID-to-URL or Item Info, and `dashboard.summary` → the bounded `dashboard_summary` service.
+
+This reconciliation is diagnostic only. A missing or ambiguous implementation surface produces a review recommendation but does not make the declaration invalid, grant authorization, or change the role/readiness score automatically. Specialized provider capabilities remain accepted when Hub cannot infer their implementation surface.
+
 Runtime-detected callbacks are kept distinct from source evidence, provider declarations and inference. Hub never presents source scanning as proof that every mutation path emits a lifecycle notification. The full runtime `plugin_*_<plugin>()` surface remains available under the collapsed **Advanced API surface** section.
 
 See `ROADMAP.md` for the planned pillar/relationship implementation.
