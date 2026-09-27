@@ -127,6 +127,7 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
         foreach ($hubMissingArticles as $hubArticleRow) {
             $hubSid = isset($hubArticleRow['sid']) ? $hubArticleRow['sid'] : '';
             $hubTitle = isset($hubArticleRow['title']) ? $hubArticleRow['title'] : $hubSid;
+            $hubTitle = html_entity_decode((string) $hubTitle, ENT_QUOTES, 'UTF-8');
             $hubDate = isset($hubArticleRow['date']) ? $hubArticleRow['date'] : '';
             $hubArticleUrl = function_exists('COM_buildURL')
                 ? COM_buildURL($_CONF['site_url'] . '/article.php?story=' . rawurlencode($hubSid))
