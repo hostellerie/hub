@@ -15,7 +15,7 @@ foreach (array('HUB_roleInfer', 'HUB_roleReadiness', 'HUB_roleEnrichRows', 'HUB_
         exit(1);
     }
 }
-if (strpos($admin, 'Export audit as Markdown') === false || strpos($admin, '<th>Role</th>') === false || strpos($admin, 'ID to URL') === false || strpos($admin, 'Extended Geeklog integration') === false || strpos($admin, 'Shared content contract evidence') === false || strpos($admin, 'Modernization metadata') === false) {
+if (strpos($admin, 'Export audit as Markdown') === false || strpos($admin, '<th>Role</th>') === false || strpos($admin, 'Primary role') === false || strpos($admin, 'ID to URL') === false || strpos($admin, 'Extended Geeklog integration') === false || strpos($admin, 'Shared content contract evidence') === false || strpos($admin, 'Modernization metadata') === false) {
     fwrite(STDERR, "Missing role-aware/export audit UI\n");
     exit(1);
 }
@@ -362,6 +362,94 @@ if (HUB_linkAuditContainsLink('<p>https://example.com/staticpages/index.php?page
 }
 
 require_once $root . '/lib-role.php';
+
+$diagnosticRole = HUB_roleInfer(array(
+    'plugin' => 'monitor',
+    'caps' => array(
+        'item_info' => false,
+        'related_items' => false,
+        'id_to_url' => false,
+        'blocks' => false,
+        'autotags' => false,
+        'search' => false,
+        'services' => true,
+    ),
+    'source_facts' => array('item_saved' => array(), 'item_deleted' => array()),
+    'object_types' => array(),
+    'api_surface' => array(),
+    'capability_declaration' => array(
+        'valid' => true,
+        'roles' => array('diagnostic', 'service'),
+    ),
+));
+if ($diagnosticRole['name'] !== 'diagnostic'
+    || $diagnosticRole['source'] !== 'declared'
+    || $diagnosticRole['declared_roles'] !== array('diagnostic', 'service')
+) {
+    fwrite(STDERR, "Declared diagnostic role precedence failed\n");
+    exit(1);
+}
+$diagnosticReadiness = HUB_roleReadiness(array(
+    'plugin' => 'monitor',
+    'caps' => array('services' => true),
+    'source_facts' => array(),
+), $diagnosticRole);
+if ($diagnosticReadiness['label'] !== 'Role OK') {
+    fwrite(STDERR, "Diagnostic role readiness must not use content scoring\n");
+    exit(1);
+}
+
+$contentRole = HUB_roleInfer(array(
+    'plugin' => 'videos',
+    'caps' => array(
+        'item_info' => true,
+        'related_items' => false,
+        'id_to_url' => false,
+        'blocks' => false,
+        'autotags' => false,
+        'search' => false,
+        'services' => true,
+    ),
+    'source_facts' => array('item_saved' => array('functions.inc'), 'item_deleted' => array()),
+    'object_types' => array(),
+    'api_surface' => array(),
+    'capability_declaration' => array(
+        'valid' => true,
+        'roles' => array('content', 'service'),
+    ),
+));
+if ($contentRole['name'] !== 'content'
+    || $contentRole['source'] !== 'declared+inferred'
+) {
+    fwrite(STDERR, "Content evidence must remain primary over generic service role\n");
+    exit(1);
+}
+
+$hubRole = HUB_roleInfer(array(
+    'plugin' => 'hub',
+    'caps' => array(
+        'item_info' => false,
+        'related_items' => false,
+        'id_to_url' => false,
+        'blocks' => false,
+        'autotags' => false,
+        'search' => false,
+        'services' => false,
+    ),
+    'source_facts' => array('item_saved' => array(), 'item_deleted' => array()),
+    'object_types' => array(),
+    'api_surface' => array(),
+    'capability_declaration' => array(
+        'valid' => true,
+        'roles' => array('orchestrator', 'relationship', 'service'),
+    ),
+));
+if ($hubRole['name'] !== 'orchestrator'
+    || $hubRole['declared_roles'] !== array('orchestrator', 'relationship', 'service')
+) {
+    fwrite(STDERR, "Hub shared role declaration precedence failed\n");
+    exit(1);
+}
 
 $siteAwareMarkdown = HUB_roleMarkdown(array(), '2.2.2', '8.1.0', '0.2.0', 'Ecologie Pratique');
 if (strpos($siteAwareMarkdown, '# Ecologie Pratique — Plugin Interoperability Audit') === false
