@@ -257,9 +257,14 @@ $content = '<style>'
     . '.hub-rel-form-note{margin:.45rem 0 0;font-size:.9em;opacity:.72}'
     . '.hub-rel-suggest{background:#f7f9fc}.hub-rel-suggest-row{display:grid;grid-template-columns:minmax(220px,2fr) minmax(220px,3fr) auto;gap:.75rem;align-items:center;padding:.65rem 0;border-bottom:1px solid #e3e6eb}'
     . '.hub-rel-suggest-row:last-child{border-bottom:0}.hub-rel-reason{font-size:.9em;opacity:.75}'
-    . '@media(max-width:760px){.hub-rel-suggest-row{grid-template-columns:1fr}}'
-    . '.hub-rel-table{width:100%;border-collapse:collapse;margin-top:1rem}.hub-rel-table th,.hub-rel-table td{padding:.45rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}'
+    . '@media(max-width:760px){.hub-rel-suggest-row{grid-template-columns:1fr}.hub-rel-row-edit{grid-template-columns:1fr}.hub-rel-table{table-layout:auto}.hub-rel-col-order,.hub-rel-col-enabled,.hub-rel-col-actions{width:auto}}'
+    . '.hub-rel-table{width:100%;border-collapse:collapse;margin-top:1rem;table-layout:fixed}.hub-rel-table th,.hub-rel-table td{padding:.5rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}'
+    . '.hub-rel-col-order{width:120px}.hub-rel-col-enabled{width:150px}.hub-rel-col-actions{width:240px}'
+    . '.hub-rel-relation-main{line-height:1.45}.hub-rel-relation-main code{display:inline-block;margin-bottom:.15rem}'
+
+    . '.hub-rel-row-edit{grid-template-columns:120px minmax(260px,1fr) 150px 240px}'
     . '.hub-rel-actions{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}.hub-rel-actions form{display:inline}.hub-rel-muted{opacity:.7;font-size:.92em}'
+
     . '.hub-rel-integrity{margin:.55rem 0;padding:.55rem .7rem;border-left:4px solid #d7a900;background:#fffbea}'
     . '.hub-rel-ok{display:inline-block;padding:.12rem .45rem;border-radius:10px;background:#edf7ed;font-size:.86em}'
     . '.hub-rel-unresolved{display:inline-block;padding:.12rem .45rem;border-radius:10px;background:#fff1f0;font-size:.86em}'
@@ -356,18 +361,18 @@ if (empty($pillars)) {
         if (empty($relations)) {
             $content .= '<p class="hub-rel-muted">No manual relation yet.</p>';
         } else {
-            $content .= '<table class="hub-rel-table"><thead><tr><th>Order</th><th>Type + id</th><th>Resolved item</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+            $content .= '<table class="hub-rel-table"><thead><tr><th class="hub-rel-col-order">Order</th><th>Relation</th><th class="hub-rel-col-enabled">Enabled</th><th class="hub-rel-col-actions">Actions</th></tr></thead><tbody>';
             foreach ($relations as $relation) {
                 $resolved = HUB_resolveObject($relation['item_type'], $relation['item_id']);
                 $relationIdentity = HUB_relAdminEscape($relation['item_type'] . ':' . $relation['item_id']);
-                $content .= '<tr><td colspan="5"><form method="post" action="relations.php" class="hub-rel-grid">'
+                $content .= '<tr><td colspan="4"><form method="post" action="relations.php" class="hub-rel-grid hub-rel-row-edit">'
                     . HUB_relAdminTokenField()
                     . '<input type="hidden" name="relation_id" value="' . (int) $relation['id'] . '">'
                     . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
                     . '<input type="hidden" name="item_type" value="' . HUB_relAdminEscape($relation['item_type']) . '">'
                     . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($relation['item_id']) . '">'
                     . '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (int) $relation['position'] . '"></label>'
-                    . '<div><strong><code>' . $relationIdentity . '</code></strong><br>'
+                    . '<div class="hub-rel-relation-main"><strong><code>' . $relationIdentity . '</code></strong><br>'
                     . HUB_relAdminEscape($resolved['title'])
                     . (!empty($resolved['url']) ? ' · <a href="' . HUB_relAdminEscape($resolved['url']) . '">View</a>' : '')
                     . '<br>'
