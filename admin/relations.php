@@ -249,6 +249,11 @@ $content = '<style>'
     . '.hub-rel-message{padding:.7rem 1rem;margin:0 0 1rem;background:#edf7ed;border-left:4px solid #2e7d32}'
     . '.hub-rel-error{background:#fff1f0;border-left-color:#b00020}'
     . '.hub-rel-card{border:1px solid #d5d8dc;padding:1rem;margin:0 0 1rem;border-radius:4px}'
+    . '.hub-rel-pillar{padding:0;overflow:hidden}.hub-rel-pillar>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem 1rem;background:#f8f9fb}'
+    . '.hub-rel-pillar>summary::-webkit-details-marker{display:none}.hub-rel-pillar>summary:before{content:"▸";font-size:1.1rem;flex:0 0 auto}.hub-rel-pillar[open]>summary:before{content:"▾"}'
+    . '.hub-rel-pillar-summary-main{display:flex;align-items:center;gap:.65rem;min-width:0;flex:1}.hub-rel-pillar-summary-title{font-weight:700;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+    . '.hub-rel-pillar-summary-meta{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;font-size:.9em;opacity:.78}.hub-rel-pillar-body{padding:1rem;border-top:1px solid #e3e6eb}'
+
     . '.hub-rel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;align-items:end}'
     . '.hub-rel-grid label{display:block;font-weight:600}.hub-rel-grid input:not([type=checkbox]),.hub-rel-grid select{box-sizing:border-box;width:100%;padding:.45rem}'
     . '.hub-rel-grid input[type=checkbox]{width:auto;margin:0}'
@@ -334,15 +339,22 @@ if (empty($pillars)) {
             : $resolvedPillar['title'];
         $relations = HUB_getRelations($pillar['id'], true);
 
-        $content .= '<div class="hub-rel-card">';
-        $content .= '<h2>' . HUB_relAdminEscape($pillarTitle) . '</h2>';
-        $content .= '<p class="hub-rel-muted"><code>' . HUB_relAdminEscape($pillar['source_type'])
-            . ':' . HUB_relAdminEscape($pillar['source_id']) . '</code>'
-            . (!empty($pillar['is_enabled']) ? ' · enabled' : ' · disabled');
+        $content .= '<details class="hub-rel-card hub-rel-pillar">';
+        $content .= '<summary>'
+            . '<span class="hub-rel-pillar-summary-main"><span class="hub-rel-pillar-summary-title">'
+            . HUB_relAdminEscape($pillarTitle)
+            . '</span></span>'
+            . '<span class="hub-rel-pillar-summary-meta"><code>'
+            . HUB_relAdminEscape($pillar['source_type'] . ':' . $pillar['source_id'])
+            . '</code><span>'
+            . (!empty($pillar['is_enabled']) ? 'enabled' : 'disabled')
+            . '</span><span>'
+            . count($relations) . ' relation' . (count($relations) === 1 ? '' : 's')
+            . '</span></span></summary>';
+        $content .= '<div class="hub-rel-pillar-body">';
         if (!empty($resolvedPillar['url'])) {
-            $content .= ' · <a href="' . HUB_relAdminEscape($resolvedPillar['url']) . '">View source</a>';
+            $content .= '<p class="hub-rel-muted"><a href="' . HUB_relAdminEscape($resolvedPillar['url']) . '">View source</a></p>';
         }
-        $content .= '</p>';
         if (empty($resolvedPillar['exists'])) {
             $content .= '<div class="hub-rel-integrity"><strong>Pillar source unresolved.</strong> '
                 . HUB_relAdminEscape($resolvedPillar['diagnostic']) . '</div>';
@@ -495,7 +507,7 @@ if (empty($pillars)) {
             . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
             . '<button type="submit" class="uk-button">Delete pillar</button></form>';
 
-        $content .= '</div>';
+        $content .= '</div></details>';
     }
 }
 
