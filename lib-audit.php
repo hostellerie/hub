@@ -370,6 +370,82 @@ function HUB_auditLifecycleCallsFromSource($source)
     return $facts;
 }
 
+function HUB_auditItemDisplayCallsFromSource($source)
+{
+    $facts = array(
+        'found' => false,
+        'object_types' => array(),
+    );
+
+    if (!function_exists('token_get_all')) {
+        return $facts;
+    }
+
+    $tokens = token_get_all($source);
+    $count = count($tokens);
+
+    for ($i = 0; $i < $count; $i++) {
+        $token = $tokens[$i];
+        if (!is_array($token) || $token[0] !== T_STRING || strtolower($token[1]) !== 'plg_itemdisplay') {
+            continue;
+        }
+
+        $previous = HUB_auditPreviousSignificantTokenIndex($tokens, $i - 1);
+        if ($previous >= 0 && is_array($tokens[$previous]) && $tokens[$previous][0] === T_FUNCTION) {
+            continue;
+        }
+
+        $open = HUB_auditNextSignificantTokenIndex($tokens, $i + 1);
+        if ($open < 0 || HUB_auditTokenText($tokens[$open]) !== '(') {
+            continue;
+        }
+
+        $facts['found'] = true;
+
+        $depth = 1;
+        $argument = 1;
+        $secondArgumentTokens = array();
+
+        for ($j = $open + 1; $j < $count && $depth > 0; $j++) {
+            $current = $tokens[$j];
+            $tokenText = HUB_auditTokenText($current);
+
+            if ($tokenText === '(' || $tokenText === '[' || $tokenText === '{') {
+                $depth++;
+            } elseif ($tokenText === ')' || $tokenText === ']' || $tokenText === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    break;
+                }
+            }
+
+            if ($depth === 1 && $tokenText === ',') {
+                $argument++;
+                continue;
+            }
+
+            if ($argument === 2 && $depth === 1 && !HUB_auditTokenIsIgnorable($current)) {
+                $secondArgumentTokens[] = $current;
+            }
+        }
+
+        if (count($secondArgumentTokens) === 1
+            && is_array($secondArgumentTokens[0])
+            && $secondArgumentTokens[0][0] === T_CONSTANT_ENCAPSED_STRING
+        ) {
+            $type = trim(HUB_auditDecodePhpStringLiteral($secondArgumentTokens[0][1]));
+            if ($type !== '') {
+                $facts['object_types'][$type] = true;
+            }
+        }
+    }
+
+    $facts['object_types'] = array_keys($facts['object_types']);
+    sort($facts['object_types']);
+
+    return $facts;
+}
+
 function HUB_auditRelativeSourcePath($path, $plugin)
 {
     foreach (HUB_auditPluginSourceRoots($plugin) as $root) {
@@ -382,8 +458,16 @@ function HUB_auditRelativeSourcePath($path, $plugin)
 
 function HUB_auditSourceFacts($plugin)
 {
-    $facts = array('files_scanned' => 0, 'item_saved' => array(), 'item_deleted' => array(), 'object_types' => array());
+    $facts = array(
+        'files_scanned' => 0,
+        'item_saved' => array(),
+        'item_deleted' => array(),
+        'object_types' => array(),
+        'item_display' => array(),
+        'item_display_types' => array(),
+    );
     $types = array();
+    $displayTypes = array();
 
     foreach (HUB_auditPluginSourceFiles($plugin) as $file) {
         $source = @file_get_contents($file);
@@ -404,12 +488,23 @@ function HUB_auditSourceFacts($plugin)
         foreach ($sourceCalls['object_types'] as $type) {
             $types[$type] = true;
         }
+
+        $itemDisplay = HUB_auditItemDisplayCallsFromSource($source);
+        if ($itemDisplay['found']) {
+            $facts['item_display'][] = $relative;
+        }
+        foreach ($itemDisplay['object_types'] as $type) {
+            $displayTypes[$type] = true;
+        }
     }
 
     $facts['item_saved'] = array_values(array_unique($facts['item_saved']));
     $facts['item_deleted'] = array_values(array_unique($facts['item_deleted']));
     $facts['object_types'] = array_keys($types);
     sort($facts['object_types']);
+    $facts['item_display'] = array_values(array_unique($facts['item_display']));
+    $facts['item_display_types'] = array_keys($displayTypes);
+    sort($facts['item_display_types']);
 
     return $facts;
 }
@@ -581,6 +676,35 @@ function HUB_auditAdditionalCapabilities($plugin)
     return $details;
 }
 
+function HUB_auditItemDisplayPlacementDetails($sourceFacts)
+{
+    $details = array();
+
+    if (!empty($sourceFacts['item_display'])) {
+        $details[] = '◐ PLG_itemDisplay() provider placement found in source: '
+            . implode(', ', $sourceFacts['item_display']);
+        if (!empty($sourceFacts['item_display_types'])) {
+            $details[] = 'Detected item type(s): ' . implode(', ', $sourceFacts['item_display_types']);
+        } else {
+            $details[] = '◐ Placement found, but the item type is dynamic or could not be inferred safely.';
+        }
+    } else {
+        $details[] = '? No PLG_itemDisplay() provider placement found in scanned source.';
+    }
+
+    return $details;
+}
+
+function HUB_auditItemDisplayConsumerDetails($plugin)
+{
+    $function = 'plugin_itemdisplay_' . $plugin;
+    if (function_exists($function)) {
+        return array('✓ ' . HUB_auditFunctionSignature($function));
+    }
+
+    return array('? No plugin_itemdisplay_' . $plugin . '() callback detected at runtime.');
+}
+
 function HUB_auditRecommendations($plugin, $caps, $sourceFacts)
 {
     $recommendations = array();
@@ -604,6 +728,9 @@ function HUB_auditRecommendations($plugin, $caps, $sourceFacts)
         }
         if (!$caps['services']) {
             $recommendations[] = 'If another plugin should request specialized actions or rendering, expose a Geeklog service entry point.';
+        }
+        if ($caps['item_info'] && empty($sourceFacts['item_display'])) {
+            $recommendations[] = 'If this plugin has a full public item view, call PLG_itemDisplay($id, $type) at a stable server-rendered location so other plugins can contribute contextual fragments.';
         }
     }
     if (empty($sourceFacts['item_saved']) && empty($sourceFacts['item_deleted'])) {
@@ -675,6 +802,10 @@ function HUB_auditPlugin($plugin)
         'lifecycle_emitter' => HUB_auditLifecycleEmitterDetails($sourceFacts),
         'lifecycle_listener' => HUB_auditLifecycleListenerDetails($plugin),
         'lifecycle_contract' => HUB_auditLifecycleContractDetails($plugin),
+        'item_display_provider' => !empty($sourceFacts['item_display']),
+        'item_display_provider_details' => HUB_auditItemDisplayPlacementDetails($sourceFacts),
+        'item_display_consumer' => function_exists('plugin_itemdisplay_' . $plugin),
+        'item_display_consumer_details' => HUB_auditItemDisplayConsumerDetails($plugin),
         'object_types' => HUB_auditObjectTypeDetails($objectTypes),
         'search_types_function' => function_exists('plugin_searchtypes_' . $plugin) ? HUB_auditFunctionSignature('plugin_searchtypes_' . $plugin) : '',
         'api_surface' => HUB_auditPluginApiSurface($plugin),
