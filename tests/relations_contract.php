@@ -86,7 +86,7 @@ hubAssert(empty($missingKnownProvider['exists']), 'missing known-provider object
 hubAssert(!empty($missingKnownProvider['provider_available']), 'known provider remains detectable');
 hubAssert(strpos($missingKnownProvider['diagnostic'], 'did not resolve') !== false, 'missing object diagnostic is specific');
 
-$missingProvider = HUB_resolveObject('videos', 'video-1');
+$missingProvider = HUB_resolveObject('maps', 'map-1');
 hubAssert(empty($missingProvider['exists']), 'unknown provider object remains unresolved');
 hubAssert(empty($missingProvider['provider_available']), 'unknown provider is reported unavailable');
 hubAssert(strpos($missingProvider['diagnostic'], 'No loaded Item Info provider') !== false, 'missing provider diagnostic is specific');
