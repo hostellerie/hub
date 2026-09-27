@@ -35,7 +35,7 @@ Hub renders enabled pillar relations as normal server-side HTML links and resolv
 
 For Core articles, Hub also renders one reciprocal backlink to each enabled pillar in the full article body. This has been smoke-tested on Geeklog 2.1.1 and 2.2.2.
 
-Forum, Documents, Videos and Maps can already be linked from pillars, but their current public renderers do not expose `PLG_itemDisplay()`, `PLG_templateSetVars()` or another confirmed generic placement hook that Hub can safely reuse for reciprocal backlinks. Hub intentionally does not use provider-private database tables, DOM injection or provider-specific JavaScript as a workaround. Reciprocal backlink placement for those providers should be added through a shared Geeklog rendering hook in the owning plugin.
+Hub's generic `plugin_itemdisplay_hub()` backlink path is prepared for Forum, Documents, Videos, Maps, MediaGallery and Polls. When one of those providers calls `PLG_itemDisplay($id, $type)` on its full public item view, Hub can render the reciprocal pillar backlink without any provider-specific dependency. Articles and Static Pages keep their dedicated Hub integration paths to avoid duplicate output.
 
 The **Find suggestions** mode adds a deliberately small 0.3.0 editorial aid. Hub can suggest Static Pages as pillar candidates when they have specific Geeklog topics with matching published articles, and can suggest article relations for an existing Static Page pillar when those articles share one or more specific topics. Each suggestion explains the topic signal and requires an explicit **Add** action. This does not replace the broader cross-plugin discovery and ranking work planned for 0.8.0.
 
