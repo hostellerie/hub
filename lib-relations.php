@@ -200,7 +200,11 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
     $position = max(0, min(65535, (int) $position));
     $isEnabled = $isEnabled ? 1 : 0;
 
-    if ($pillarId < 1 || $itemType === '' || $itemId === '' || !HUB_getPillar($pillarId)) {
+    $pillar = HUB_getPillar($pillarId);
+    if ($pillarId < 1 || $itemType === '' || $itemId === '' || !$pillar) {
+        return false;
+    }
+    if ($itemType === (string) $pillar['source_type'] && $itemId === (string) $pillar['source_id']) {
         return false;
     }
 
