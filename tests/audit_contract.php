@@ -238,6 +238,20 @@ if (!empty($badLifecycleDeclaration['valid'])
     exit(1);
 }
 
+$hubAuditSource = file_get_contents($root . '/lib-audit.php');
+$hubAuditAdminSource = file_get_contents($root . '/admin/audit.php');
+if (strpos($hubAuditSource, 'function HUB_auditItemDisplayCallsFromSource') === false
+    || strpos($hubAuditSource, 'item_display_provider') === false
+    || strpos($hubAuditSource, 'item_display_consumer') === false
+    || strpos($hubAuditAdminSource, '<th>Display point</th>') === false
+    || strpos($hubAuditAdminSource, '<th>Display callback</th>') === false
+    || strpos($hubAuditAdminSource, 'Provider placement') === false
+    || strpos($hubAuditAdminSource, 'Consumer callback') === false
+) {
+    fwrite(STDERR, "ItemDisplay provider/consumer audit contract missing\n");
+    exit(1);
+}
+
 $hubFunctionsSource = file_get_contents($root . '/functions.inc');
 if (strpos($hubFunctionsSource, 'function plugin_getcapabilities_hub()') === false
     || strpos($hubFunctionsSource, "'relationship'") === false
@@ -485,6 +499,31 @@ if (!$realFacts['item_saved'] || !$realFacts['item_deleted']
     || $realFacts['object_types'] !== array('article')
 ) {
     fwrite(STDERR, "Lifecycle tokenizer real-call regression failed\n");
+    exit(1);
+}
+
+$itemDisplayFakeSource = <<<'PHP'
+<?php
+$fake = "PLG_itemDisplay($id, 'videos')";
+ // PLG_itemDisplay($id, 'documents');
+function PLG_itemDisplay($id, $type) {}
+PHP;
+$itemDisplayFakeFacts = HUB_auditItemDisplayCallsFromSource($itemDisplayFakeSource);
+if (!empty($itemDisplayFakeFacts['found']) || !empty($itemDisplayFakeFacts['object_types'])) {
+    fwrite(STDERR, "ItemDisplay tokenizer false-positive regression failed\n");
+    exit(1);
+}
+
+$itemDisplayRealSource = <<<'PHP'
+<?php
+$extra = PLG_itemDisplay($videoId, 'videos');
+$dynamic = PLG_itemDisplay($documentId, $type);
+PHP;
+$itemDisplayRealFacts = HUB_auditItemDisplayCallsFromSource($itemDisplayRealSource);
+if (empty($itemDisplayRealFacts['found'])
+    || $itemDisplayRealFacts['object_types'] !== array('videos')
+) {
+    fwrite(STDERR, "ItemDisplay tokenizer real-call regression failed\n");
     exit(1);
 }
 
