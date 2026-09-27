@@ -741,6 +741,39 @@ function HUB_auditProviderItemDisplayProbe($plugin)
     $path = $base . '/plugins/forum/include/viewtopic_core.php';
     if (!file_exists($path)) {
         $details[] = '? Direct Forum probe: include/viewtopic_core.php not found at ' . $path;
+
+        $candidates = array();
+        foreach (HUB_auditPluginSourceRoots('forum') as $root) {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)
+            );
+            foreach ($iterator as $fileInfo) {
+                if (!$fileInfo->isFile()) {
+                    continue;
+                }
+                $name = strtolower($fileInfo->getFilename());
+                if ($name === 'viewtopic_core.php' || $name === 'viewtopic.php') {
+                    $candidatePath = $fileInfo->getPathname();
+                    $candidateSource = @file_get_contents($candidatePath);
+                    $candidates[] = array(
+                        'path' => $candidatePath,
+                        'size' => ($candidateSource === false ? 0 : strlen($candidateSource)),
+                        'hook' => ($candidateSource !== false && stripos($candidateSource, 'PLG_itemDisplay(') !== false),
+                    );
+                }
+            }
+        }
+
+        if (empty($candidates)) {
+            $details[] = '? Direct Forum probe: no viewtopic.php or viewtopic_core.php file was found in Forum source roots.';
+        } else {
+            foreach ($candidates as $candidate) {
+                $details[] = 'Direct Forum candidate: ' . $candidate['path']
+                    . '; ' . (int) $candidate['size'] . ' bytes; PLG_itemDisplay() '
+                    . ($candidate['hook'] ? 'FOUND' : 'NOT FOUND') . '.';
+            }
+        }
+
         return $details;
     }
 
