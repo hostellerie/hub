@@ -1,3 +1,7 @@
+<?php
+
+$_SERVER['PHP_SELF'] = 'tests/relations_contract.php';
+
 $hubItemInfoFixture = array(
     'article:story-1' => array('story-1', 'Story one', '/article.php?story=story-1'),
     'videos:video-1' => array(
