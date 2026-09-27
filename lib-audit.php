@@ -498,10 +498,13 @@ function HUB_auditSourceFacts($plugin)
         'item_display_types' => array(),
         'scan_limit' => 800,
         'scan_truncated' => false,
+        'source_roots' => array(),
+        'item_display_text_fallback' => array(),
     );
     $types = array();
     $displayTypes = array();
 
+    $facts['source_roots'] = HUB_auditPluginSourceRoots($plugin);
     $sourceFiles = HUB_auditPluginSourceFiles($plugin);
     $facts['scan_truncated'] = count($sourceFiles) >= $facts['scan_limit'];
 
@@ -528,6 +531,11 @@ function HUB_auditSourceFacts($plugin)
         $itemDisplay = HUB_auditItemDisplayCallsFromSource($source);
         if ($itemDisplay['found']) {
             $facts['item_display'][] = $relative;
+        } elseif (stripos($source, 'PLG_itemDisplay(') !== false) {
+            // Conservative fallback for legacy PHP tokenizer edge cases.
+            // This is source evidence only and is reported separately.
+            $facts['item_display'][] = $relative;
+            $facts['item_display_text_fallback'][] = $relative;
         }
         foreach ($itemDisplay['object_types'] as $type) {
             $displayTypes[$type] = true;
@@ -539,6 +547,7 @@ function HUB_auditSourceFacts($plugin)
     $facts['object_types'] = array_keys($types);
     sort($facts['object_types']);
     $facts['item_display'] = array_values(array_unique($facts['item_display']));
+    $facts['item_display_text_fallback'] = array_values(array_unique($facts['item_display_text_fallback']));
     $facts['item_display_types'] = array_keys($displayTypes);
     sort($facts['item_display_types']);
 
@@ -719,6 +728,9 @@ function HUB_auditItemDisplayPlacementDetails($sourceFacts)
     if (!empty($sourceFacts['item_display'])) {
         $details[] = '◐ PLG_itemDisplay() provider placement found in source: '
             . implode(', ', $sourceFacts['item_display']);
+        if (!empty($sourceFacts['item_display_text_fallback'])) {
+            $details[] = '◐ Text fallback matched in: ' . implode(', ', $sourceFacts['item_display_text_fallback']);
+        }
         if (!empty($sourceFacts['item_display_types'])) {
             $details[] = 'Detected item type(s): ' . implode(', ', $sourceFacts['item_display_types']);
         } else {
@@ -726,6 +738,12 @@ function HUB_auditItemDisplayPlacementDetails($sourceFacts)
         }
     } else {
         $details[] = '? No PLG_itemDisplay() provider placement found in scanned source.';
+    }
+
+    if (!empty($sourceFacts['source_roots'])) {
+        $details[] = 'Source roots: ' . implode(' | ', $sourceFacts['source_roots']);
+    } else {
+        $details[] = '? No readable plugin source root was discovered.';
     }
 
     if (!empty($sourceFacts['scan_truncated'])) {
