@@ -273,7 +273,7 @@ $content = '<style>'
 $content .= HUB_adminNavigation('relations');
 
 $content .= '<h1>Pillars &amp; manual relations</h1>';
-$content .= '<p>Hub 0.3.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
+$content .= '<p>Hub 0.4.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
 $content .= '<p class="hub-rel-muted">Known relation types are discovered from active Geeklog Item Info providers. When a provider exposes the shared collection contract, Hub can also list its selectable objects without querying plugin-private tables. Choose <em>Custom / other…</em> only when a provider type is not listed.</p>';
 $content .= $message;
 
@@ -496,5 +496,5 @@ $content .= '<script>(function(){'
     . '})(types[i]);}'
     . '})();</script>';
 
-$display = COM_startBlock('Hub 0.3.0') . $content . COM_endBlock();
+$display = COM_startBlock('Hub 0.4.0') . $content . COM_endBlock();
 COM_output(COM_createHTMLDocument($display));
