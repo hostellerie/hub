@@ -409,6 +409,9 @@ if (empty($pillars)) {
                     . (!empty($resolved['exists'])
                         ? '<span class="hub-rel-ok">Resolved</span>'
                         : '<span class="hub-rel-unresolved">Unresolved</span> <span class="hub-rel-muted">' . HUB_relAdminEscape($resolved['diagnostic']) . '</span>')
+                    . '<br><span class="hub-rel-muted">Backlink: '
+                    . HUB_relAdminEscape(HUB_backlinkIntegrationStatus($relation['item_type'])['label'])
+                    . '</span>'
                     . '</div>'
                     . '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1"' . (!empty($relation['is_enabled']) ? ' checked' : '') . '><span>Enabled</span></label>'
                     . '<div class="hub-rel-actions">'
