@@ -169,14 +169,17 @@ Implemented foundation:
 - direct self-relations rejected
 - install and upgrade path from 0.2.0
 - administrator UI for creating/removing pillars and adding/updating/removing manual relations
+- shared administration navigation across Hub home, pillars/relations, interoperability audit and link audit
+- relation type suggestions discovered from shared Geeklog Item Info/object-type contracts without querying plugin-private tables; manual IDs remain supported where no generic collection contract exists
+- integrity diagnostics distinguish invalid identity, unavailable dispatcher, unavailable provider and provider-present/object-missing cases
+- unresolved relations are preserved instead of being deleted automatically
+- focused relation contract tests cover normalization, resolution diagnostics, duplicate-prevention SQL constraints and deterministic ordering
+- upgrade behavior validated on Geeklog 2.1.1/PHP 5.6 and Geeklog 2.2.2/PHP 8.x
 - ownership of every related item remains with its source plugin
 
 Remaining 0.3.0 hardening:
 
-- validate upgrade behavior on both Geeklog 2.1.1/PHP 5.6 and Geeklog 2.2.2/PHP 8.x
-- improve provider/object selection UX without querying plugin-private tables
-- add integrity indicators for unresolved related objects
-- add focused storage/upgrade tests around duplicate identities and ordering
+- run final administration UI smoke tests with representative article and plugin-owned relations
 - keep public rendering/backlinks out of 0.3.0; those belong to 0.4.0
 
 ## 0.4.0 — Bidirectional navigation
