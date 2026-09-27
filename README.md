@@ -39,6 +39,8 @@ On an enabled Static Page pillar, Hub now resolves enabled relations at render t
 
 Hub also exposes `plugin_itemdisplay_hub()`. When a core or plugin content renderer calls Geeklog's `PLG_itemDisplay($id, $type)`, Hub can return a **Part of / Dans ce dossier** backlink to the enabled pillar. This keeps backlinks generic and avoids provider-specific database access. Providers that do not render `PLG_itemDisplay()` fragments may require a later fallback adapter.
 
+Core articles are handled without a Core patch: Geeklog already calls `PLG_templateSetVars()` for full story templates and exposes `story_id` / `story_display_type`. Hub uses that generic hook to populate the existing `plugin_itemdisplay` template variable only on full article pages. Forum, Documents, Videos and Maps currently do not expose an equivalent generic public placement hook in the reviewed source, so Hub does not inject backlinks into them through JavaScript or private-table logic.
+
 The SEO value comes from the resulting HTML links, not from the database relationship alone: approved relationships become an explicit internal-link graph between a central pillar and complementary content. A future optional relationship-role field may classify links as guide, tutorial, video, download, discussion, case study or reference so public navigation can be grouped semantically without changing the stable `type + id` identity.
 
 ## Article link audit (introduced in 0.1.1)
