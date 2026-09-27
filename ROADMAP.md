@@ -305,8 +305,13 @@ queue / deduplicate / submit
 - show why a candidate was detected: shared topics, keywords, related-items provider, existing links, engagement, or other transparent evidence
 - suggest complementary content without automatically changing editorial relationships
 - allow administrators to approve, dismiss or defer suggestions so repeated audits remain useful
-- export the normalized inventory as Markdown and structured JSON for documentation or external consumers
-- keep GitHub synchronization outside Hub itself: Agent/Connector or another external integration may publish/update an exported inventory in a repository
+- generate an editorial roadmap directly from the current inventory and relationship graph
+- display generated roadmaps in Hub administration with clear sections for pillars, satellites, missing links, candidate content and editorial gaps
+- provide a one-click Markdown download of the generated roadmap
+- optionally provide a structured JSON export of the same roadmap/inventory for external consumers
+- keep roadmap generation deterministic and explainable by default; every recommendation must retain its evidence
+- allow administrators to regenerate a roadmap after relationship, topic or content changes without manually maintaining a separate document
+- keep GitHub synchronization outside Hub itself: Agent/Connector or another external integration may publish/update an exported roadmap in a repository
 - allow future semantic or AI-assisted ranking only as an optional layer
 - AI suggestions must not silently create editorial relationships
 
@@ -321,6 +326,37 @@ Pillar
 ├── thematically close content
 ├── missing / broken relationships
 └── editorial gaps / content opportunities
+```
+
+Suggested roadmap output:
+
+```text
+Editorial roadmap
+├── Executive summary
+├── Existing pillars
+│   ├── current satellites
+│   ├── missing backlinks
+│   ├── missing pillar → satellite links
+│   └── strongest new candidates
+├── New pillar opportunities
+├── Content gaps to create or refresh
+├── Internal-link actions
+├── Broken/unresolved relationships
+└── Prioritized next actions
+```
+
+Administration target:
+
+```text
+Hub → Editorial roadmap
+        ↓
+Generate / Refresh
+        ↓
+HTML preview
+        ↓
+Download .md
+        ↓
+optional JSON export / external publication
 ```
 
 Possible future flow:
