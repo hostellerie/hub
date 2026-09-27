@@ -3,6 +3,7 @@
 require_once '../../../lib-common.php';
 require_once '../../auth.inc.php';
 require_once $_CONF['path'] . 'system/lib-admin.php';
+require_once $_CONF['path'] . 'plugins/hub/lib-admin-ui.php';
 
 if (!SEC_hasRights('hub.admin')) {
     COM_accessLog('User ' . (int) $_USER['uid'] . ' attempted to access Hub relationships without permission.');
@@ -105,11 +106,7 @@ $content = '<style>'
     . '.hub-rel-actions form{display:inline}.hub-rel-muted{opacity:.7;font-size:.92em}'
     . '</style>';
 
-$content .= '<div class="hub-rel-nav">'
-    . '<a href="audit.php">Interoperability audit</a>'
-    . '<a href="link-audit.php">Article link audit</a>'
-    . '<strong>Pillars &amp; relations</strong>'
-    . '</div>';
+$content .= HUB_adminNavigation('relations');
 
 $content .= '<h1>Pillars &amp; manual relations</h1>';
 $content .= '<p>Hub 0.3.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
