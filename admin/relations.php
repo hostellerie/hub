@@ -259,7 +259,7 @@ $content = '<style>'
     . '.hub-rel-suggest-row:last-child{border-bottom:0}.hub-rel-reason{font-size:.9em;opacity:.75}'
     . '@media(max-width:760px){.hub-rel-suggest-row{grid-template-columns:1fr}}'
     . '.hub-rel-table{width:100%;border-collapse:collapse;margin-top:1rem}.hub-rel-table th,.hub-rel-table td{padding:.45rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}'
-    . '.hub-rel-actions form{display:inline}.hub-rel-muted{opacity:.7;font-size:.92em}'
+    . '.hub-rel-actions{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}.hub-rel-actions form{display:inline}.hub-rel-muted{opacity:.7;font-size:.92em}'
     . '.hub-rel-integrity{margin:.55rem 0;padding:.55rem .7rem;border-left:4px solid #d7a900;background:#fffbea}'
     . '.hub-rel-ok{display:inline-block;padding:.12rem .45rem;border-radius:10px;background:#edf7ed;font-size:.86em}'
     . '.hub-rel-unresolved{display:inline-block;padding:.12rem .45rem;border-radius:10px;background:#fff1f0;font-size:.86em}'
@@ -359,15 +359,15 @@ if (empty($pillars)) {
             $content .= '<table class="hub-rel-table"><thead><tr><th>Order</th><th>Type + id</th><th>Resolved item</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
             foreach ($relations as $relation) {
                 $resolved = HUB_resolveObject($relation['item_type'], $relation['item_id']);
+                $relationIdentity = HUB_relAdminEscape($relation['item_type'] . ':' . $relation['item_id']);
                 $content .= '<tr><td colspan="5"><form method="post" action="relations.php" class="hub-rel-grid">'
                     . HUB_relAdminTokenField()
-                    . '<input type="hidden" name="hub_action" value="save_relation">'
                     . '<input type="hidden" name="relation_id" value="' . (int) $relation['id'] . '">'
                     . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
                     . '<input type="hidden" name="item_type" value="' . HUB_relAdminEscape($relation['item_type']) . '">'
                     . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($relation['item_id']) . '">'
                     . '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (int) $relation['position'] . '"></label>'
-                    . '<div><strong><code>' . HUB_relAdminEscape($relation['item_type']) . ':' . HUB_relAdminEscape($relation['item_id']) . '</code></strong><br>'
+                    . '<div><strong><code>' . $relationIdentity . '</code></strong><br>'
                     . HUB_relAdminEscape($resolved['title'])
                     . (!empty($resolved['url']) ? ' · <a href="' . HUB_relAdminEscape($resolved['url']) . '">View</a>' : '')
                     . '<br>'
@@ -376,12 +376,11 @@ if (empty($pillars)) {
                         : '<span class="hub-rel-unresolved">Unresolved</span> <span class="hub-rel-muted">' . HUB_relAdminEscape($resolved['diagnostic']) . '</span>')
                     . '</div>'
                     . '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1"' . (!empty($relation['is_enabled']) ? ' checked' : '') . '><span>Enabled</span></label>'
-                    . '<div><button type="submit" class="uk-button">Update</button></div>'
-                    . '</form><form method="post" action="relations.php" style="margin-top:.4rem">'
-                    . HUB_relAdminTokenField()
-                    . '<input type="hidden" name="hub_action" value="delete_relation">'
-                    . '<input type="hidden" name="relation_id" value="' . (int) $relation['id'] . '">'
-                    . '<button type="submit" class="uk-button">Delete</button></form></td></tr>';
+                    . '<div class="hub-rel-actions">'
+                    . '<button type="submit" name="hub_action" value="save_relation" class="uk-button">Update</button>'
+                    . '<button type="submit" name="hub_action" value="delete_relation" class="uk-button" formnovalidate '
+                    . 'onclick="return confirm(\'Delete relation ' . $relationIdentity . '?\');">Delete</button>'
+                    . '</div></form></td></tr>';
             }
             $content .= '</tbody></table>';
         }
