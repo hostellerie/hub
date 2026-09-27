@@ -77,6 +77,14 @@ if (strpos($relationsAdminSource, '<details class="hub-rel-card hub-rel-pillar">
     exit(1);
 }
 
+if (strpos($relationsSource, 'function HUB_invalidateRelationshipCaches') === false
+    || strpos($relationsSource, "CACHE_remove_instance('article__'") === false
+    || strpos($relationsSource, "CACHE_remove_instance('staticpage__'") === false
+) {
+    fwrite(STDERR, "Hub relationship cache invalidation contract missing\n");
+    exit(1);
+}
+
 if (strpos($relationsSource, 'function HUB_savePillar') === false
     || strpos($relationsSource, 'function HUB_saveRelation') === false
     || strpos($relationsSource, 'function HUB_relationCoreArticleOptions') === false
@@ -94,7 +102,9 @@ if (strpos($relationsSource, 'function HUB_renderPillarRelations') === false
     || strpos($relationsSource, 'function HUB_renderItemPillarBacklinks') === false
     || strpos($functionsSource, 'function plugin_itemdisplay_hub') === false
     || strpos($functionsSource, "story_display_type") === false
-    || strpos($functionsSource, "story_bodyhtml") === false
+    || strpos($functionsSource, "plugin_itemdisplay") === false
+    || strpos($functionsSource, "featuredarticle") === false
+    || strpos($functionsSource, "archivearticle") === false
     || strpos($functionsSource, "hub-pillar-backlinks") === false
     || strpos($functionsSource, "HUB_renderItemPillarBacklinks('article', \$storyId)") === false
     || strpos($functionsSource, "HUB_renderPillarRelations('staticpages', \$pageId)") === false
@@ -653,6 +663,14 @@ $staticPageSource = file_get_contents($root . '/lib-staticpages.php');
 $linkAuditLibSource = file_get_contents($root . '/lib-link-audit.php');
 $linkAuditSource = file_get_contents($root . '/admin/link-audit.php');
 $auditCacheSource = file_get_contents($root . '/lib-audit-cache.php');
+
+if (strpos($linkAuditSource, 'hub-audit-table') === false
+    || strpos($linkAuditSource, '<th>Engagement</th>') === false
+    || strpos($linkAuditSource, '<th>Topics</th>') === false
+) {
+    fwrite(STDERR, "Hub compact article audit layout missing\n");
+    exit(1);
+}
 
 if (strpos($linkAuditLibSource, 's.hits') === false
     || strpos($linkAuditLibSource, 's.comments') === false
