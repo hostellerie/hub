@@ -87,16 +87,13 @@ function HUB_getPillars($includeDisabled = true)
     return $rows;
 }
 
-function HUB_savePillar($pillarId, $sourceType, $sourceId, $titleOverride = '', $isEnabled = 1, $ownerId = 0)
+function HUB_savePillar($pillarId, $sourceType, $sourceId, $isEnabled = 1, $ownerId = 0)
 {
     global $_TABLES, $_USER;
 
     $pillarId = (int) $pillarId;
     $sourceType = HUB_normalizeObjectType($sourceType);
     $sourceId = HUB_normalizeObjectId($sourceId);
-    // title_override is retained only as a legacy schema/API slot during 0.4.x.
-    // Public and admin labels always use the resolved source title.
-    $titleOverride = '';
     $isEnabled = $isEnabled ? 1 : 0;
 
     if ($sourceType === '' || $sourceId === '') {
