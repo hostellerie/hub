@@ -269,3 +269,93 @@ function HUB_linkAuditMissingArticlesForTopics(array $topicIds, $pageId)
 
     return $missing;
 }
+
+
+/**
+ * Return a human-readable age for a published article.
+ *
+ * @param string $date
+ * @param int|null $now
+ * @return string
+ */
+function HUB_linkAuditArticleAge($date, $now = null)
+{
+    $timestamp = strtotime((string) $date);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    $now = $now === null ? time() : (int) $now;
+    $seconds = max(0, $now - $timestamp);
+    $days = (int) floor($seconds / 86400);
+
+    if ($days < 1) {
+        return '< 1 day';
+    }
+    if ($days < 30) {
+        return $days . ' day' . ($days === 1 ? '' : 's');
+    }
+
+    $months = (int) floor($days / 30);
+    if ($months < 12) {
+        return $months . ' month' . ($months === 1 ? '' : 's');
+    }
+
+    $years = (int) floor($days / 365);
+    return $years . ' year' . ($years === 1 ? '' : 's');
+}
+
+/**
+ * Sort link-audit article rows by an explicit administrator-selected signal.
+ *
+ * Supported keys: topics, views, comments, date, title.
+ *
+ * @param array $articles
+ * @param string $sort
+ * @param string $direction
+ * @return array
+ */
+function HUB_linkAuditSortArticles(array $articles, $sort, $direction = 'desc')
+{
+    $allowed = array('topics', 'views', 'comments', 'date', 'title');
+    $sort = in_array($sort, $allowed, true) ? $sort : 'views';
+    $direction = strtolower((string) $direction) === 'asc' ? 'asc' : 'desc';
+
+    usort($articles, function ($left, $right) use ($sort, $direction) {
+        switch ($sort) {
+            case 'topics':
+                $a = !empty($left['hub_topics']) && is_array($left['hub_topics']) ? count($left['hub_topics']) : 0;
+                $b = !empty($right['hub_topics']) && is_array($right['hub_topics']) ? count($right['hub_topics']) : 0;
+                break;
+            case 'comments':
+                $a = isset($left['comments']) ? (int) $left['comments'] : 0;
+                $b = isset($right['comments']) ? (int) $right['comments'] : 0;
+                break;
+            case 'date':
+                $a = isset($left['date']) ? strtotime((string) $left['date']) : 0;
+                $b = isset($right['date']) ? strtotime((string) $right['date']) : 0;
+                break;
+            case 'title':
+                $a = isset($left['title']) ? html_entity_decode((string) $left['title'], ENT_QUOTES, 'UTF-8') : '';
+                $b = isset($right['title']) ? html_entity_decode((string) $right['title'], ENT_QUOTES, 'UTF-8') : '';
+                $cmp = strcasecmp($a, $b);
+                return $direction === 'asc' ? $cmp : -$cmp;
+            case 'views':
+            default:
+                $a = isset($left['hits']) ? (int) $left['hits'] : 0;
+                $b = isset($right['hits']) ? (int) $right['hits'] : 0;
+                break;
+        }
+
+        if ($a == $b) {
+            $titleA = isset($left['title']) ? (string) $left['title'] : '';
+            $titleB = isset($right['title']) ? (string) $right['title'] : '';
+            return strcasecmp($titleA, $titleB);
+        }
+
+        $cmp = ($a < $b) ? -1 : 1;
+        return $direction === 'asc' ? $cmp : -$cmp;
+    });
+
+    return $articles;
+}
