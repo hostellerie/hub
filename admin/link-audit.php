@@ -16,6 +16,9 @@ if (!function_exists('HUB_linkAuditStaticPages')) {
 if (!function_exists('HUB_topicUrl')) {
     require_once $hubPluginPath . 'lib-staticpages.php';
 }
+if (!function_exists('HUB_findPillar')) {
+    require_once $hubPluginPath . 'lib-relations.php';
+}
 
 if (!SEC_hasRights('hub.admin')) {
     COM_accessLog('User ' . (int) $_USER['uid'] . ' attempted to access the Hub link audit without permission.');
@@ -29,15 +32,80 @@ function HUB_linkAuditAdminEscape($value)
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function HUB_linkAuditTokenField()
+{
+    return '<input type="hidden" name="' . CSRF_TOKEN . '" value="'
+        . HUB_linkAuditAdminEscape(SEC_createToken()) . '">';
+}
+
+function HUB_linkAuditNextRelationPosition($pillarId)
+{
+    $max = 0;
+    foreach (HUB_getRelations($pillarId, true) as $relation) {
+        $position = isset($relation['position']) ? (int) $relation['position'] : 0;
+        if ($position > $max) {
+            $max = $position;
+        }
+    }
+
+    return $max + 10;
+}
+
 $hubSelectedPageId = isset($_GET['page_id']) ? COM_applyFilter($_GET['page_id']) : '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['page_id'])) {
+    $hubSelectedPageId = COM_applyFilter($_POST['page_id']);
+}
 $hubRunAudit = ($hubSelectedPageId !== '');
+
+$hubSort = isset($_GET['sort']) ? COM_applyFilter($_GET['sort']) : 'views';
+$hubDirection = isset($_GET['dir']) ? strtolower(COM_applyFilter($_GET['dir'])) : 'desc';
+if (!in_array($hubSort, array('topics', 'views', 'comments', 'date', 'title'), true)) {
+    $hubSort = 'views';
+}
+if (!in_array($hubDirection, array('asc', 'desc'), true)) {
+    $hubDirection = 'desc';
+}
+
+$hubMessage = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!SEC_checkToken()) {
+        $hubMessage = '<p class="hub-warning">Invalid security token.</p>';
+    } else {
+        $hubAction = isset($_POST['hub_action']) ? (string) $_POST['hub_action'] : '';
+        if ($hubAction === 'add_article_relation') {
+            $hubSid = isset($_POST['sid']) ? HUB_normalizeObjectId($_POST['sid']) : '';
+            $hubPillar = HUB_findPillar('staticpages', $hubSelectedPageId);
+
+            if (!$hubPillar) {
+                $hubMessage = '<p class="hub-warning">This Static Page is not registered as a Hub pillar yet. Add it as a pillar before creating relations from the link audit.</p>';
+            } elseif ($hubSid === '') {
+                $hubMessage = '<p class="hub-warning">Invalid article ID.</p>';
+            } else {
+                $hubPosition = HUB_linkAuditNextRelationPosition((int) $hubPillar['id']);
+                $hubSaved = HUB_saveRelation(
+                    0,
+                    (int) $hubPillar['id'],
+                    'article',
+                    $hubSid,
+                    $hubPosition,
+                    1
+                );
+
+                $hubMessage = $hubSaved
+                    ? '<p class="hub-summary">Article relation added to this pillar.</p>'
+                    : '<p class="hub-warning">Unable to add the relation. It may already exist.</p>';
+            }
+        }
+    }
+}
 
 $hubStaticPageRows = HUB_linkAuditStaticPages();
 
 $content = '<style>';
-$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-topic-note{margin:10px 0 0}.hub-topic-note a{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
+$content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-topic-note{margin:10px 0 0}.hub-topic-note a{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-sortbar{display:flex;gap:.65rem;align-items:end;flex-wrap:wrap;margin:14px 0}.hub-sortbar label{font-weight:bold}.hub-sortbar select{min-height:34px}.hub-metric{white-space:nowrap;text-align:right}.hub-count{font-weight:bold}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
 $content .= '</style>';
 $content .= HUB_adminNavigation('link-audit');
+$content .= $hubMessage;
 $content .= '<h2>Articles without a link to a static page</h2>';
 $content .= '<p>Select a Static Page. Hub uses only specific Geeklog topics as editorial context. The native <strong>All</strong> and <strong>Home page only</strong> assignments are treated as placement options and are never interpreted as editorial topics.</p>';
 
@@ -55,6 +123,8 @@ if (!empty($hubStaticPageRows)) {
         $content .= '<option value="' . HUB_linkAuditAdminEscape($hubSpId) . '"' . $hubSelected . '>' . HUB_linkAuditAdminEscape($hubSpTitle) . ' (' . HUB_linkAuditAdminEscape($hubSpId) . ')</option>';
     }
     $content .= '</select></div>';
+    $content .= '<input type="hidden" name="sort" value="' . HUB_linkAuditAdminEscape($hubSort) . '">';
+    $content .= '<input type="hidden" name="dir" value="' . HUB_linkAuditAdminEscape($hubDirection) . '">';
     $content .= '<button class="hub-submit" type="submit">Run audit</button>';
     $content .= '</form>';
 }
@@ -73,6 +143,8 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
 
     $hubAllArticles = HUB_linkAuditArticlesByTopics($hubTopicIds);
     $hubMissingArticles = HUB_linkAuditMissingArticlesForTopics($hubTopicIds, $hubSelectedPageId);
+    $hubMissingArticles = HUB_linkAuditSortArticles($hubMissingArticles, $hubSort, $hubDirection);
+    $hubPillar = HUB_findPillar('staticpages', $hubSelectedPageId);
     $hubTargetUrl = HUB_linkAuditStaticPageUrl($hubSelectedPageId);
     $hubEscapedTargetUrl = HUB_linkAuditAdminEscape($hubTargetUrl);
 
@@ -123,7 +195,27 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
         }
     } else {
         $content .= '<p>The articles below share one or more <strong>specific Geeklog topics</strong> with this Static Page but do not currently link back to it. This is a suggestion signal only; review each article before deciding whether a contextual link is editorially appropriate.</p>';
-        $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>Matched topics</th><th>Views</th><th>Comments</th><th>Published</th><th>ID</th><th>Actions</th></tr></thead><tbody>';
+
+        if (!$hubPillar) {
+            $content .= '<p class="hub-warning">This Static Page is not yet a Hub pillar. You can review candidates here, but <strong>Add relation</strong> becomes available only after the page is registered as a pillar.</p>';
+        }
+
+        $content .= '<form class="hub-sortbar" method="get" action="link-audit.php">'
+            . '<input type="hidden" name="page_id" value="' . HUB_linkAuditAdminEscape($hubSelectedPageId) . '">'
+            . '<label>Sort by<br><select name="sort">'
+            . '<option value="views"' . ($hubSort === 'views' ? ' selected' : '') . '>Views</option>'
+            . '<option value="comments"' . ($hubSort === 'comments' ? ' selected' : '') . '>Comments</option>'
+            . '<option value="topics"' . ($hubSort === 'topics' ? ' selected' : '') . '>Matched topics</option>'
+            . '<option value="date"' . ($hubSort === 'date' ? ' selected' : '') . '>Published date</option>'
+            . '<option value="title"' . ($hubSort === 'title' ? ' selected' : '') . '>Title</option>'
+            . '</select></label>'
+            . '<label>Direction<br><select name="dir">'
+            . '<option value="desc"' . ($hubDirection === 'desc' ? ' selected' : '') . '>Descending</option>'
+            . '<option value="asc"' . ($hubDirection === 'asc' ? ' selected' : '') . '>Ascending</option>'
+            . '</select></label>'
+            . '<button class="hub-submit" type="submit">Apply sort</button></form>';
+
+        $content .= '<div style="overflow-x:auto"><table class="admin-list" style="width:100%;border-collapse:collapse"><thead><tr><th>Article</th><th>Matched topics</th><th>Views</th><th>Comments</th><th>Age</th><th>Published</th><th>ID</th><th>Actions</th></tr></thead><tbody>';
         foreach ($hubMissingArticles as $hubArticleRow) {
             $hubSid = isset($hubArticleRow['sid']) ? $hubArticleRow['sid'] : '';
             $hubTitle = isset($hubArticleRow['title']) ? $hubArticleRow['title'] : $hubSid;
@@ -131,6 +223,10 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
             $hubDate = isset($hubArticleRow['date']) ? $hubArticleRow['date'] : '';
             $hubHits = isset($hubArticleRow['hits']) ? (int) $hubArticleRow['hits'] : 0;
             $hubComments = isset($hubArticleRow['comments']) ? (int) $hubArticleRow['comments'] : 0;
+            $hubTopicCount = !empty($hubArticleRow['hub_topics']) && is_array($hubArticleRow['hub_topics'])
+                ? count($hubArticleRow['hub_topics'])
+                : 0;
+            $hubAge = HUB_linkAuditArticleAge($hubDate);
             $hubArticleUrl = function_exists('COM_buildURL')
                 ? COM_buildURL($_CONF['site_url'] . '/article.php?story=' . rawurlencode($hubSid))
                 : $_CONF['site_url'] . '/article.php?story=' . rawurlencode($hubSid);
@@ -148,7 +244,27 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
                 ? '&mdash;'
                 : implode('<br>', $hubMatchedTopicLinks);
 
-            $content .= '<tr><td><strong>' . HUB_linkAuditAdminEscape($hubTitle) . '</strong></td><td>' . $hubMatchedTopicsHtml . '</td><td>' . $hubHits . '</td><td>' . $hubComments . '</td><td>' . HUB_linkAuditAdminEscape($hubDate) . '</td><td><code>' . HUB_linkAuditAdminEscape($hubSid) . '</code></td><td><a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a> &middot; <a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a></td></tr>';
+            $hubActions = '<a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a> &middot; <a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a>';
+            if ($hubPillar) {
+                $hubActions .= '<form method="post" action="link-audit.php?page_id='
+                    . rawurlencode($hubSelectedPageId) . '&amp;sort=' . rawurlencode($hubSort)
+                    . '&amp;dir=' . rawurlencode($hubDirection)
+                    . '" style="display:inline;margin-left:.5rem">'
+                    . HUB_linkAuditTokenField()
+                    . '<input type="hidden" name="hub_action" value="add_article_relation">'
+                    . '<input type="hidden" name="page_id" value="' . HUB_linkAuditAdminEscape($hubSelectedPageId) . '">'
+                    . '<input type="hidden" name="sid" value="' . HUB_linkAuditAdminEscape($hubSid) . '">'
+                    . '<button type="submit" class="uk-button">Add relation</button></form>';
+            }
+
+            $content .= '<tr><td><strong>' . HUB_linkAuditAdminEscape($hubTitle) . '</strong></td>'
+                . '<td><span class="hub-count">' . $hubTopicCount . '</span><br>' . $hubMatchedTopicsHtml . '</td>'
+                . '<td class="hub-metric">' . $hubHits . '</td>'
+                . '<td class="hub-metric">' . $hubComments . '</td>'
+                . '<td>' . HUB_linkAuditAdminEscape($hubAge) . '</td>'
+                . '<td>' . HUB_linkAuditAdminEscape($hubDate) . '</td>'
+                . '<td><code>' . HUB_linkAuditAdminEscape($hubSid) . '</code></td>'
+                . '<td>' . $hubActions . '</td></tr>';
         }
         $content .= '</tbody></table></div>';
     }
