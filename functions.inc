@@ -162,14 +162,25 @@ function plugin_templatesetvars_hub($templatename, &$template)
         return;
     }
 
-    // Geeklog article rendering exposes story_id and story_display_type through
-    // PLG_templateSetVars(), but does not populate plugin_itemdisplay itself.
-    // Use that generic hook as a Core fallback only on the full article page.
+    // Article fallback compatible with Geeklog 2.1.1 and 2.2.x.
+    //
+    // Geeklog 2.2.x exposes story_display_type, but Geeklog 2.1.1 stable does
+    // not. On 2.1.1 we therefore identify a full article page from article.php
+    // and the current story id. The first storytext hook still runs before the
+    // parent article template is rendered, so story_text_no_br is the most
+    // reliable theme-neutral placement for Eclipse/Denim.
     if (in_array($templatename, array('storytext', 'featuredstorytext', 'archivestorytext'), true)) {
-        $displayType = (string) $template->get_var('story_display_type');
         $storyId = (string) $template->get_var('story_id');
+        if ($storyId === '' && isset($_GET['story'])) {
+            $storyId = HUB_normalizeObjectId($_GET['story']);
+        }
 
-        if ($displayType !== 'n' || $storyId === '') {
+        $displayType = (string) $template->get_var('story_display_type');
+        $script = isset($_SERVER['PHP_SELF']) ? basename((string) $_SERVER['PHP_SELF']) : '';
+        $isFullArticle = ($displayType === 'n')
+            || ($displayType === '' && $script === 'article.php');
+
+        if (!$isFullArticle || $storyId === '') {
             return;
         }
 
@@ -178,17 +189,19 @@ function plugin_templatesetvars_hub($templatename, &$template)
             return;
         }
 
-        // Geeklog parses the article body sub-template into story_bodyhtml
-        // immediately before this hook. Updating story_text_no_br here can be
-        // too late for themes such as Eclipse because the child template has
-        // already been rendered. Append Hub's backlink to the parsed body HTML
-        // instead; the parent article template has not been rendered yet.
-        $storyBodyHtml = (string) $template->get_var('story_bodyhtml');
-        if (strpos($storyBodyHtml, 'hub-pillar-backlinks') === false) {
+        $storyText = (string) $template->get_var('story_text_no_br');
+        if (strpos($storyText, 'hub-pillar-backlinks') === false) {
             $template->set_var(
-                'story_bodyhtml',
-                $storyBodyHtml === '' ? $backlinksHtml : $storyBodyHtml . "\n" . $backlinksHtml
+                'story_text_no_br',
+                $storyText === '' ? $backlinksHtml : $storyText . "\n" . $backlinksHtml
             );
+        }
+
+        // Keep story_introtext in sync for themes that use that variable
+        // instead of story_text_no_br.
+        $storyIntro = (string) $template->get_var('story_introtext');
+        if ($storyIntro !== '' && strpos($storyIntro, 'hub-pillar-backlinks') === false) {
+            $template->set_var('story_introtext', $storyIntro . "\n" . $backlinksHtml);
         }
     }
 }
