@@ -212,9 +212,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $itemIdChoice = isset($_POST['item_id_choice']) ? (string) $_POST['item_id_choice'] : '';
             $itemIdManual = isset($_POST['item_id_manual']) ? (string) $_POST['item_id_manual'] : '';
-            $itemId = ($itemIdChoice !== '' && $itemIdChoice !== '__manual__')
-                ? $itemIdChoice
-                : $itemIdManual;
+            $itemIdDirect = isset($_POST['item_id']) ? (string) $_POST['item_id'] : '';
+            if ($itemIdChoice !== '' && $itemIdChoice !== '__manual__') {
+                $itemId = $itemIdChoice;
+            } elseif ($itemIdManual !== '') {
+                $itemId = $itemIdManual;
+            } else {
+                $itemId = $itemIdDirect;
+            }
             $position = isset($_POST['position']) ? (int) $_POST['position'] : 0;
             $enabled = !empty($_POST['is_enabled']) ? 1 : 0;
 
@@ -247,9 +252,9 @@ $content = '<style>'
     . '.hub-rel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;align-items:end}'
     . '.hub-rel-grid label{display:block;font-weight:600}.hub-rel-grid input:not([type=checkbox]),.hub-rel-grid select{box-sizing:border-box;width:100%;padding:.45rem}'
     . '.hub-rel-grid input[type=checkbox]{width:auto;margin:0}'
-    . '.hub-rel-check{display:flex!important;flex-direction:column;justify-content:flex-end;min-height:4.15rem}'
-    . '.hub-rel-check>span:first-child{margin-bottom:.55rem}.hub-rel-check-control{display:flex;align-items:center;min-height:2.45rem}'
-    . '.hub-rel-item-note{display:block;margin-top:.35rem;font-weight:400;opacity:.72;font-size:.88em}'
+    . '.hub-rel-check{display:flex!important;align-items:center;gap:.45rem;min-height:2.45rem;font-weight:600!important}'
+    . '.hub-rel-check input[type=checkbox]{flex:0 0 auto}.hub-rel-check span{display:inline}'
+    . '.hub-rel-form-note{margin:.45rem 0 0;font-size:.9em;opacity:.72}'
     . '.hub-rel-suggest{background:#f7f9fc}.hub-rel-suggest-row{display:grid;grid-template-columns:minmax(220px,2fr) minmax(220px,3fr) auto;gap:.75rem;align-items:center;padding:.65rem 0;border-bottom:1px solid #e3e6eb}'
     . '.hub-rel-suggest-row:last-child{border-bottom:0}.hub-rel-reason{font-size:.9em;opacity:.75}'
     . '@media(max-width:760px){.hub-rel-suggest-row{grid-template-columns:1fr}}'
@@ -311,7 +316,7 @@ foreach ($staticPages as $page) {
 }
 $content .= '</select></label>';
 $content .= '<label>Optional title override<input type="text" name="title_override" maxlength="255"></label>';
-$content .= '<label class="hub-rel-check"><span>Enabled</span><span class="hub-rel-check-control"><input type="checkbox" name="is_enabled" value="1" checked></span></label>';
+$content .= '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1" checked><span>Enabled</span></label>';
 $content .= '<div><button type="submit" class="uk-button uk-button-primary">Add pillar</button></div></div></form></div>';
 
 if (empty($pillars)) {
@@ -344,7 +349,7 @@ if (empty($pillars)) {
         $content .= '<input type="hidden" name="source_id" value="' . HUB_relAdminEscape($pillar['source_id']) . '">';
         $content .= '<div class="hub-rel-grid">';
         $content .= '<label>Title override<input type="text" name="title_override" maxlength="255" value="' . HUB_relAdminEscape($pillar['title_override']) . '"></label>';
-        $content .= '<label class="hub-rel-check"><span>Enabled</span><span class="hub-rel-check-control"><input type="checkbox" name="is_enabled" value="1"' . (!empty($pillar['is_enabled']) ? ' checked' : '') . '></span></label>';
+        $content .= '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1"' . (!empty($pillar['is_enabled']) ? ' checked' : '') . '><span>Enabled</span></label>';
         $content .= '<div><button type="submit" class="uk-button">Update pillar</button></div></div></form>';
 
         $content .= '<h3>Relations</h3>';
@@ -370,7 +375,7 @@ if (empty($pillars)) {
                         ? '<span class="hub-rel-ok">Resolved</span>'
                         : '<span class="hub-rel-unresolved">Unresolved</span> <span class="hub-rel-muted">' . HUB_relAdminEscape($resolved['diagnostic']) . '</span>')
                     . '</div>'
-                    . '<label class="hub-rel-check"><span>Enabled</span><span class="hub-rel-check-control"><input type="checkbox" name="is_enabled" value="1"' . (!empty($relation['is_enabled']) ? ' checked' : '') . '></span></label>'
+                    . '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1"' . (!empty($relation['is_enabled']) ? ' checked' : '') . '><span>Enabled</span></label>'
                     . '<div><button type="submit" class="uk-button">Update</button></div>'
                     . '</form><form method="post" action="relations.php" style="margin-top:.4rem">'
                     . HUB_relAdminTokenField()
@@ -438,14 +443,12 @@ if (empty($pillars)) {
         }
         $content .= '<option value="__custom__">Custom / other…</option></select></label>';
         $content .= '<label id="' . $hubTypeCustomId . '-wrap" style="display:none">Custom type<input type="text" id="' . $hubTypeCustomId . '" name="item_type_custom" maxlength="64" autocomplete="off"></label>';
-        $content .= '<label id="' . $hubItemSelectId . '-wrap">Item<select class="hub-rel-item-select" id="' . $hubItemSelectId . '" name="item_id_choice" disabled><option value="">Select a type first</option></select>'
-            . '<span class="hub-rel-item-note" id="' . $hubItemNoteId . '"></span></label>';
-        $content .= '<label id="' . $hubItemManualId . '-wrap" style="display:none">Item id<input type="text" id="' . $hubItemManualId . '" name="item_id_manual" maxlength="128" autocomplete="off">'
-            . '<span class="hub-rel-item-note">Manual fallback for providers without a collection or for an ID not listed above.</span></label>';
+        $content .= '<label id="' . $hubItemSelectId . '-wrap">Item<select class="hub-rel-item-select" id="' . $hubItemSelectId . '" name="item_id_choice" disabled><option value="">Select a type first</option></select></label>';
+        $content .= '<label id="' . $hubItemManualId . '-wrap" style="display:none">Item id<input type="text" id="' . $hubItemManualId . '" name="item_id_manual" maxlength="128" autocomplete="off"></label>';
         $content .= '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (count($relations) * 10 + 10) . '"></label>';
-        $content .= '<label class="hub-rel-check"><span>Enabled</span><span class="hub-rel-check-control"><input type="checkbox" name="is_enabled" value="1" checked></span></label>';
+        $content .= '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1" checked><span>Enabled</span></label>';
         $content .= '<div><button type="submit" class="uk-button uk-button-primary">Add relation</button></div>';
-        $content .= '</div></form>';
+        $content .= '</div><div class="hub-rel-form-note" id="' . $hubItemNoteId . '"></div></form>';
 
         $content .= '<hr><form method="post" action="relations.php" onsubmit="return confirm(\'Delete this pillar and all its relations?\');">'
             . HUB_relAdminTokenField()
@@ -484,7 +487,7 @@ $content .= '<script>(function(){'
     . '})'
     . '.catch(function(){showManual("Unable to load the provider collection; enter the item ID manually.");});'
     . '}'
-    . 'itemSelect.addEventListener("change",function(){var manual=itemSelect.value==="__manual__";setManual(manualInput,manualWrap,manual);if(manualInput&&manual){manualInput.focus();}});'
+    . 'itemSelect.addEventListener("change",function(){var manual=itemSelect.value==="__manual__";setManual(manualInput,manualWrap,manual);if(note&&manual){note.textContent="Manual fallback for providers without a collection or for an ID not listed above.";}if(manualInput&&manual){manualInput.focus();}});'
     . 'typeSelect.addEventListener("change",loadItems);loadItems();'
     . '})(types[i]);}'
     . '})();</script>';
