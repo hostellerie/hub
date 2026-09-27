@@ -178,22 +178,17 @@ function plugin_templatesetvars_hub($templatename, &$template)
             return;
         }
 
-        // Geeklog 2.1.1 themes do not all expose a reliable late
-        // plugin_itemdisplay placement after PLG_templateSetVars(). Inject the
-        // backlink into the already prepared story body variables instead.
-        // This remains server-rendered, theme-neutral HTML and therefore
-        // crawlable without JavaScript.
-        $storyText = (string) $template->get_var('story_text_no_br');
-        if (strpos($storyText, 'hub-pillar-backlinks') === false) {
+        // Geeklog parses the article body sub-template into story_bodyhtml
+        // immediately before this hook. Updating story_text_no_br here can be
+        // too late for themes such as Eclipse because the child template has
+        // already been rendered. Append Hub's backlink to the parsed body HTML
+        // instead; the parent article template has not been rendered yet.
+        $storyBodyHtml = (string) $template->get_var('story_bodyhtml');
+        if (strpos($storyBodyHtml, 'hub-pillar-backlinks') === false) {
             $template->set_var(
-                'story_text_no_br',
-                $storyText === '' ? $backlinksHtml : $storyText . "\n" . $backlinksHtml
+                'story_bodyhtml',
+                $storyBodyHtml === '' ? $backlinksHtml : $storyBodyHtml . "\n" . $backlinksHtml
             );
-        }
-
-        $storyIntro = (string) $template->get_var('story_introtext');
-        if ($storyIntro !== '' && strpos($storyIntro, 'hub-pillar-backlinks') === false) {
-            $template->set_var('story_introtext', $storyIntro . "\n" . $backlinksHtml);
         }
     }
 }
