@@ -145,6 +145,16 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
     $hubMissingArticles = HUB_linkAuditMissingArticlesForTopics($hubTopicIds, $hubSelectedPageId);
     $hubMissingArticles = HUB_linkAuditSortArticles($hubMissingArticles, $hubSort, $hubDirection);
     $hubPillar = HUB_findPillar('staticpages', $hubSelectedPageId);
+    $hubExistingArticleRelations = array();
+    if ($hubPillar) {
+        foreach (HUB_getRelations((int) $hubPillar['id'], true) as $hubExistingRelation) {
+            if (isset($hubExistingRelation['item_type'], $hubExistingRelation['item_id'])
+                && (string) $hubExistingRelation['item_type'] === 'article'
+            ) {
+                $hubExistingArticleRelations[(string) $hubExistingRelation['item_id']] = true;
+            }
+        }
+    }
     $hubTargetUrl = HUB_linkAuditStaticPageUrl($hubSelectedPageId);
     $hubEscapedTargetUrl = HUB_linkAuditAdminEscape($hubTargetUrl);
 
@@ -245,7 +255,9 @@ if ($hubRunAudit && !empty($hubStaticPageRows)) {
                 : implode('<br>', $hubMatchedTopicLinks);
 
             $hubActions = '<a href="' . HUB_linkAuditAdminEscape($hubArticleUrl) . '" target="_blank" rel="noopener">View</a> &middot; <a href="' . HUB_linkAuditAdminEscape($hubEditUrl) . '">Edit</a>';
-            if ($hubPillar) {
+            if (isset($hubExistingArticleRelations[$hubSid])) {
+                $hubActions .= ' &middot; <strong>Already related</strong>';
+            } elseif ($hubPillar) {
                 $hubActions .= '<form method="post" action="link-audit.php?page_id='
                     . rawurlencode($hubSelectedPageId) . '&amp;sort=' . rawurlencode($hubSort)
                     . '&amp;dir=' . rawurlencode($hubDirection)
