@@ -178,16 +178,23 @@ function plugin_templatesetvars_hub($templatename, &$template)
             return;
         }
 
-        $existing = (string) $template->get_var('plugin_itemdisplay');
-        $template->set_var(
-            'plugin_itemdisplay',
-            $existing === '' ? $backlinksHtml : $existing . "\n" . $backlinksHtml
-        );
+        // Geeklog 2.1.1 themes do not all expose a reliable late
+        // plugin_itemdisplay placement after PLG_templateSetVars(). Inject the
+        // backlink into the already prepared story body variables instead.
+        // This remains server-rendered, theme-neutral HTML and therefore
+        // crawlable without JavaScript.
+        $storyText = (string) $template->get_var('story_text_no_br');
+        if (strpos($storyText, 'hub-pillar-backlinks') === false) {
+            $template->set_var(
+                'story_text_no_br',
+                $storyText === '' ? $backlinksHtml : $storyText . "\n" . $backlinksHtml
+            );
+        }
 
-        // Core computes these flags before PLG_templateSetVars(). Re-enable the
-        // footer when Hub adds the first plugin_itemdisplay fragment.
-        $template->set_var('feedback_list', true);
-        $template->set_var('story_footer', true);
+        $storyIntro = (string) $template->get_var('story_introtext');
+        if ($storyIntro !== '' && strpos($storyIntro, 'hub-pillar-backlinks') === false) {
+            $template->set_var('story_introtext', $storyIntro . "\n" . $backlinksHtml);
+        }
     }
 }
 
