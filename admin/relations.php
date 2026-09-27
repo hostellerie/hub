@@ -512,6 +512,7 @@ if (empty($pillars)) {
 }
 
 $content .= '<script>(function(){'
+    . 'var pillars=document.querySelectorAll("details.hub-rel-pillar");for(var p=0;p<pillars.length;p++){pillars[p].open=false;pillars[p].removeAttribute("open");}'
     . 'function byId(id){return document.getElementById(id);}'
     . 'function setManual(input,wrap,on){if(wrap){wrap.style.display=on?"block":"none";}if(input){input.required=on;if(!on){input.value="";}}}'
     . 'function resetItems(select,note,text){select.innerHTML="";var option=document.createElement("option");option.value="";option.textContent=text||"Select an item";select.appendChild(option);select.disabled=true;if(note){note.textContent="";}}'
