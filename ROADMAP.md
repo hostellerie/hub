@@ -170,7 +170,10 @@ Implemented foundation:
 - install and upgrade path from 0.2.0
 - administrator UI for creating/removing pillars and adding/updating/removing manual relations
 - shared administration navigation across Hub home, pillars/relations, interoperability audit and link audit
-- relation type suggestions discovered from shared Geeklog Item Info/object-type contracts without querying plugin-private tables; manual IDs remain supported where no generic collection contract exists
+- relation types discovered only from active resolvable Geeklog Item Info providers
+- dynamic related-object selector through the shared Item Info collection contract when available, with manual ID fallback when the provider does not expose a collection
+- administration checkbox alignment hardened independently from normal text/select field sizing
+- lightweight explainable administration suggestions: Static Page pillar candidates and article relation candidates based on existing specific-topic context; every suggestion requires explicit administrator approval
 - integrity diagnostics distinguish invalid identity, unavailable dispatcher, unavailable provider and provider-present/object-missing cases
 - unresolved relations are preserved instead of being deleted automatically
 - focused relation contract tests cover normalization, resolution diagnostics, duplicate-prevention SQL constraints and deterministic ordering
@@ -179,7 +182,8 @@ Implemented foundation:
 
 Remaining 0.3.0 hardening:
 
-- run final administration UI smoke tests with representative article and plugin-owned relations
+- run final administration UI smoke tests with representative article and plugin-owned relations, including collection-backed selectors
+- keep broader cross-plugin discovery/ranking in 0.8.0; 0.3.0 suggestions remain limited to existing explicit Geeklog topic signals
 - keep public rendering/backlinks out of 0.3.0; those belong to 0.4.0
 
 ## 0.4.0 — Bidirectional navigation
