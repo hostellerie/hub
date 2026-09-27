@@ -21,7 +21,7 @@ function plugin_autoinstall_hub($pi_name)
         'groups'   => $_HUB_PLUGIN['GROUPS'],
         'features' => $_HUB_PLUGIN['FEATURES'],
         'mappings' => $_HUB_PLUGIN['MAPPINGS'],
-        'tables'   => array(),
+        'tables'   => array('hub_pillars', 'hub_relations'),
     );
 }
 
