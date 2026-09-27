@@ -776,7 +776,7 @@ function HUB_backlinkIntegrationStatus($itemType)
             'supported' => true,
             'mode' => 'core-template-fallback',
             'label' => 'Core article fallback',
-            'detail' => 'Full article pages expose PLG_templateSetVars() and Hub fills plugin_itemdisplay.',
+            'detail' => 'Full article pages expose PLG_templateSetVars() and Hub appends one server-rendered backlink inside the article body.',
         );
     }
 
