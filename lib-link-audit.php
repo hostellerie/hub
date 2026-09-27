@@ -46,7 +46,7 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
 
     $quotedTopicIds = "'" . implode("','", $escapedTopicIds) . "'";
 
-    $sql = "SELECT s.sid, s.title, s.introtext, s.bodytext, s.date, ta.tid, t.topic "
+    $sql = "SELECT s.sid, s.title, s.introtext, s.bodytext, s.date, s.hits, s.comments, ta.tid, t.topic "
          . "FROM {$_TABLES['stories']} AS s "
          . "INNER JOIN {$_TABLES['topic_assignments']} AS ta "
          . "ON ta.type = 'article' AND ta.id = s.sid "
