@@ -265,7 +265,7 @@ $content = '<style>'
     . '.hub-rel-row-edit{grid-template-columns:120px minmax(260px,1fr) 150px 240px}'
     . '.hub-rel-actions{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}.hub-rel-actions form{display:inline}.hub-rel-muted{opacity:.7;font-size:.92em}'
 
-    . '.hub-rel-integrity{margin:.55rem 0;padding:.55rem .7rem;border-left:4px solid #d7a900;background:#fffbea}'
+    . '.hub-rel-integrity{margin:.55rem 0;padding:.55rem .7rem;border-left:4px solid #d7a900;background:#fffbea}.hub-rel-public-rendering{margin:1.25rem 0;padding:.8rem 1rem}'
     . '.hub-rel-ok{display:inline-block;padding:.12rem .45rem;border-radius:10px;background:#edf7ed;font-size:.86em}'
     . '.hub-rel-unresolved{display:inline-block;padding:.12rem .45rem;border-radius:10px;background:#fff1f0;font-size:.86em}'
     . '</style>';
@@ -397,7 +397,7 @@ if (empty($pillars)) {
 
         $publicDiagCurrent = HUB_pillarRenderDiagnostics($pillar['source_type'], $pillar['source_id'], 0);
         $publicDiagAnon = HUB_pillarRenderDiagnostics($pillar['source_type'], $pillar['source_id'], 1);
-        $content .= '<div class="hub-rel-integrity"><strong>Public rendering:</strong> current user '
+        $content .= '<div class="hub-rel-integrity hub-rel-public-rendering"><strong>Public rendering:</strong> current user '
             . (int) $publicDiagCurrent['renderable_count'] . ' / ' . (int) $publicDiagCurrent['relation_count']
             . ' · anonymous/SEO '
             . (int) $publicDiagAnon['renderable_count'] . ' / ' . (int) $publicDiagAnon['relation_count']
