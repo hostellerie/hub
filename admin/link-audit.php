@@ -3,6 +3,7 @@
 require_once '../../../lib-common.php';
 require_once '../../auth.inc.php';
 require_once $_CONF['path'] . 'system/lib-admin.php';
+require_once $_CONF['path'] . 'plugins/hub/lib-admin-ui.php';
 
 /*
  * This administration page can be called directly. Do not rely on Geeklog
@@ -36,7 +37,7 @@ $hubStaticPageRows = HUB_linkAuditStaticPages();
 $content = '<style>';
 $content .= '.hub-nav{margin:0 0 18px}.hub-nav a{margin-right:14px}.hub-audit-form{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:12px;align-items:end;padding:16px;background:#f6f7f9;border:1px solid #d9dde5;border-radius:5px}.hub-field label{display:block;font-weight:bold;margin-bottom:5px}.hub-field select{width:100%;min-height:36px}.hub-submit{min-height:36px;padding:6px 14px}.hub-summary{margin:18px 0;padding:12px 14px;background:#f3f7f4;border-left:4px solid #6c9b74}.hub-url{overflow-wrap:anywhere}.hub-topic-note{margin:10px 0 0}.hub-topic-note a{overflow-wrap:anywhere}.hub-empty-result{padding:14px;background:#f3f7f4;border-radius:4px}.hub-warning{padding:10px 12px;background:#fffbea;border-left:4px solid #d7a900;margin:12px 0}@media(max-width:760px){.hub-audit-form{grid-template-columns:1fr}}';
 $content .= '</style>';
-$content .= '<nav class="hub-nav"><a href="audit.php">Plugin interoperability audit</a><strong>Article link audit</strong></nav>';
+$content .= HUB_adminNavigation('link-audit');
 $content .= '<h2>Articles without a link to a static page</h2>';
 $content .= '<p>Select a Static Page. Hub uses only specific Geeklog topics as editorial context. The native <strong>All</strong> and <strong>Home page only</strong> assignments are treated as placement options and are never interpreted as editorial topics.</p>';
 
