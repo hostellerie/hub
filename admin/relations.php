@@ -111,7 +111,7 @@ $content .= '<div class="hub-rel-nav">'
     . '<strong>Pillars &amp; relations</strong>'
     . '</div>';
 
-$content .= '<h1>Hub pillars &amp; manual relations</h1>';
+$content .= '<h1>Pillars &amp; manual relations</h1>';
 $content .= '<p>Hub 0.3.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
 $content .= $message;
 
