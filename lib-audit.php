@@ -721,7 +721,56 @@ function HUB_auditAdditionalCapabilities($plugin)
     return $details;
 }
 
-function HUB_auditItemDisplayPlacementDetails($sourceFacts)
+function HUB_auditProviderItemDisplayProbe($plugin)
+{
+    global $_CONF;
+
+    $details = array();
+    $plugin = strtolower(trim((string) $plugin));
+
+    if ($plugin !== 'forum') {
+        return $details;
+    }
+
+    $base = isset($_CONF['path']) ? rtrim($_CONF['path'], '/\\') : '';
+    if ($base === '') {
+        $details[] = '? Direct Forum probe unavailable: Geeklog private path is not defined.';
+        return $details;
+    }
+
+    $path = $base . '/plugins/forum/include/viewtopic_core.php';
+    if (!file_exists($path)) {
+        $details[] = '? Direct Forum probe: include/viewtopic_core.php not found at ' . $path;
+        return $details;
+    }
+
+    if (!is_readable($path)) {
+        $details[] = '? Direct Forum probe: include/viewtopic_core.php exists but is not readable.';
+        return $details;
+    }
+
+    $source = @file_get_contents($path);
+    if ($source === false) {
+        $details[] = '? Direct Forum probe: include/viewtopic_core.php could not be read.';
+        return $details;
+    }
+
+    $hasHook = stripos($source, 'PLG_itemDisplay(') !== false;
+    $details[] = 'Direct Forum probe: include/viewtopic_core.php is readable; '
+        . strlen($source) . ' bytes; PLG_itemDisplay() '
+        . ($hasHook ? 'FOUND' : 'NOT FOUND') . '.';
+
+    if (function_exists('sha1_file')) {
+        $hash = @sha1_file($path);
+        if ($hash !== false && $hash !== '') {
+            $details[] = 'Direct Forum probe SHA-1: ' . $hash;
+        }
+    }
+
+    return $details;
+}
+
+function HUB_auditItemDisplayPlacementDetails($sourceFacts, $plugin = '')
 {
     $details = array();
 
@@ -750,6 +799,10 @@ function HUB_auditItemDisplayPlacementDetails($sourceFacts)
         $details[] = '◐ Source scan reached the configured file limit; absence cannot be treated as definitive.';
     }
     $details[] = 'Scanned PHP files: ' . (int) $sourceFacts['files_scanned'];
+
+    foreach (HUB_auditProviderItemDisplayProbe($plugin) as $probeDetail) {
+        $details[] = $probeDetail;
+    }
 
     return $details;
 }
@@ -862,7 +915,7 @@ function HUB_auditPlugin($plugin)
         'lifecycle_listener' => HUB_auditLifecycleListenerDetails($plugin),
         'lifecycle_contract' => HUB_auditLifecycleContractDetails($plugin),
         'item_display_provider' => !empty($sourceFacts['item_display']),
-        'item_display_provider_details' => HUB_auditItemDisplayPlacementDetails($sourceFacts),
+        'item_display_provider_details' => HUB_auditItemDisplayPlacementDetails($sourceFacts, $plugin),
         'item_display_consumer' => function_exists('plugin_itemdisplay_' . $plugin),
         'item_display_consumer_details' => HUB_auditItemDisplayConsumerDetails($plugin),
         'object_types' => HUB_auditObjectTypeDetails($objectTypes),
