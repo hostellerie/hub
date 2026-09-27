@@ -444,12 +444,39 @@ function HUB_resolveObject($type, $id)
             $resolved['id'] = $normalized['id'];
             $resolved['title'] = $normalized['title'] !== '' ? $normalized['title'] : $id;
             $resolved['url'] = $normalized['url'];
-            return $resolved;
         }
     }
 
+    // Some legacy providers only return reliable values when Item Info
+    // properties are requested separately. Keep the combined request as the
+    // preferred contract, then fill missing public fields through the same
+    // permission-aware Geeklog API.
+    if ($resolved['provider_available']) {
+        if ($resolved['title'] === $id || $resolved['title'] === '') {
+            $title = PLG_getItemInfo($type, $id, 'title');
+            if (is_string($title) && $title !== '') {
+                $resolved['title'] = $title;
+                $resolved['exists'] = true;
+                $resolved['status'] = 'resolved';
+            }
+        }
+
+        if ($resolved['url'] === '') {
+            $url = PLG_getItemInfo($type, $id, 'url');
+            if (is_string($url) && $url !== '') {
+                $resolved['url'] = $url;
+                $resolved['exists'] = true;
+                $resolved['status'] = 'resolved';
+            }
+        }
+    }
+
+    if ($resolved['exists']) {
+        return $resolved;
+    }
+
     $resolved['diagnostic'] = $resolved['provider_available']
-        ? 'The provider is available but did not resolve this object identity.'
+        ? 'The provider is available but did not resolve this object identity for the current user.'
         : 'No loaded Item Info provider resolved this object type. The plugin may be disabled, unavailable, or may not expose Item Info.';
 
     return $resolved;
@@ -530,6 +557,50 @@ function HUB_publicText($key)
     }
 
     return isset($strings[$family][$key]) ? $strings[$family][$key] : $key;
+}
+
+function HUB_pillarRenderDiagnostics($sourceType, $sourceId)
+{
+    $diagnostics = array(
+        'pillar_found' => false,
+        'pillar_enabled' => false,
+        'relation_count' => 0,
+        'renderable_count' => 0,
+        'relations' => array(),
+    );
+
+    $pillar = HUB_findPillar($sourceType, $sourceId);
+    if (!$pillar) {
+        return $diagnostics;
+    }
+
+    $diagnostics['pillar_found'] = true;
+    $diagnostics['pillar_enabled'] = !empty($pillar['is_enabled']);
+    if (!$diagnostics['pillar_enabled']) {
+        return $diagnostics;
+    }
+
+    $relations = HUB_getRelations($pillar['id'], false);
+    $diagnostics['relation_count'] = count($relations);
+
+    foreach ($relations as $relation) {
+        $resolved = HUB_resolveObject($relation['item_type'], $relation['item_id']);
+        $renderable = !empty($resolved['exists']) && !empty($resolved['url']);
+        if ($renderable) {
+            $diagnostics['renderable_count']++;
+        }
+
+        $diagnostics['relations'][] = array(
+            'type' => (string) $relation['item_type'],
+            'id' => (string) $relation['item_id'],
+            'renderable' => $renderable,
+            'title' => (string) $resolved['title'],
+            'url' => (string) $resolved['url'],
+            'diagnostic' => $renderable ? '' : (string) $resolved['diagnostic'],
+        );
+    }
+
+    return $diagnostics;
 }
 
 function HUB_renderPillarRelations($sourceType, $sourceId)
