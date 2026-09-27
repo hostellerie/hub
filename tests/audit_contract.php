@@ -47,7 +47,7 @@ $upgradeSource = file_get_contents($root . '/install_updates.php');
 $relationsSource = file_get_contents($root . '/lib-relations.php');
 $relationsAdminSource = file_get_contents($root . '/admin/relations.php');
 
-if (strpos($configSource, "'pi_version'    => '0.3.0'") === false
+if (strpos($configSource, "'pi_version'    => '0.4.0'") === false
     || strpos($autoinstallSource, "'hub_pillars'") === false
     || strpos($autoinstallSource, "'hub_relations'") === false
     || strpos($functionsSource, 'HUB_updateSchema_0_3_0') === false
@@ -56,7 +56,7 @@ if (strpos($configSource, "'pi_version'    => '0.3.0'") === false
     || strpos($sqlSource, "CREATE TABLE {\$_TABLES['hub_relations']}") === false
     || strpos($upgradeSource, 'CREATE TABLE IF NOT EXISTS') === false
 ) {
-    fwrite(STDERR, "Hub 0.3.0 storage contract missing\n");
+    fwrite(STDERR, "Hub 0.4.0 storage contract missing\n");
     exit(1);
 }
 
@@ -65,7 +65,7 @@ if (strpos($sqlSource, 'source_url') !== false
     || strpos($relationsSource, 'source_url') !== false
     || strpos($relationsSource, 'item_url') !== false
 ) {
-    fwrite(STDERR, "Hub 0.3.0 must not persist canonical URLs\n");
+    fwrite(STDERR, "Hub relationship storage must not persist canonical URLs\n");
     exit(1);
 }
 
@@ -76,7 +76,17 @@ if (strpos($relationsSource, 'function HUB_savePillar') === false
     || strpos($relationsAdminSource, 'Pillars &amp; manual relations') === false
     || strpos($relationsAdminSource, 'save_relation') === false
 ) {
-    fwrite(STDERR, "Hub 0.3.0 relationship API/admin contract missing\n");
+    fwrite(STDERR, "Hub relationship API/admin contract missing\n");
+    exit(1);
+}
+
+if (strpos($relationsSource, 'function HUB_renderPillarRelations') === false
+    || strpos($relationsSource, 'function HUB_renderItemPillarBacklinks') === false
+    || strpos($functionsSource, 'function plugin_itemdisplay_hub') === false
+    || strpos($functionsSource, "HUB_renderPillarRelations('staticpages', \$pageId)") === false
+    || strpos($readme, 'Public relationship navigation (0.4.0)') === false
+) {
+    fwrite(STDERR, "Hub 0.4.0 public relationship navigation contract missing\n");
     exit(1);
 }
 
@@ -105,7 +115,7 @@ if (strpos($libAudit, 'current 0.1.0 audit milestone') !== false) {
 if (strpos($readme, 'Shared Memorandum alignment') === false
     || strpos($readme, 'Pillars and manual relations (0.3.0)') === false
     || strpos($roadmap, '0.2.0 — Generic capability discovery — completed') === false
-    || strpos($roadmap, 'Current development milestone:** `0.3.0`') === false
+    || strpos($roadmap, 'Current development milestone:** `0.4.0`') === false
     || strpos($roadmap, 'hub.context.read') === false
     || strpos($roadmap, 'Agent is the provider-neutral Geeklog machine access layer') === false
 ) {
