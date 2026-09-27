@@ -56,9 +56,15 @@ function plugin_getadminoption_hub()
  */
 function plugin_getheadercode_hub()
 {
-    global $_CONF;
+    global $_CONF, $_HUB_PLUGIN;
 
-    $href = rtrim($_CONF['site_url'], '/') . '/hub/hub.css';
+    $cssFile = $_CONF['path'] . 'plugins/hub/public_html/hub.css';
+    $version = isset($_HUB_PLUGIN['pi_version']) ? (string) $_HUB_PLUGIN['pi_version'] : '0';
+    if (is_file($cssFile)) {
+        $version .= '-' . (string) filemtime($cssFile);
+    }
+
+    $href = rtrim($_CONF['site_url'], '/') . '/hub/hub.css?v=' . rawurlencode($version);
 
     return '<link rel="stylesheet" type="text/css" href="'
         . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
