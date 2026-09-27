@@ -676,9 +676,10 @@ if (strpos($linkAuditLibSource, 's.hits') === false
     || strpos($linkAuditLibSource, 's.comments') === false
     || strpos($linkAuditLibSource, 'function HUB_linkAuditArticleAge') === false
     || strpos($linkAuditLibSource, 'function HUB_linkAuditSortArticles') === false
-    || strpos($linkAuditSource, '<th>Views</th>') === false
-    || strpos($linkAuditSource, '<th>Comments</th>') === false
-    || strpos($linkAuditSource, '<th>Age</th>') === false
+    || strpos($linkAuditSource, '<th>Engagement</th>') === false
+    || strpos($linkAuditSource, 'views</span>') === false
+    || strpos($linkAuditSource, 'comments</span>') === false
+    || strpos($linkAuditSource, 'hub-article-meta') === false
     || strpos($linkAuditSource, 'add_article_relation') === false
     || strpos($linkAuditSource, 'Already related') === false
 ) {
