@@ -25,6 +25,10 @@ Hub does **not** store another plugin's canonical URL as source of truth. Titles
 
 The initial 0.3.0 target is deliberately limited to Static Pages as pillars. Relations may point to any provider/object identity that Geeklog can resolve. Static Page topic assignments remain a discovery signal only and are independent from explicit Hub relationships.
 
+The relation editor now suggests known object types discovered through shared Geeklog Item Info/object-type contracts without reading plugin-private tables. The object ID remains editable so providers without a generic collection endpoint are still usable. Saved relations display integrity diagnostics when an identity can no longer be resolved; Hub keeps the stable identity instead of deleting it automatically because a provider may simply be disabled or temporarily unavailable.
+
+All Hub administration pages share the same navigation between the Hub home, pillars/relations, interoperability audit and article link audit.
+
 ## Article link audit (introduced in 0.1.1)
 
 From **Hub administration → Article link audit**, select a destination Static Page and click **Run audit**.
