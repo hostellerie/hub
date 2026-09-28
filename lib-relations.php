@@ -754,11 +754,11 @@ function HUB_renderPillarRelations($sourceType, $sourceId)
         return '';
     }
 
-    return '<section class="hub-related-content" aria-label="'
+    return '<section class="hub-context-block hub-related-content" aria-label="'
         . htmlspecialchars(HUB_publicText('related_content'), ENT_QUOTES, 'UTF-8')
-        . '"><h2>'
+        . '"><div class="hub-context-title">'
         . htmlspecialchars(HUB_publicText('related_content'), ENT_QUOTES, 'UTF-8')
-        . '</h2><ul>'
+        . '</div><ul class="hub-context-list">'
         . implode('', $links)
         . '</ul></section>';
 }
@@ -847,11 +847,11 @@ function HUB_renderItemPillarBacklinks($itemType, $itemId)
         return '';
     }
 
-    return '<aside class="hub-pillar-backlinks" aria-label="'
+    return '<aside class="hub-context-block hub-pillar-backlinks" aria-label="'
         . htmlspecialchars(HUB_publicText('part_of'), ENT_QUOTES, 'UTF-8')
-        . '"><strong>'
+        . '"><div class="hub-context-title">'
         . htmlspecialchars(HUB_publicText('part_of'), ENT_QUOTES, 'UTF-8')
-        . '</strong><ul>'
+        . '</div><ul class="hub-context-list">'
         . implode('', $links)
         . '</ul></aside>';
 }
