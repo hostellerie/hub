@@ -46,6 +46,42 @@ Content plugins / Core
 7. Hello remains the communication layer for registered users and email campaigns; Hub may provide context or candidate content but must not become a newsletter engine.
 8. IndexNow remains responsible for queueing, deduplication and submission to search engines.
 9. A future common Data/API layer and common Events layer should remain shared Geeklog architecture, not Hub-specific infrastructure.
+10. **Hub owns generic editorial relationships and context, not provider-specific functional attachments.** A provider plugin may own narrowly scoped attachment records when those records directly control its own rendering or business behavior.
+11. Provider-owned attachments must not evolve into a parallel generic relationship graph. If a relation primarily means "this content object is editorially related to that content object", belongs to a pillar, or contributes generic cross-provider context/navigation, Hub is the owner.
+12. Hub may observe provider-owned attachments through public contracts for context, diagnostics or affected-item analysis, but it must not duplicate, rewrite or become the persistence owner of those records.
+
+## Relationship ownership boundary
+
+The relationship layer must distinguish **generic editorial/context relationships** from **provider-specific functional attachments**.
+
+Examples owned by Hub:
+
+- Article ↔ Document;
+- Static Page ↔ Video;
+- Map ↔ Document;
+- pillar membership;
+- generic related-content navigation;
+- relationship roles, graph traversal, context, integrity and affected-item diagnostics.
+
+Examples that remain owned by the provider plugin:
+
+- FAQ → Article when the relation means "render this FAQ with that article";
+- FAQ category → Static Page when the relation dynamically controls which FAQs are rendered;
+- other provider-specific attachments whose stored state directly controls that provider's own rendering, placement, ACL, ordering or business rules.
+
+For FAQ specifically, Hub must not replace `faq_relations` or `faq_category_relations`. FAQ remains authoritative for FAQ placement, category expansion, de-duplication and rendering. Hub may later consume a read-only/public representation of those attachments as context, but should not mirror them into the Hub graph as a second source of truth.
+
+A useful rule is:
+
+```text
+"related to / part of / contextual to"
+    -> Hub
+
+"render or operate this provider-owned feature on that host item"
+    -> provider plugin
+```
+
+This boundary prevents Hub from absorbing plugin business logic while also preventing provider plugins from becoming competing generic relationship managers.
 
 ## Shared interoperability baseline
 
