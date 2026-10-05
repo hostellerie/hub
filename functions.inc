@@ -23,6 +23,7 @@ require_once $hub_path . 'lib-graph.php';
 require_once $hub_path . 'lib-suggestion-decisions.php';
 require_once $hub_path . 'lib-editorial.php';
 require_once $hub_path . 'lib-integrity.php';
+require_once $hub_path . 'lib-site-context.php';
 require_once $hub_path . 'lib-lifecycle.php';
 require_once $hub_path . 'lib-indexnow.php';
 require_once $hub_path . 'lib-staticpages.php';
