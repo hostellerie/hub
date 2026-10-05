@@ -190,6 +190,10 @@ function HUB_editorialInventory($includeDisabled = false)
 
     $inventory = array(
         'schema' => 1,
+        'scope' => 'active-site-graph',
+        'site_context' => function_exists('HUB_siteContext')
+            ? HUB_siteContext()
+            : array(),
         'pillars' => array(),
     );
 
