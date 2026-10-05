@@ -261,3 +261,5 @@ Backlink diagnostics deliberately distinguish three evidence levels:
 - **unconfirmed** — Hub has no confirmed generic backlink placement contract.
 
 This prevents Monitor, Agent or other consumers from treating integration capability as proof that a backlink is present on a rendered provider page.
+
+Reciprocal-link verification is stricter still: for Core articles, Hub can verify that the expected pillar backlink fragment is generated and owns the placement path, so the relation is reported as `hub-rendered`. For generic providers, Hub may report `fragment-available-runtime-unverified` or `integration-available-unverified`; neither status is treated as proof of a backlink on the rendered provider page.
