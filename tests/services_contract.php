@@ -14,6 +14,21 @@ function SEC_hasRights($right)
     return $right === 'hub.admin' && $hubServiceAuthorized;
 }
 
+function HUB_siteContext()
+{
+    return array(
+        'schema' => 1,
+        'site_url' => 'https://example.test',
+        'site_admin_url' => 'https://example.test/admin',
+        'host' => 'example.test',
+        'scheme' => 'https',
+        'port' => null,
+        'site_name' => 'Example',
+        'language' => 'english',
+        'source' => 'active-geeklog-config',
+    );
+}
+
 function HUB_normalizeObjectType($type)
 {
     return strtolower(trim((string) $type));
@@ -268,6 +283,7 @@ hubServiceAssert(isset($output['diagnostics']), 'affected service exposes public
 hubServiceAssert($output['diagnostics']['public_page_count'] === 1, 'affected diagnostics expose resolved public page count');
 hubServiceAssert($output['diagnostics']['unresolved_page_count'] === 0, 'affected diagnostics expose unresolved public page count');
 hubServiceAssert($output['diagnostics']['contexts'][0]['reasons'] === array('related-item'), 'affected diagnostics preserve dependency reason');
+hubServiceAssert($output['site_context']['host'] === 'example.test', 'affected service exposes active site context');
 
 $output = null;
 $messages = null;
@@ -297,6 +313,7 @@ hubServiceAssert($status === PLG_RET_OK, 'context read returns OK');
 hubServiceAssert($output['capability'] === 'hub.context.read', 'context service identifies its capability');
 hubServiceAssert($output['context']['max_depth'] === 3, 'context service forwards requested traversal depth');
 hubServiceAssert(count($output['context']['nodes']) === 2, 'context service returns graph nodes');
+hubServiceAssert($output['site_context']['language'] === 'english', 'context service exposes active site language');
 
 $output = null;
 $messages = null;
@@ -313,6 +330,7 @@ hubServiceAssert($output['capability'] === 'hub.pillar.read', 'pillar service id
 hubServiceAssert($output['pillar']['source_id'] === 'guide', 'pillar service returns stable source identity');
 hubServiceAssert(count($output['relations']) === 1, 'pillar service returns relation identities');
 hubServiceAssert($output['relations'][0]['relation_role'] === 'satellite', 'pillar service returns structural role');
+hubServiceAssert($output['site_context']['source'] === 'active-geeklog-config', 'pillar service identifies Geeklog as site context authority');
 
 $output = null;
 $messages = null;
