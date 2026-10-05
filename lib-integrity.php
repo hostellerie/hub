@@ -5,6 +5,90 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 }
 
 /**
+ * Resolve public pages affected by one content identity.
+ *
+ * The dependency graph remains owned by HUB_getAffectedContexts(); this helper
+ * only enriches those contexts with current public resolution diagnostics.
+ *
+ * @param string $type
+ * @param string $id
+ * @param bool $includeDisabled
+ * @return array
+ */
+function HUB_integrityAffectedPages($type, $id, $includeDisabled = false)
+{
+    $type = HUB_normalizeObjectType($type);
+    $id = HUB_normalizeObjectId($id);
+
+    $result = array(
+        'object' => array('type' => $type, 'id' => $id),
+        'context_count' => 0,
+        'public_page_count' => 0,
+        'unresolved_page_count' => 0,
+        'contexts' => array(),
+    );
+
+    if ($type === '' || $id === '' || !function_exists('HUB_getAffectedContexts')) {
+        return $result;
+    }
+
+    $contexts = HUB_getAffectedContexts($type, $id, $includeDisabled);
+    $result['context_count'] = count($contexts);
+
+    foreach ($contexts as $context) {
+        if (!is_array($context)) {
+            continue;
+        }
+
+        $sourceType = isset($context['source_type'])
+            ? HUB_normalizeObjectType($context['source_type'])
+            : '';
+        $sourceId = isset($context['source_id'])
+            ? HUB_normalizeObjectId($context['source_id'])
+            : '';
+
+        $resolved = HUB_resolveObject($sourceType, $sourceId, 0);
+        $public = !empty($resolved['exists']) && !empty($resolved['url']);
+
+        if ($public) {
+            $result['public_page_count']++;
+        } else {
+            $result['unresolved_page_count']++;
+        }
+
+        $reasons = isset($context['reasons']) && is_array($context['reasons'])
+            ? array_values(array_unique(array_map('strval', $context['reasons'])))
+            : array();
+        sort($reasons, SORT_STRING);
+
+        $result['contexts'][] = array(
+            'pillar_id' => isset($context['pillar_id']) ? (int) $context['pillar_id'] : 0,
+            'source_type' => $sourceType,
+            'source_id' => $sourceId,
+            'reasons' => $reasons,
+            'public_resolved' => $public,
+            'title' => isset($resolved['title']) ? (string) $resolved['title'] : '',
+            'url' => isset($resolved['url']) ? (string) $resolved['url'] : '',
+            'diagnostic' => $public
+                ? ''
+                : (isset($resolved['diagnostic']) ? (string) $resolved['diagnostic'] : ''),
+        );
+    }
+
+    usort($result['contexts'], function ($left, $right) {
+        $pillarLeft = isset($left['pillar_id']) ? (int) $left['pillar_id'] : 0;
+        $pillarRight = isset($right['pillar_id']) ? (int) $right['pillar_id'] : 0;
+        if ($pillarLeft === $pillarRight) {
+            return 0;
+        }
+
+        return $pillarLeft < $pillarRight ? -1 : 1;
+    });
+
+    return $result;
+}
+
+/**
  * Classify backlink diagnostic evidence without claiming runtime rendering that
  * Hub cannot verify.
  *
