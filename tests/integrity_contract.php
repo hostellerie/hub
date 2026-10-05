@@ -55,6 +55,13 @@ function HUB_normalizeObjectId($id)
     return trim((string) $id);
 }
 
+function HUB_graphIdentityKey($type, $id)
+{
+    $type = HUB_normalizeObjectType($type);
+    $id = HUB_normalizeObjectId($id);
+    return $type === '' || $id === '' ? '' : $type . ':' . $id;
+}
+
 function HUB_normalizeRelationRole($role)
 {
     $role = strtolower(trim((string) $role));
@@ -92,6 +99,10 @@ function HUB_resolveObject($type, $id, $uid = 0)
         'article:story-ok' => array('title' => 'Story', 'url' => '/story', 'exists' => true),
         'videos:video-ok' => array('title' => 'Video', 'url' => '/video', 'exists' => true),
         'events:event-ok' => array('title' => 'Event', 'url' => '/event', 'exists' => true),
+        'staticpages:cycle-a' => array('title' => 'Cycle A', 'url' => '/cycle-a', 'exists' => true),
+        'staticpages:cycle-b' => array('title' => 'Cycle B', 'url' => '/cycle-b', 'exists' => true),
+        'article:canonical-a' => array('title' => 'Canonical A', 'url' => 'https://example.com/same/', 'exists' => true),
+        'article:canonical-b' => array('title' => 'Canonical B', 'url' => 'http://www.example.com/same', 'exists' => true),
     );
 
     if (isset($fixture[$key])) {
@@ -228,6 +239,34 @@ hubIntegrityAssert($summary['backlink']['integration_available'] === 2, 'integri
 hubIntegrityAssert($summary['health']['broken'] === 1, 'integrity summary aggregates broken pillar status');
 hubIntegrityAssert($summary['reciprocal']['hub_rendered'] === 1, 'integrity summary aggregates verified reciprocal links');
 hubIntegrityAssert($summary['reciprocal']['fragment_available_runtime_unverified'] === 1, 'integrity summary preserves unverified generic fragment distinction');
+hubIntegrityAssert(isset($summary['graph']['counts']), 'integrity summary exposes graph diagnostics');
+hubIntegrityAssert(isset($summary['canonical_collisions']), 'integrity summary exposes canonical collision diagnostics');
+
+$hubIntegrityPillars = array(
+    array('id' => 10, 'source_type' => 'staticpages', 'source_id' => 'cycle-a', 'editorial_role' => '', 'is_enabled' => 1),
+    array('id' => 11, 'source_type' => 'staticpages', 'source_id' => 'cycle-b', 'editorial_role' => '', 'is_enabled' => 1),
+);
+$hubIntegrityRelations = array(
+    10 => array(
+        array('id' => 101, 'item_type' => 'staticpages', 'item_id' => 'cycle-b', 'relation_role' => 'sub-pillar', 'editorial_role' => '', 'is_enabled' => 1),
+        array('id' => 102, 'item_type' => 'article', 'item_id' => 'canonical-a', 'relation_role' => 'satellite', 'editorial_role' => '', 'is_enabled' => 1),
+    ),
+    11 => array(
+        array('id' => 103, 'item_type' => 'staticpages', 'item_id' => 'cycle-a', 'relation_role' => 'sub-pillar', 'editorial_role' => '', 'is_enabled' => 1),
+        array('id' => 104, 'item_type' => 'article', 'item_id' => 'canonical-b', 'relation_role' => 'satellite', 'editorial_role' => '', 'is_enabled' => 1),
+        array('id' => 105, 'item_type' => 'staticpages', 'item_id' => 'cycle-b', 'relation_role' => 'related', 'editorial_role' => '', 'is_enabled' => 1),
+    ),
+);
+
+$graph = HUB_integrityGraphDiagnostics();
+hubIntegrityAssert($graph['counts']['cycles'] === 1, 'graph diagnostics detect pillar cycle');
+hubIntegrityAssert($graph['counts']['self_relations'] === 1, 'graph diagnostics detect self-relation');
+hubIntegrityAssert($graph['counts']['multi_parent_items'] === 0, 'graph diagnostics do not invent multi-parent participation');
+
+$collisions = HUB_integrityCanonicalCollisions(0);
+hubIntegrityAssert(count($collisions) === 1, 'canonical diagnostics detect identities resolving to the same URL');
+hubIntegrityAssert(count($collisions[0]['identities']) === 2, 'canonical collision retains both stable identities');
+hubIntegrityAssert(HUB_integrityCanonicalUrlKey('https://www.example.com/same/') === HUB_integrityCanonicalUrlKey('http://example.com/same'), 'canonical key ignores scheme www and trailing slash');
 
 $source = file_get_contents(dirname(__DIR__) . '/lib-integrity.php');
 hubIntegrityAssert(strpos($source, "verification' => 'integration-available'") === false, 'integrity code does not hardcode a runtime backlink claim in output');
