@@ -271,11 +271,71 @@ function HUB_integrityPillar($pillar, $uid = 0)
 
     ksort($result['providers'], SORT_STRING);
 
+    $issues = array();
+    $status = 'healthy';
+
+    if (empty($result['source']['resolved'])) {
+        $issues[] = array(
+            'code' => 'pillar-source-unresolved',
+            'severity' => 'broken',
+            'count' => 1,
+        );
+        $status = 'broken';
+    }
+
+    if ($result['unresolved_relations'] > 0) {
+        $issues[] = array(
+            'code' => 'relation-target-unresolved',
+            'severity' => 'broken',
+            'count' => (int) $result['unresolved_relations'],
+        );
+        $status = 'broken';
+    }
+
+    if ($result['non_renderable_relations'] > $result['unresolved_relations']) {
+        $issues[] = array(
+            'code' => 'relation-target-non-renderable',
+            'severity' => 'attention',
+            'count' => (int) ($result['non_renderable_relations'] - $result['unresolved_relations']),
+        );
+        if ($status === 'healthy') {
+            $status = 'attention';
+        }
+    }
+
+    $runtimeUnverified = (int) $result['reciprocal']['fragment_available_runtime_unverified']
+        + (int) $result['reciprocal']['integration_available_unverified']
+        + (int) $result['reciprocal']['unconfirmed'];
+
+    if ($runtimeUnverified > 0) {
+        $issues[] = array(
+            'code' => 'reciprocal-link-runtime-unverified',
+            'severity' => 'attention',
+            'count' => $runtimeUnverified,
+        );
+        if ($status === 'healthy') {
+            $status = 'attention';
+        }
+    }
+
+    if ($result['relation_count'] === 0) {
+        $issues[] = array(
+            'code' => 'pillar-without-relations',
+            'severity' => 'attention',
+            'count' => 1,
+        );
+        if ($status === 'healthy') {
+            $status = 'attention';
+        }
+    }
+
     $result['health'] = array(
+        'status' => $status,
         'source_resolved' => !empty($result['source']['resolved']),
         'all_relations_resolved' => $result['unresolved_relations'] === 0,
         'all_relations_renderable' => $result['non_renderable_relations'] === 0,
         'backlink_integration_unconfirmed' => $result['backlink']['unconfirmed'],
+        'issues' => $issues,
     );
 
     return $result;
@@ -299,6 +359,11 @@ function HUB_integritySummary($uid = 0)
         'renderable_relations' => 0,
         'non_renderable_relations' => 0,
         'unresolved_pillar_sources' => 0,
+        'health' => array(
+            'healthy' => 0,
+            'attention' => 0,
+            'broken' => 0,
+        ),
         'backlink' => array(
             'hub_managed' => 0,
             'integration_available' => 0,
@@ -329,6 +394,13 @@ function HUB_integritySummary($uid = 0)
 
         if (empty($diagnostic['source']['resolved'])) {
             $summary['unresolved_pillar_sources']++;
+        }
+
+        $healthStatus = isset($diagnostic['health']['status'])
+            ? (string) $diagnostic['health']['status']
+            : 'attention';
+        if (isset($summary['health'][$healthStatus])) {
+            $summary['health'][$healthStatus]++;
         }
 
         foreach ($summary['backlink'] as $key => $value) {
