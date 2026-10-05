@@ -180,7 +180,7 @@ hubLifecycleAssert(count($deletedContexts) === 1, 'delete handler returns affect
 hubLifecycleAssert($beforeRelations === $hubLifecycleFixture['relations'], 'delete handler does not destroy relationship state');
 
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
-hubLifecycleAssert(strpos($functionsSource, "require_once $hub_path . 'lib-lifecycle.php';") !== false, 'lifecycle library is loaded');
+hubLifecycleAssert(strpos($functionsSource, "require_once \$hub_path . 'lib-lifecycle.php';") !== false, 'lifecycle library is loaded');
 hubLifecycleAssert(strpos($functionsSource, 'function plugin_itemsaved_hub($id, $type, $old_id = \'\', $sub_type = \'\')') !== false, 'save listener supports legacy and 2.2.2 arguments');
 hubLifecycleAssert(strpos($functionsSource, 'function plugin_itemdeleted_hub($id, $type, $sub_type = \'\')') !== false, 'delete listener supports optional subtype');
 hubLifecycleAssert(strpos($functionsSource, "'listens' => array('item.saved', 'item.deleted')") !== false, 'Hub declares implemented lifecycle listeners');
