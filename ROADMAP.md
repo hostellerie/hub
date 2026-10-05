@@ -574,7 +574,7 @@ This phase remains secondary to the single-site relationship graph and should re
 - accept optional generic language metadata when exposed by the owning provider
 - allow an optional equivalent-content relation between resolvable objects in different languages or sites
 - expose cross-site / cross-language diagnostics without treating a missing translation as an error
-- allow diagnostics for suspicious cross-domain or cross-language links when the relevant site/language metadata is available — URL context now distinguishes current-site vs cross-site destinations from the configured active site host; no cross-site verdict is attached to relationships yet
+- allow diagnostics for suspicious cross-domain or cross-language links when the relevant site/language metadata is available — cross-site relation context is now reported from resolved URLs as `current-site`, `cross-site` or `unknown`; cross-site remains contextual information, not an error by default
 - keep hreflang generation, translation workflow and language-specific SEO ownership outside Hub; Hub may expose context to the responsible plugin or external consumer
 - keep network-level inventories provider-agnostic and explainable, with each object retaining its owning site/plugin identity
 
