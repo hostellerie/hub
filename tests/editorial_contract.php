@@ -81,11 +81,17 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
             'sid' => 'story-x',
             'title' => 'Already approved story',
             'hub_topics' => array('seo' => 'SEO'),
+            'hits' => 100,
+            'comments' => 4,
+            'date' => '2025-01-10 12:00:00',
         ),
         array(
             'sid' => 'story-new',
             'title' => 'Candidate story',
             'hub_topics' => array('seo' => 'SEO', 'content' => 'Content'),
+            'hits' => 250,
+            'comments' => 9,
+            'date' => '2024-06-15 09:30:00',
         ),
     );
 }
@@ -149,6 +155,13 @@ hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['suggested_role']
 hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['score'] === 2, 'candidate score is deterministic from matched topics');
 hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][0]['signal'] === 'shared-topic', 'candidate retains evidence signal');
 hubEditorialAssert(count($suggestions['pillars'][0]['candidates'][0]['evidence'][0]['topics']) === 2, 'candidate retains matched topic evidence');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['ranking']['views'] === 250, 'candidate exposes engagement ranking evidence');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['ranking']['comments'] === 9, 'candidate exposes comment ranking evidence');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['ranking']['published_year'] === 2024, 'candidate exposes publication year');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][1]['signal'] === 'engagement', 'candidate keeps engagement as transparent evidence');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][2]['signal'] === 'publication-date', 'candidate keeps publication date as transparent evidence');
+hubEditorialAssert(in_array('engagement', $suggestions['ranking_signals'], true), 'suggestion payload declares engagement ranking signal');
+hubEditorialAssert(in_array('publication-date', $suggestions['ranking_signals'], true), 'suggestion payload declares publication-date ranking signal');
 
 $allSuggestions = HUB_editorialSuggestions(0, 10);
 hubEditorialAssert(isset($allSuggestions['pillar_candidates']), 'global suggestions expose pillar candidates');
