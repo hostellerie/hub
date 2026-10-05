@@ -20,6 +20,7 @@ require_once $hub_path . 'lib-audit-cache.php';
 require_once $hub_path . 'lib-link-audit.php';
 require_once $hub_path . 'lib-relations.php';
 require_once $hub_path . 'lib-graph.php';
+require_once $hub_path . 'lib-editorial.php';
 require_once $hub_path . 'lib-lifecycle.php';
 require_once $hub_path . 'lib-indexnow.php';
 require_once $hub_path . 'lib-staticpages.php';
@@ -66,7 +67,7 @@ function plugin_getcapabilities_hub()
     return array(
         'schema' => 1,
         'roles' => array('relationship', 'orchestrator', 'service'),
-        'capabilities' => array('hub.affected.read', 'hub.context.read', 'hub.related.read', 'hub.pillar.read'),
+        'capabilities' => array('hub.affected.read', 'hub.context.read', 'hub.related.read', 'hub.pillar.read', 'hub.editorial.summary'),
         'lifecycle' => array(
             'emits' => array(),
             'listens' => array('item.saved', 'item.deleted'),
