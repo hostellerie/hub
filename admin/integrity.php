@@ -52,6 +52,28 @@ $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>
     . '<td>No confirmed generic backlink placement contract is available.</td></tr>'
     . '</tbody></table>';
 
+$reciprocal = isset($summary['reciprocal']) && is_array($summary['reciprocal'])
+    ? $summary['reciprocal']
+    : array();
+
+$content .= '<h2>Reciprocal-link evidence</h2>'
+    . '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
+    . '<th>Status</th><th>Relations</th><th>Meaning</th>'
+    . '</tr></thead><tbody>'
+    . '<tr><td><code>hub-rendered</code></td><td>'
+    . (isset($reciprocal['hub_rendered']) ? (int) $reciprocal['hub_rendered'] : 0)
+    . '</td><td>Hub generated the expected pillar backlink and owns the public placement path.</td></tr>'
+    . '<tr><td><code>fragment-available-runtime-unverified</code></td><td>'
+    . (isset($reciprocal['fragment_available_runtime_unverified']) ? (int) $reciprocal['fragment_available_runtime_unverified'] : 0)
+    . '</td><td>Hub can generate the expected fragment, but provider placement is not proven.</td></tr>'
+    . '<tr><td><code>integration-available-unverified</code></td><td>'
+    . (isset($reciprocal['integration_available_unverified']) ? (int) $reciprocal['integration_available_unverified'] : 0)
+    . '</td><td>A provider integration path exists, but no expected fragment was verified.</td></tr>'
+    . '<tr><td><code>unconfirmed</code></td><td>'
+    . (isset($reciprocal['unconfirmed']) ? (int) $reciprocal['unconfirmed'] : 0)
+    . '</td><td>No reciprocal-link placement can currently be verified.</td></tr>'
+    . '</tbody></table>';
+
 $providers = isset($summary['providers']) && is_array($summary['providers'])
     ? $summary['providers']
     : array();
@@ -111,7 +133,7 @@ if (empty($pillars)) {
         }
 
         $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
-            . '<th>Identity</th><th>Structural</th><th>Editorial</th><th>Target</th><th>Backlink evidence</th>'
+            . '<th>Identity</th><th>Structural</th><th>Editorial</th><th>Target</th><th>Integration</th><th>Reciprocal</th>'
             . '</tr></thead><tbody>';
 
         foreach ($relations as $relation) {
@@ -122,6 +144,9 @@ if (empty($pillars)) {
                 : 'unresolved / non-renderable';
             $evidence = isset($relation['backlink_evidence']) && is_array($relation['backlink_evidence'])
                 ? $relation['backlink_evidence']
+                : array();
+            $reciprocalEvidence = isset($relation['reciprocal_evidence']) && is_array($relation['reciprocal_evidence'])
+                ? $relation['reciprocal_evidence']
                 : array();
 
             $content .= '<tr><td><code>' . HUB_integrityAdminEscape($identity) . '</code>'
@@ -140,6 +165,11 @@ if (empty($pillars)) {
                     isset($evidence['verification']) ? $evidence['verification'] : 'unconfirmed'
                 ) . '</code><br><small>'
                 . HUB_integrityAdminEscape(isset($evidence['label']) ? $evidence['label'] : '')
+                . '</small></td>'
+                . '<td><code>' . HUB_integrityAdminEscape(
+                    isset($reciprocalEvidence['status']) ? $reciprocalEvidence['status'] : 'unconfirmed'
+                ) . '</code><br><small>'
+                . HUB_integrityAdminEscape(isset($reciprocalEvidence['detail']) ? $reciprocalEvidence['detail'] : '')
                 . '</small></td></tr>';
         }
 
