@@ -527,7 +527,7 @@ Hub stores approved relationship
 ## 0.9.0 — SEO, cluster health and integrity — in progress
 
 - extend the 0.1.1 link audit to saved Hub relationships and plugin-owned content across all supported providers
-- report cluster health per pillar across articles, Static Pages, Maps objects, Documents, Videos, Forum topics and future provider-owned content
+- report cluster health per pillar across articles, Static Pages, Maps objects, Documents, Videos, Forum topics and future provider-owned content — first provider-neutral health states implemented as `healthy`, `attention` and `broken`, derived only from explainable integrity issues
 - report cluster health per pillar: satellites, reciprocal links, unresolved objects and unlinked candidates — first normalized integrity slice implemented for pillar source resolution, relation resolution/renderability, provider participation and backlink-integration evidence; administration view is available under **Integrity & cluster health**
 - identify satellites without a backlink to their pillar — reciprocal evidence is now normalized: Core article backlinks can be verified through Hub's owned placement path; generic provider fragments/integration remain explicitly runtime-unverified until the provider placement can be proven
 - identify pillars that omit important approved satellites from their outgoing links — approved targets now report resolved/renderable outgoing-link eligibility; richer omission/usefulness scoring remains future 0.9 work
@@ -536,7 +536,7 @@ Hub stores approved relationship
 - broken/missing object checks — first implementation reports unresolved pillar sources and unresolved approved relation identities through `HUB_integritySummary()`
 - sitemap/feed integration opportunities
 - affected-page diagnostics
-- relationship graph diagnostics
+- relationship graph diagnostics — first pillar-level issue codes implemented for unresolved sources/targets, non-renderable targets, runtime-unverified reciprocal links and empty pillars
 - canonical URL consistency checks
 - expose normalized diagnostics so Connector or administration tools can report them without reimplementing Hub logic — implemented first as read-only `hub.integrity.summary`
 
