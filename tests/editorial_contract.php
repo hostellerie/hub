@@ -62,7 +62,7 @@ function HUB_getRelations($pillarId, $includeDisabled = true)
 
 function HUB_staticPageTopicContext($pageId)
 {
-    if ((string) $pageId !== 'hub-a') {
+    if ((string) $pageId !== 'hub-a' && (string) $pageId !== 'new-pillar') {
         return array('specific_topics' => array());
     }
 
@@ -87,6 +87,14 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
             'title' => 'Candidate story',
             'hub_topics' => array('seo' => 'SEO', 'content' => 'Content'),
         ),
+    );
+}
+
+function HUB_linkAuditStaticPages()
+{
+    return array(
+        array('sp_id' => 'hub-a', 'sp_title' => 'Existing pillar'),
+        array('sp_id' => 'new-pillar', 'sp_title' => 'New pillar candidate'),
     );
 }
 
@@ -141,6 +149,14 @@ hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['suggested_role']
 hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['score'] === 2, 'candidate score is deterministic from matched topics');
 hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][0]['signal'] === 'shared-topic', 'candidate retains evidence signal');
 hubEditorialAssert(count($suggestions['pillars'][0]['candidates'][0]['evidence'][0]['topics']) === 2, 'candidate retains matched topic evidence');
+
+$allSuggestions = HUB_editorialSuggestions(0, 10);
+hubEditorialAssert(isset($allSuggestions['pillar_candidates']), 'global suggestions expose pillar candidates');
+hubEditorialAssert(count($allSuggestions['pillar_candidates']) === 1, 'existing Static Page pillars are excluded from pillar candidates');
+hubEditorialAssert($allSuggestions['pillar_candidates'][0]['id'] === 'new-pillar', 'unapproved Static Page is suggested as a pillar candidate');
+hubEditorialAssert($allSuggestions['pillar_candidates'][0]['score'] === 2, 'pillar candidate score is deterministic from matching published articles');
+hubEditorialAssert($allSuggestions['pillar_candidates'][0]['evidence'][0]['signal'] === 'shared-topic', 'pillar candidate retains shared-topic evidence');
+hubEditorialAssert($allSuggestions['pillar_candidates'][0]['evidence'][0]['matching_article_count'] === 2, 'pillar candidate exposes matching article count');
 
 $source = file_get_contents(dirname(__DIR__) . '/lib-editorial.php');
 $summaryStart = strpos($source, 'function HUB_editorialSummary(');
