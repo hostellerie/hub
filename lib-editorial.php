@@ -795,8 +795,9 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
         $relations = HUB_getRelations($currentPillarId, false);
         $candidates = HUB_editorialArticleCandidates($pillar, $relations, $limitPerPillar);
         $closeContent = HUB_editorialCloseContentCandidates($pillar, $limitPerPillar);
+        $contentGaps = HUB_editorialContentGaps($pillar, $limitPerPillar);
 
-        if (empty($candidates) && empty($closeContent)) {
+        if (empty($candidates) && empty($closeContent) && empty($contentGaps)) {
             continue;
         }
 
@@ -806,6 +807,7 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
             'source_id' => (string) $pillar['source_id'],
             'candidates' => $candidates,
             'close_content' => $closeContent,
+            'content_gaps' => $contentGaps,
         );
     }
 
@@ -821,7 +823,7 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
         'schema' => 1,
         'generated_from' => array('shared-topic'),
         'ranking_signals' => array('shared-topic-count', 'engagement', 'publication-date'),
-        'review_signals' => array('older-year-marker', 'version-marker', 'title-token-overlap'),
+        'review_signals' => array('older-year-marker', 'version-marker', 'title-token-overlap', 'topic-coverage'),
         'pillar_candidates' => $pillarId > 0
             ? array()
             : HUB_editorialPillarCandidates($limitPerPillar),
@@ -829,6 +831,93 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
     );
 }
 
+
+/**
+ * Detect deterministic topic-coverage gaps for Static Page pillars.
+ *
+ * Zero published article for a specific topic is a create-content opportunity.
+ * One published article is a thin-coverage review signal. Existing article
+ * candidates remain relation suggestions and are not duplicated here.
+ *
+ * @param array $pillar
+ * @param int $limit
+ * @return array
+ */
+function HUB_editorialContentGaps($pillar, $limit = 20)
+{
+    if (!is_array($pillar)
+        || !isset($pillar['source_type'], $pillar['source_id'])
+        || (string) $pillar['source_type'] !== 'staticpages'
+        || !function_exists('HUB_linkAuditArticlesByTopics')
+    ) {
+        return array();
+    }
+
+    $topicContext = HUB_editorialTopicContext($pillar['source_id']);
+    if (empty($topicContext['ids'])) {
+        return array();
+    }
+
+    $pillarId = isset($pillar['id']) ? (int) $pillar['id'] : 0;
+    $gaps = array();
+
+    foreach ($topicContext['ids'] as $topicId) {
+        $topicId = (string) $topicId;
+        if ($topicId === '') {
+            continue;
+        }
+
+        $articles = HUB_linkAuditArticlesByTopics(array($topicId));
+        $articleCount = count($articles);
+
+        if ($articleCount > 1) {
+            continue;
+        }
+
+        if (function_exists('HUB_isSuggestionHidden')
+            && HUB_isSuggestionHidden('content-gap', $pillarId, 'topic', $topicId)
+        ) {
+            continue;
+        }
+
+        $label = isset($topicContext['labels'][$topicId])
+            ? (string) $topicContext['labels'][$topicId]
+            : $topicId;
+
+        $gapKind = $articleCount === 0
+            ? 'create-content'
+            : 'review-thin-coverage';
+
+        $gaps[] = array(
+            'pillar_id' => $pillarId,
+            'topic_id' => $topicId,
+            'topic_label' => $label,
+            'kind' => $gapKind,
+            'article_count' => $articleCount,
+            'priority' => $articleCount === 0 ? 100 : 50,
+            'evidence' => array(
+                array(
+                    'signal' => 'topic-coverage',
+                    'topic' => array(
+                        'id' => $topicId,
+                        'label' => $label,
+                    ),
+                    'published_article_count' => $articleCount,
+                ),
+            ),
+        );
+    }
+
+    usort($gaps, function ($left, $right) {
+        if ((int) $left['priority'] !== (int) $right['priority']) {
+            return (int) $left['priority'] > (int) $right['priority'] ? -1 : 1;
+        }
+
+        return strcmp((string) $left['topic_id'], (string) $right['topic_id']);
+    });
+
+    return array_slice($gaps, 0, max(1, (int) $limit));
+}
 
 /**
  * Suggest Static Pages that may deserve promotion to Hub pillars.
