@@ -44,6 +44,14 @@ $health = isset($summary['health']) && is_array($summary['health'])
     ? $summary['health']
     : array();
 
+$content .= '<h2>Cross-site relation context</h2>'
+    . '<ul>'
+    . '<li>Current-site targets: ' . (isset($summary['current_site_relations']) ? (int) $summary['current_site_relations'] : 0) . '</li>'
+    . '<li>Cross-site targets: ' . (isset($summary['cross_site_relations']) ? (int) $summary['cross_site_relations'] : 0) . '</li>'
+    . '<li>Unknown/unresolved site context: ' . (isset($summary['unknown_site_relations']) ? (int) $summary['unknown_site_relations'] : 0) . '</li>'
+    . '</ul>'
+    . '<p><small>Cross-site is contextual information, not an error by itself.</small></p>';
+
 $content .= '<h2>Pillar health</h2>'
     . '<ul>'
     . '<li>Healthy: ' . (isset($health['healthy']) ? (int) $health['healthy'] : 0) . '</li>'
@@ -161,7 +169,7 @@ if (empty($pillars)) {
         }
 
         $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
-            . '<th>Identity</th><th>Structural</th><th>Editorial</th><th>Target</th><th>Integration</th><th>Reciprocal</th>'
+            . '<th>Identity</th><th>Structural</th><th>Editorial</th><th>Target</th><th>Site</th><th>Integration</th><th>Reciprocal</th>'
             . '</tr></thead><tbody>';
 
         foreach ($relations as $relation) {
@@ -176,6 +184,12 @@ if (empty($pillars)) {
             $reciprocalEvidence = isset($relation['reciprocal_evidence']) && is_array($relation['reciprocal_evidence'])
                 ? $relation['reciprocal_evidence']
                 : array();
+            $relationSite = isset($relation['site_context']) && is_array($relation['site_context'])
+                ? $relation['site_context']
+                : array();
+            $siteLabel = !empty($relationSite['cross_site'])
+                ? 'cross-site'
+                : (!empty($relationSite['current_site']) ? 'current-site' : 'unknown');
 
             $content .= '<tr><td><code>' . HUB_integrityAdminEscape($identity) . '</code>'
                 . (!empty($relation['title']) ? '<br>' . HUB_integrityAdminEscape($relation['title']) : '')
@@ -188,6 +202,10 @@ if (empty($pillars)) {
                 . '<td>' . HUB_integrityAdminEscape($targetStatus)
                 . (!empty($relation['diagnostic'])
                     ? '<br><small>' . HUB_integrityAdminEscape($relation['diagnostic']) . '</small>'
+                    : '') . '</td>'
+                . '<td><code>' . HUB_integrityAdminEscape($siteLabel) . '</code>'
+                . (!empty($relationSite['host'])
+                    ? '<br><small>' . HUB_integrityAdminEscape($relationSite['host']) . '</small>'
                     : '') . '</td>'
                 . '<td><code>' . HUB_integrityAdminEscape(
                     isset($evidence['verification']) ? $evidence['verification'] : 'unconfirmed'
