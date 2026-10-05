@@ -212,3 +212,10 @@ When IndexNow exposes the `indexnow.urls.submit` capability, Hub submits only ad
 ## Development archive
 
 The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.8.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+
+
+## Editorial roadmap exports
+
+The read-only Editorial mapping administration page can build a deterministic 0.8 editorial roadmap from the approved Hub graph and explainable suggestion signals. It includes existing pillars, strongest relation candidates, new Static Page pillar opportunities, temporal review candidates and prioritized next actions.
+
+The roadmap can be downloaded as Markdown or JSON. Diagnostics that belong to 0.9.0, including reciprocal-link health, orphan detection, broken/unresolved relations, canonical consistency and cluster health, are listed as deferred instead of being inferred prematurely.
