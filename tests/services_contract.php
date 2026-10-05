@@ -51,6 +51,33 @@ function HUB_editorialSummary($includeDisabled = false)
     );
 }
 
+function HUB_editorialInventory($includeDisabled = false)
+{
+    return array(
+        'schema' => 1,
+        'pillars' => array(
+            array(
+                'pillar_id' => 7,
+                'source_type' => 'staticpages',
+                'source_id' => 'guide',
+                'is_enabled' => true,
+                'items' => array(
+                    array(
+                        'type' => 'article',
+                        'id' => 'story-1',
+                        'relation_role' => 'satellite',
+                        'position' => 10,
+                        'is_enabled' => true,
+                        'is_nested_pillar' => false,
+                        'nested_pillar_id' => 0,
+                        'parent_count' => 1,
+                    ),
+                ),
+            ),
+        ),
+    );
+}
+
 function HUB_getAffectedContexts($type, $id, $includeDisabled = false)
 {
     return array(
@@ -190,6 +217,15 @@ hubServiceAssert($status === PLG_RET_OK, 'editorial summary returns OK');
 hubServiceAssert($output['capability'] === 'hub.editorial.summary', 'editorial summary identifies its capability');
 hubServiceAssert($output['summary']['pillars'] === 2, 'editorial summary service returns structural graph counts');
 hubServiceAssert($output['summary']['multi_parent_items'] === 1, 'editorial summary preserves graph-shaped context');
+hubServiceAssert(!isset($output['inventory']), 'editorial summary stays compact by default');
+
+$output = null;
+$messages = null;
+$status = service_editorial_summary_hub(array('include_inventory' => true), $output, $messages);
+hubServiceAssert($status === PLG_RET_OK, 'editorial summary with inventory returns OK');
+hubServiceAssert(isset($output['inventory']), 'editorial summary optionally returns inventory');
+hubServiceAssert($output['inventory']['pillars'][0]['items'][0]['relation_role'] === 'satellite', 'inventory keeps structural roles');
+hubServiceAssert($output['inventory']['pillars'][0]['items'][0]['parent_count'] === 1, 'inventory keeps parent participation');
 
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
 hubServiceAssert(strpos($functionsSource, 'function plugin_wsEnabled_hub()') !== false, 'Hub enables the native service dispatcher');
