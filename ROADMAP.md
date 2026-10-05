@@ -531,8 +531,8 @@ Hub stores approved relationship
 - report cluster health per pillar: satellites, reciprocal links, unresolved objects and unlinked candidates — first normalized integrity slice implemented for pillar source resolution, relation resolution/renderability, provider participation and backlink-integration evidence; administration view is available under **Integrity & cluster health**
 - identify satellites without a backlink to their pillar — reciprocal evidence is now normalized: Core article backlinks can be verified through Hub's owned placement path; generic provider fragments/integration remain explicitly runtime-unverified until the provider placement can be proven
 - identify pillars that omit important approved satellites from their outgoing links — approved targets now report resolved/renderable outgoing-link eligibility; richer omission/usefulness scoring remains future 0.9 work
-- identify related content clusters with weak or missing internal-link connections
-- orphaned-item checks
+- identify related content clusters with weak or missing internal-link connections — Hub can now identify provider content absent from the Hub graph where a public collection contract exists; true site-wide weak-link/orphan analysis remains separate
+- orphaned-item checks — first safe precursor implemented as `hub-unconnected`: content returned by a provider's shared `content.collection` contract but absent from the enabled Hub graph; this is explicitly not labelled as global SEO orphan status
 - broken/missing object checks — first implementation reports unresolved pillar sources and unresolved approved relation identities through `HUB_integritySummary()`
 - sitemap/feed integration opportunities
 - affected-page diagnostics
