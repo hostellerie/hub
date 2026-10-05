@@ -188,6 +188,15 @@ function HUB_handleItemSaved($id, $type, $oldId = '', $subType = '')
 
     HUB_invalidateAffectedContexts($contexts, $identity['type'], $identity['id']);
 
+    if (function_exists('HUB_notifyIndexNowAffectedContexts')) {
+        HUB_notifyIndexNowAffectedContexts(
+            $contexts,
+            $identity['type'],
+            $identity['id'],
+            'hub-affected-save'
+        );
+    }
+
     return $contexts;
 }
 
@@ -205,6 +214,15 @@ function HUB_handleItemDeleted($id, $type, $subType = '')
     $contexts = HUB_getAffectedContexts($identity['type'], $identity['id']);
 
     HUB_invalidateAffectedContexts($contexts, $identity['type'], $identity['id']);
+
+    if (function_exists('HUB_notifyIndexNowAffectedContexts')) {
+        HUB_notifyIndexNowAffectedContexts(
+            $contexts,
+            $identity['type'],
+            $identity['id'],
+            'hub-affected-delete'
+        );
+    }
 
     return $contexts;
 }
