@@ -158,5 +158,42 @@ function HUB_updateSchema_0_8_0()
         return false;
     }
 
+    $editorialColumns = array(
+        array(
+            'table' => $_TABLES['hub_pillars'],
+            'column' => 'editorial_role',
+            'sql' => "ALTER TABLE {$_TABLES['hub_pillars']} "
+                . "ADD editorial_role varchar(32) NOT NULL DEFAULT '' AFTER source_id",
+        ),
+        array(
+            'table' => $_TABLES['hub_relations'],
+            'column' => 'editorial_role',
+            'sql' => "ALTER TABLE {$_TABLES['hub_relations']} "
+                . "ADD editorial_role varchar(32) NOT NULL DEFAULT '' AFTER relation_role",
+        ),
+    );
+
+    foreach ($editorialColumns as $column) {
+        $check = DB_query(
+            "SHOW COLUMNS FROM " . $column['table']
+            . " LIKE '" . DB_escapeString($column['column']) . "'",
+            1
+        );
+        if ($check === false) {
+            return false;
+        }
+        if (DB_numRows($check) > 0) {
+            continue;
+        }
+
+        DB_query($column['sql'], 1);
+        if (DB_error()) {
+            if (function_exists('COM_errorLog')) {
+                COM_errorLog('Hub 0.8.0 editorial role schema upgrade failed for ' . $column['table'] . '.');
+            }
+            return false;
+        }
+    }
+
     return true;
 }
