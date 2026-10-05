@@ -28,6 +28,20 @@ function HUB_normalizeRelationRole($role)
 {
     $role = strtolower(trim((string) $role));
     return in_array($role, array('related', 'sub-pillar', 'satellite', 'support'), true)
+        ? $role : 'related';
+}
+
+function HUB_normalizeEditorialRole($role)
+{
+    $role = strtolower(trim((string) $role));
+    return in_array($role, array('', 'guide', 'tutorial', 'reference', 'case-study', 'download', 'video', 'discussion', 'resource', 'news', 'archive'), true)
+        ? $role : '';
+}
+
+function HUB_normalizeRelationRole($role)
+{
+    $role = strtolower(trim((string) $role));
+    return in_array($role, array('related', 'sub-pillar', 'satellite', 'support'), true)
         ? $role
         : 'related';
 }
@@ -185,7 +199,7 @@ function HUB_findPillar($type, $id)
 function HUB_getRelations($pillarId, $includeDisabled = true)
 {
     return (int) $pillarId === 7
-        ? array(array('item_type' => 'article', 'item_id' => 'story-1', 'relation_role' => 'satellite', 'position' => 10, 'is_enabled' => 1))
+        ? array(array('item_type' => 'article', 'item_id' => 'story-1', 'relation_role' => 'satellite', 'editorial_role' => 'tutorial', 'position' => 10, 'is_enabled' => 1))
         : array();
 }
 
