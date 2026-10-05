@@ -21,7 +21,7 @@ if (!isset($_TABLES['hub_suggestion_decisions'])) {
 
 $_HUB_PLUGIN = array(
     'pi_name'       => 'hub',
-    'pi_version'    => '0.10.0',
+    'pi_version'    => '1.0.0',
     'gl_version'    => '2.1.1',
     'pi_url'        => 'https://github.com/hostellerie/hub',
     'GROUPS'        => array(
