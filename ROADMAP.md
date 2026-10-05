@@ -576,7 +576,7 @@ This phase remains secondary to the single-site relationship graph and should re
 - expose cross-site / cross-language diagnostics without treating a missing translation as an error — explicit `equivalent` relations now report separate site and language evidence (`cross-site`, `current-site`, `unknown`; `cross-language`, `same-language-review`, `language-unverified`) without converting absence of language metadata into an error
 - allow diagnostics for suspicious cross-domain or cross-language links when the relevant site/language metadata is available — cross-site relation context is reported as `current-site`, `cross-site` or `unknown`; approved equivalents additionally expose `cross-language`, `same-language-review` or `language-unverified`, and only the latter two create an explainable `equivalence-review` attention signal
 - keep hreflang generation, translation workflow and language-specific SEO ownership outside Hub; Hub may expose context to the responsible plugin or external consumer — current 0.10 diagnostics deliberately stop at approved equivalence + evidence and do not emit hreflang
-- keep network-level inventories provider-agnostic and explainable, with each object retaining its owning site/plugin identity
+- keep network-level inventories provider-agnostic and explainable, with each object retaining its owning site/plugin identity — the editorial inventory is now explicitly scoped as `active-site-graph`, exposes the active Geeklog site context at the inventory root, and keeps provider ownership through stable `type + id`; remote-site identity is derived contextually from resolved URLs rather than persisted as a second Hub-owned identifier
 
 ## 1.0.0 — Stable Hub
 
