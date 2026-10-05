@@ -115,3 +115,48 @@ function HUB_updateSchema_0_5_0()
 
     return true;
 }
+
+
+/**
+ * Ensure suggestion decision persistence exists for Hub 0.8.0 development installs.
+ *
+ * This migration is intentionally idempotent and may be called even when the
+ * installed plugin version is already 0.8.0.
+ *
+ * @return bool
+ */
+function HUB_updateSchema_0_8_0()
+{
+    global $_TABLES;
+
+    if (empty($_TABLES['hub_suggestion_decisions'])) {
+        return false;
+    }
+
+    $sql = "CREATE TABLE IF NOT EXISTS {$_TABLES['hub_suggestion_decisions']} (
+      id int(11) unsigned NOT NULL AUTO_INCREMENT,
+      suggestion_kind varchar(32) NOT NULL,
+      pillar_id int(11) unsigned NOT NULL DEFAULT 0,
+      item_type varchar(64) NOT NULL,
+      item_id varchar(128) NOT NULL,
+      decision varchar(16) NOT NULL,
+      defer_until int(11) unsigned NOT NULL DEFAULT 0,
+      created int(11) unsigned NOT NULL DEFAULT 0,
+      modified int(11) unsigned NOT NULL DEFAULT 0,
+      owner_id mediumint(8) unsigned NOT NULL DEFAULT 2,
+      PRIMARY KEY (id),
+      UNIQUE KEY suggestion_identity (suggestion_kind, pillar_id, item_type, item_id),
+      KEY active_decision (decision, defer_until),
+      KEY item_identity (item_type, item_id)
+    ) ENGINE=MyISAM";
+
+    DB_query($sql, 1);
+    if (DB_error()) {
+        if (function_exists('COM_errorLog')) {
+            COM_errorLog('Hub 0.8.0 suggestion decision schema upgrade failed.');
+        }
+        return false;
+    }
+
+    return true;
+}
