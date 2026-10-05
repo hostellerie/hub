@@ -272,8 +272,8 @@ Current code status before 0.5.0 work:
 
 - 0.4.0 public bidirectional navigation is implemented;
 - Hub currently has no `plugin_itemsaved_hub()` / `plugin_itemdeleted_hub()` lifecycle listener callbacks;
-- Hub currently exposes no implemented `hub.*` read/service capability;
-- `plugin_getcapabilities_hub()` deliberately advertises an empty capability list until those surfaces exist;
+- Hub now exposes the first implemented read/service capability: `hub.affected.read`;
+- `plugin_getcapabilities_hub()` advertises only implemented Hub capabilities;
 - relation persistence currently stores stable identity, order and enabled state only; richer dependency/editorial graph semantics remain future work.
 
 Implemented first lifecycle slice:
@@ -300,9 +300,9 @@ Remaining implementation target:
 - keep the dependency/editorial model graph-shaped rather than enforcing a single-parent tree: a content object may participate in several approved contexts
 - support multi-level editorial structures such as hub → pillar → sub-pillar → satellite and pillar → map → marker without changing source ownership
 - keep graph edges explicit and typed so a sub-pillar can itself be a pillar in another approved context
-- expose affected-page/context information through a reusable Hub service for administration and future external consumers
+- expose affected-page/context information through a reusable Hub service for administration and future external consumers — implemented as read-only `hub.affected.read`
 
-Shared Hub capability targets from the Memorandum (future targets; none are advertised by Hub until implemented):
+Shared Hub capability targets from the Memorandum (advertise each capability only when its corresponding Hub-owned surface is implemented):
 
 ```text
 hub.context.read
