@@ -26,6 +26,17 @@ $hubEditorialRelations = array(
     ),
 );
 
+function HUB_siteContext()
+{
+    return array(
+        'schema' => 1,
+        'site_url' => 'https://example.test',
+        'host' => 'example.test',
+        'language' => 'english',
+        'source' => 'active-geeklog-config',
+    );
+}
+
 function HUB_normalizeObjectType($type)
 {
     return strtolower(trim((string) $type));
@@ -204,6 +215,8 @@ hubEditorialAssert($summary['pillar_items'][0]['pillar_id'] === 1, 'pillar summa
 
 $inventory = HUB_editorialInventory(false);
 hubEditorialAssert($inventory['schema'] === 1, 'editorial inventory schema is explicit');
+hubEditorialAssert($inventory['scope'] === 'active-site-graph', 'editorial inventory scope is active-site graph');
+hubEditorialAssert($inventory['site_context']['host'] === 'example.test', 'editorial inventory exposes active Geeklog site context');
 hubEditorialAssert(count($inventory['pillars']) === 3, 'editorial inventory exposes every approved pillar');
 hubEditorialAssert(count($inventory['pillars'][0]['items']) === 2, 'pillar inventory exposes approved relation identities');
 hubEditorialAssert($inventory['pillars'][0]['editorial_role'] === 'guide', 'inventory preserves pillar editorial role');
