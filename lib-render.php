@@ -104,3 +104,155 @@ function HUB_renderAvailable($plugin)
 
     return !empty($catalogue['declared']) || !empty($catalogue['services']);
 }
+
+
+/**
+ * Invoke one provider-owned render service discovered by Hub.
+ *
+ * Hub validates only that the action belongs to the provider render catalogue.
+ * The owning plugin remains responsible for authorization, filtering,
+ * rendering, presentation dependencies and output semantics.
+ *
+ * @param string $plugin
+ * @param string $action
+ * @param array  $args
+ * @return array
+ */
+function HUB_renderInvoke($plugin, $action, $args = array())
+{
+    $plugin = strtolower(trim((string) $plugin));
+    $action = strtolower(trim((string) $action));
+    $result = array(
+        'available' => false,
+        'status' => null,
+        'output' => array(),
+        'messages' => array(),
+    );
+
+    if ($plugin === '' || $action === '' || !function_exists('PLG_invokeService')) {
+        return $result;
+    }
+
+    $catalogue = HUB_renderCatalogue($plugin);
+    $allowed = false;
+    if (!empty($catalogue['services']) && is_array($catalogue['services'])) {
+        foreach ($catalogue['services'] as $service) {
+            if (isset($service['action'])
+                && strtolower((string) $service['action']) === $action
+            ) {
+                $allowed = true;
+                break;
+            }
+        }
+    }
+
+    if (!$allowed) {
+        return $result;
+    }
+
+    $output = array();
+    $messages = array();
+    $status = PLG_invokeService(
+        $plugin,
+        $action,
+        is_array($args) ? $args : array(),
+        $output,
+        $messages
+    );
+
+    $result['available'] = true;
+    $result['status'] = $status;
+    $result['output'] = is_array($output) ? $output : array();
+    $result['messages'] = is_array($messages) ? $messages : array();
+
+    return $result;
+}
+
+/**
+ * Return the single unambiguous provider-owned render action, if any.
+ *
+ * Hub does not guess between several specialized renderers. A provider with
+ * multiple render actions must be selected explicitly by a future policy/UI.
+ *
+ * @param string $plugin
+ * @return string
+ */
+function HUB_renderSingleAction($plugin)
+{
+    $catalogue = HUB_renderCatalogue($plugin);
+    if (empty($catalogue['services']) || !is_array($catalogue['services'])) {
+        return '';
+    }
+
+    $actions = array();
+    foreach ($catalogue['services'] as $service) {
+        if (!empty($service['action'])) {
+            $actions[] = strtolower((string) $service['action']);
+        }
+    }
+
+    $actions = array_values(array_unique($actions));
+
+    return count($actions) === 1 ? $actions[0] : '';
+}
+
+/**
+ * Render approved Hub relation identities through one provider-owned renderer.
+ *
+ * @param string $plugin
+ * @param array  $relations
+ * @param array  $context
+ * @return array
+ */
+function HUB_renderApprovedProviderRelations($plugin, $relations, $context = array())
+{
+    $plugin = strtolower(trim((string) $plugin));
+    $relations = is_array($relations) ? $relations : array();
+
+    $action = HUB_renderSingleAction($plugin);
+    if ($action === '' || empty($relations)) {
+        return array(
+            'available' => false,
+            'status' => null,
+            'output' => array(),
+            'messages' => array(),
+        );
+    }
+
+    $items = array();
+    foreach ($relations as $relation) {
+        if (!is_array($relation)
+            || empty($relation['item_type'])
+            || empty($relation['item_id'])
+            || HUB_normalizeObjectType($relation['item_type']) !== $plugin
+        ) {
+            continue;
+        }
+
+        $items[] = array(
+            'id' => HUB_normalizeObjectId($relation['item_id']),
+            'relation_role' => isset($relation['relation_role'])
+                ? HUB_normalizeRelationRole($relation['relation_role'])
+                : 'related',
+            'position' => isset($relation['position']) ? (int) $relation['position'] : 0,
+        );
+    }
+
+    if (empty($items)) {
+        return array(
+            'available' => false,
+            'status' => null,
+            'output' => array(),
+            'messages' => array(),
+        );
+    }
+
+    return HUB_renderInvoke(
+        $plugin,
+        $action,
+        array(
+            'context' => is_array($context) ? $context : array(),
+            'items' => $items,
+        )
+    );
+}
