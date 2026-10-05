@@ -32,6 +32,25 @@ function HUB_normalizeRelationRole($role)
         : 'related';
 }
 
+function HUB_editorialSummary($includeDisabled = false)
+{
+    return array(
+        'schema' => 1,
+        'pillars' => 2,
+        'relations' => 5,
+        'roles' => array(
+            'related' => 0,
+            'sub-pillar' => 1,
+            'satellite' => 3,
+            'support' => 1,
+        ),
+        'providers' => array('article' => 3, 'videos' => 2),
+        'multi_parent_items' => 1,
+        'nested_pillars' => 1,
+        'pillar_items' => array(),
+    );
+}
+
 function HUB_getAffectedContexts($type, $id, $includeDisabled = false)
 {
     return array(
@@ -164,11 +183,20 @@ hubServiceAssert($output['pillar']['source_id'] === 'guide', 'pillar service ret
 hubServiceAssert(count($output['relations']) === 1, 'pillar service returns relation identities');
 hubServiceAssert($output['relations'][0]['relation_role'] === 'satellite', 'pillar service returns structural role');
 
+$output = null;
+$messages = null;
+$status = service_editorial_summary_hub(array(), $output, $messages);
+hubServiceAssert($status === PLG_RET_OK, 'editorial summary returns OK');
+hubServiceAssert($output['capability'] === 'hub.editorial.summary', 'editorial summary identifies its capability');
+hubServiceAssert($output['summary']['pillars'] === 2, 'editorial summary service returns structural graph counts');
+hubServiceAssert($output['summary']['multi_parent_items'] === 1, 'editorial summary preserves graph-shaped context');
+
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
 hubServiceAssert(strpos($functionsSource, 'function plugin_wsEnabled_hub()') !== false, 'Hub enables the native service dispatcher');
 hubServiceAssert(strpos($functionsSource, "'hub.affected.read'") !== false, 'implemented affected service is advertised as a capability');
 hubServiceAssert(strpos($functionsSource, "'hub.context.read'") !== false, 'implemented context service is advertised as a capability');
 hubServiceAssert(strpos($functionsSource, "'hub.related.read'") !== false, 'implemented related service is advertised as a capability');
 hubServiceAssert(strpos($functionsSource, "'hub.pillar.read'") !== false, 'implemented pillar service is advertised as a capability');
+hubServiceAssert(strpos($functionsSource, "'hub.editorial.summary'") !== false, 'implemented editorial summary is advertised as a capability');
 
 echo "Hub service contract tests passed." . PHP_EOL;
