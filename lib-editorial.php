@@ -375,6 +375,34 @@ function HUB_editorialArticleCandidates($pillar, $relations, $limit = 20)
             return strcmp((string) $left['id'], (string) $right['id']);
         });
 
+        $hits = isset($article['hits']) ? max(0, (int) $article['hits']) : 0;
+        $comments = isset($article['comments']) ? max(0, (int) $article['comments']) : 0;
+        $publishedAt = isset($article['date']) ? trim((string) $article['date']) : '';
+        $publishedYear = 0;
+        if ($publishedAt !== '' && preg_match('/^(\\d{4})-/', $publishedAt, $matches)) {
+            $publishedYear = (int) $matches[1];
+        }
+
+        $evidence = array(
+            array(
+                'signal' => 'shared-topic',
+                'topics' => $matchedTopics,
+            ),
+            array(
+                'signal' => 'engagement',
+                'views' => $hits,
+                'comments' => $comments,
+            ),
+        );
+
+        if ($publishedAt !== '') {
+            $evidence[] = array(
+                'signal' => 'publication-date',
+                'published_at' => $publishedAt,
+                'published_year' => $publishedYear,
+            );
+        }
+
         $candidates[] = array(
             'type' => 'article',
             'id' => $sid,
@@ -383,18 +411,32 @@ function HUB_editorialArticleCandidates($pillar, $relations, $limit = 20)
                 : $sid,
             'suggested_role' => 'satellite',
             'score' => count($matchedTopics),
-            'evidence' => array(
-                array(
-                    'signal' => 'shared-topic',
-                    'topics' => $matchedTopics,
-                ),
+            'ranking' => array(
+                'shared_topics' => count($matchedTopics),
+                'views' => $hits,
+                'comments' => $comments,
+                'published_at' => $publishedAt,
+                'published_year' => $publishedYear,
             ),
+            'evidence' => $evidence,
         );
     }
 
     usort($candidates, function ($left, $right) {
         if ((int) $left['score'] !== (int) $right['score']) {
             return (int) $left['score'] > (int) $right['score'] ? -1 : 1;
+        }
+
+        $leftViews = isset($left['ranking']['views']) ? (int) $left['ranking']['views'] : 0;
+        $rightViews = isset($right['ranking']['views']) ? (int) $right['ranking']['views'] : 0;
+        if ($leftViews !== $rightViews) {
+            return $leftViews > $rightViews ? -1 : 1;
+        }
+
+        $leftComments = isset($left['ranking']['comments']) ? (int) $left['ranking']['comments'] : 0;
+        $rightComments = isset($right['ranking']['comments']) ? (int) $right['ranking']['comments'] : 0;
+        if ($leftComments !== $rightComments) {
+            return $leftComments > $rightComments ? -1 : 1;
         }
 
         $titleCompare = strcasecmp((string) $left['title'], (string) $right['title']);
@@ -456,6 +498,7 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
     return array(
         'schema' => 1,
         'generated_from' => array('shared-topic'),
+        'ranking_signals' => array('shared-topic-count', 'engagement', 'publication-date'),
         'pillar_candidates' => $pillarId > 0
             ? array()
             : HUB_editorialPillarCandidates($limitPerPillar),
