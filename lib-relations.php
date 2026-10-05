@@ -901,6 +901,9 @@ function HUB_pillarRenderDiagnostics($sourceType, $sourceId, $uid = 0)
         $diagnostics['relations'][] = array(
             'type' => (string) $relation['item_type'],
             'id' => (string) $relation['item_id'],
+            'relation_role' => isset($relation['relation_role'])
+                ? HUB_normalizeRelationRole($relation['relation_role'])
+                : 'related',
             'renderable' => $renderable,
             'title' => (string) $resolved['title'],
             'url' => (string) $resolved['url'],
