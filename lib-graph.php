@@ -55,7 +55,7 @@ function HUB_graphNeighbors($type, $id, $includeDisabled = false)
         $edges['down:' . $key . '>' . $type . ':' . $id] = array(
             'from' => $parent,
             'to' => HUB_graphNode($type, $id),
-            'kind' => isset($relation['relation_role']) ? HUB_normalizeRelationRole($relation['relation_role']) : 'related',
+            'kind' => isset($pillar['relation_role']) ? HUB_normalizeRelationRole($pillar['relation_role']) : 'related',
         );
     }
 
@@ -76,7 +76,7 @@ function HUB_graphNeighbors($type, $id, $includeDisabled = false)
             $edges['down:' . $type . ':' . $id . '>' . $key] = array(
                 'from' => HUB_graphNode($type, $id),
                 'to' => $child,
-                'kind' => 'related',
+                'kind' => isset($relation['relation_role']) ? HUB_normalizeRelationRole($relation['relation_role']) : 'related',
             );
         }
     }
