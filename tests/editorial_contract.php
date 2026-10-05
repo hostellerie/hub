@@ -9,6 +9,7 @@ $hubEditorialPillars = array(
 );
 
 $hubHiddenSuggestions = array();
+$hubEditorialCloseMode = false;
 
 $hubEditorialRelations = array(
     1 => array(
@@ -78,6 +79,37 @@ function HUB_staticPageTopicContext($pageId)
 
 function HUB_linkAuditArticlesByTopics(array $topicIds)
 {
+    global $hubEditorialCloseMode;
+
+    if ($hubEditorialCloseMode) {
+        return array(
+            array(
+                'sid' => 'close-a',
+                'title' => 'LibreOffice migration guide for Windows',
+                'hub_topics' => array('seo' => 'SEO', 'content' => 'Content'),
+                'hits' => 40,
+                'comments' => 1,
+                'date' => '2025-01-01 00:00:00',
+            ),
+            array(
+                'sid' => 'close-b',
+                'title' => 'LibreOffice migration guide for Linux',
+                'hub_topics' => array('seo' => 'SEO', 'content' => 'Content'),
+                'hits' => 30,
+                'comments' => 0,
+                'date' => '2025-02-01 00:00:00',
+            ),
+            array(
+                'sid' => 'far-c',
+                'title' => 'Rocket stove cooking basics',
+                'hub_topics' => array('seo' => 'SEO'),
+                'hits' => 20,
+                'comments' => 0,
+                'date' => '2025-03-01 00:00:00',
+            ),
+        );
+    }
+
     return array(
         array(
             'sid' => 'story-x',
@@ -177,6 +209,32 @@ hubEditorialAssert(in_array('engagement', $suggestions['ranking_signals'], true)
 hubEditorialAssert(in_array('publication-date', $suggestions['ranking_signals'], true), 'suggestion payload declares publication-date ranking signal');
 hubEditorialAssert(in_array('older-year-marker', $suggestions['review_signals'], true), 'suggestion payload declares older year review signal');
 hubEditorialAssert(in_array('version-marker', $suggestions['review_signals'], true), 'suggestion payload declares version review signal');
+hubEditorialAssert(in_array('title-token-overlap', $suggestions['review_signals'], true), 'suggestion payload declares title overlap review signal');
+
+$similarity = HUB_editorialTitleSimilarity(
+    'LibreOffice migration guide for Windows',
+    'LibreOffice migration guide for Linux'
+);
+hubEditorialAssert($similarity['similarity'] >= 0.50, 'close titles reach deterministic lexical threshold');
+hubEditorialAssert(in_array('libreoffice', $similarity['common_tokens'], true), 'title similarity retains common lexical evidence');
+hubEditorialAssert(in_array('migration', $similarity['common_tokens'], true), 'title similarity retains multiple common tokens');
+
+$hubEditorialCloseMode = true;
+$closeCandidates = HUB_editorialCloseContentCandidates($hubEditorialPillars[0], 10);
+hubEditorialAssert(count($closeCandidates) === 1, 'close-content detection requires shared topics and lexical overlap');
+hubEditorialAssert($closeCandidates[0]['left']['id'] === 'close-a', 'close-content pair keeps first stable identity');
+hubEditorialAssert($closeCandidates[0]['right']['id'] === 'close-b', 'close-content pair keeps second stable identity');
+hubEditorialAssert($closeCandidates[0]['score'] >= 50, 'close-content score is deterministic percentage');
+hubEditorialAssert($closeCandidates[0]['evidence'][0]['signal'] === 'shared-topic', 'close-content keeps shared-topic evidence');
+hubEditorialAssert($closeCandidates[0]['evidence'][1]['signal'] === 'title-token-overlap', 'close-content keeps lexical evidence');
+hubEditorialAssert($closeCandidates[0]['review_recommended'] === true, 'close-content remains a human-review suggestion');
+
+$pairId = $closeCandidates[0]['pair_id'];
+$hubHiddenSuggestions['close-content:1:article-pair:' . $pairId] = true;
+$hiddenCloseCandidates = HUB_editorialCloseContentCandidates($hubEditorialPillars[0], 10);
+hubEditorialAssert(empty($hiddenCloseCandidates), 'dismissed/deferred close-content pair is filtered');
+unset($hubHiddenSuggestions['close-content:1:article-pair:' . $pairId]);
+$hubEditorialCloseMode = false;
 
 $temporal = HUB_editorialTemporalSignals(array(
     'title' => 'LibreOffice 2024 and 26.8',
