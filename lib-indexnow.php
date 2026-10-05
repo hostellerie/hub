@@ -134,3 +134,46 @@ function HUB_notifyIndexNowAffectedContexts($contexts, $changedType, $changedId,
 
     return $result;
 }
+
+
+/**
+ * Read normalized IndexNow status when the provider exposes it.
+ *
+ * @return array
+ */
+function HUB_indexNowStatus()
+{
+    $result = array(
+        'available' => false,
+        'status' => null,
+        'data' => array(),
+        'messages' => array(),
+    );
+
+    if (!function_exists('PLG_invokeService')) {
+        return $result;
+    }
+
+    if (function_exists('HUB_serviceHasAction')
+        && !HUB_serviceHasAction('indexnow', 'status_read')
+    ) {
+        return $result;
+    }
+
+    $output = array();
+    $messages = array();
+    $status = PLG_invokeService(
+        'indexnow',
+        'status_read',
+        array(),
+        $output,
+        $messages
+    );
+
+    $result['available'] = true;
+    $result['status'] = $status;
+    $result['data'] = is_array($output) ? $output : array();
+    $result['messages'] = is_array($messages) ? $messages : array();
+
+    return $result;
+}
