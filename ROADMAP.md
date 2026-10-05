@@ -445,7 +445,7 @@ The normalized editorial summary is therefore the first reusable "marketing mapp
 - surface temporal signals such as publication/update age and obvious year/version markers so stale or strongly time-bound content can be reviewed — implemented as publication age plus explicit year/version-marker evidence. Hub only recommends human review; it does not classify content as stale or obsolete
 - allow explainable semantic-proximity / potential-cannibalization warnings as suggestions only; Hub must not auto-merge, redirect or rewrite content
 - suggest complementary content without automatically changing editorial relationships — implemented for Static Page pillar → article candidates through `HUB_editorialSuggestions()` and read-only `hub.suggestions.read`
-- allow administrators to approve, dismiss or defer suggestions so repeated audits remain useful — explicit approval through the existing Relations admin is implemented; dismiss/defer persistence remains future work
+- allow administrators to approve, dismiss or defer suggestions so repeated audits remain useful — implemented. Dismissed suggestions remain hidden until restored; deferred suggestions are persisted with an expiry and automatically return after 30 days; active decisions can be restored from Relations administration
 - generate an editorial roadmap directly from the current inventory and relationship graph
 - display generated roadmaps in Hub administration with clear sections for pillars, satellites, missing links, candidate content and editorial gaps
 - provide a one-click Markdown download of the generated roadmap
