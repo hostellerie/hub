@@ -921,8 +921,81 @@ function HUB_renderPillarRelations($sourceType, $sourceId)
         return '';
     }
 
+    $relations = HUB_getRelations($pillar['id'], false);
+    if (empty($relations)) {
+        return '';
+    }
+
+    $providerGroups = array();
+    foreach ($relations as $relation) {
+        if (!is_array($relation) || empty($relation['item_type'])) {
+            continue;
+        }
+
+        $provider = HUB_normalizeObjectType($relation['item_type']);
+        if ($provider === '') {
+            continue;
+        }
+
+        if (!isset($providerGroups[$provider])) {
+            $providerGroups[$provider] = array();
+        }
+        $providerGroups[$provider][] = $relation;
+    }
+
+    $specialized = array();
+    $specializedTypes = array();
+
+    if (function_exists('HUB_renderApprovedProviderRelations')) {
+        foreach ($providerGroups as $provider => $providerRelations) {
+            $rendered = HUB_renderApprovedProviderRelations(
+                $provider,
+                $providerRelations,
+                array(
+                    'type' => (string) $pillar['source_type'],
+                    'id' => (string) $pillar['source_id'],
+                    'pillar_id' => (int) $pillar['id'],
+                )
+            );
+
+            $output = isset($rendered['output']) && is_array($rendered['output'])
+                ? $rendered['output'] : array();
+            $html = isset($output['html']) ? trim((string) $output['html']) : '';
+
+            if (empty($rendered['available']) || $html === '') {
+                continue;
+            }
+
+            $okStatus = defined('PLG_RET_OK') ? PLG_RET_OK : 0;
+            if (isset($rendered['status']) && (int) $rendered['status'] !== (int) $okStatus) {
+                continue;
+            }
+
+            $title = isset($output['title']) && trim((string) $output['title']) !== ''
+                ? trim((string) $output['title'])
+                : HUB_publicText('related_content');
+
+            $specializedTypes[$provider] = true;
+            $specialized[] = '<section class="hub-context-block hub-provider-content hub-provider-'
+                . htmlspecialchars($provider, ENT_QUOTES, 'UTF-8')
+                . '" aria-label="'
+                . htmlspecialchars($title, ENT_QUOTES, 'UTF-8')
+                . '"><div class="hub-context-title">'
+                . htmlspecialchars($title, ENT_QUOTES, 'UTF-8')
+                . '</div>'
+                . $html
+                . '</section>';
+        }
+    }
+
     $links = array();
-    foreach (HUB_getRelations($pillar['id'], false) as $relation) {
+    foreach ($relations as $relation) {
+        $provider = isset($relation['item_type'])
+            ? HUB_normalizeObjectType($relation['item_type']) : '';
+        if ($provider !== '' && isset($specializedTypes[$provider])) {
+            continue;
+        }
+
         $resolved = HUB_resolveObject($relation['item_type'], $relation['item_id']);
         if (empty($resolved['exists']) || empty($resolved['url'])) {
             continue;
@@ -937,17 +1010,23 @@ function HUB_renderPillarRelations($sourceType, $sourceId)
             . '</a></li>';
     }
 
-    if (empty($links)) {
-        return '';
+    $sections = array();
+
+    if (!empty($links)) {
+        $sections[] = '<section class="hub-context-block hub-related-content" aria-label="'
+            . htmlspecialchars(HUB_publicText('related_content'), ENT_QUOTES, 'UTF-8')
+            . '"><div class="hub-context-title">'
+            . htmlspecialchars(HUB_publicText('related_content'), ENT_QUOTES, 'UTF-8')
+            . '</div><ul class="hub-context-list">'
+            . implode('', $links)
+            . '</ul></section>';
     }
 
-    return '<section class="hub-context-block hub-related-content" aria-label="'
-        . htmlspecialchars(HUB_publicText('related_content'), ENT_QUOTES, 'UTF-8')
-        . '"><div class="hub-context-title">'
-        . htmlspecialchars(HUB_publicText('related_content'), ENT_QUOTES, 'UTF-8')
-        . '</div><ul class="hub-context-list">'
-        . implode('', $links)
-        . '</ul></section>';
+    if (!empty($specialized)) {
+        $sections = array_merge($sections, $specialized);
+    }
+
+    return implode('', $sections);
 }
 
 function HUB_itemDisplayBacklinkTypes()
