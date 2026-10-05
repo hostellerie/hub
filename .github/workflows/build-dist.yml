@@ -56,6 +56,7 @@ jobs:
         shell: bash
         run: |
           php tests/audit_contract.php
+          php tests/upgrade_contract.php
           php tests/relations_contract.php
           php tests/lifecycle_contract.php
           php tests/graph_contract.php
@@ -146,7 +147,8 @@ jobs:
             hub/public_html/hub.css \
             hub/docs/plugin-author-guide.md \
             hub/docs/services.md \
-            hub/docs/compatibility.md
+            hub/docs/compatibility.md \
+            hub/docs/upgrade.md
           do
             printf '%s\n' "$archive_files" | grep -Fxq "$required_file" || {
               echo "Missing from archive: $required_file" >&2
