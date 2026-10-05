@@ -184,7 +184,7 @@ hubLifecycleAssert(strpos($functionsSource, "require_once $hub_path . 'lib-lifec
 hubLifecycleAssert(strpos($functionsSource, 'function plugin_itemsaved_hub($id, $type, $old_id = \'\', $sub_type = \'\')') !== false, 'save listener supports legacy and 2.2.2 arguments');
 hubLifecycleAssert(strpos($functionsSource, 'function plugin_itemdeleted_hub($id, $type, $sub_type = \'\')') !== false, 'delete listener supports optional subtype');
 hubLifecycleAssert(strpos($functionsSource, "'listens' => array('item.saved', 'item.deleted')") !== false, 'Hub declares implemented lifecycle listeners');
-hubLifecycleAssert(strpos($functionsSource, "'capabilities' => array()") !== false, 'future hub.* capabilities remain unadvertised');
+hubLifecycleAssert(strpos($functionsSource, "'hub.affected.read'") !== false, 'implemented affected-context capability is advertised');
 
 $relationsSource = file_get_contents(dirname(__DIR__) . '/lib-relations.php');
 hubLifecycleAssert(strpos($relationsSource, 'function HUB_migrateObjectIdentity(') !== false, 'Hub exposes a generic owned-identity migration helper');
