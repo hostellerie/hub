@@ -27,6 +27,7 @@ function HUB_editorialSummary($includeDisabled = false)
             'sub-pillar' => 0,
             'satellite' => 0,
             'support' => 0,
+            'equivalent' => 0,
         ),
         'providers' => array(),
         'multi_parent_items' => 0,
@@ -70,6 +71,7 @@ function HUB_editorialSummary($includeDisabled = false)
                 'sub-pillar' => 0,
                 'satellite' => 0,
                 'support' => 0,
+                'equivalent' => 0,
             ),
             'providers' => array(),
         );
