@@ -96,6 +96,7 @@ jobs:
             hub/lib-graph.php \
             hub/lib-editorial.php \
             hub/lib-integrity.php \
+            hub/lib-site-context.php \
             hub/lib-suggestion-decisions.php \
             hub/lib-indexnow.php \
             hub/lib-lifecycle.php \
