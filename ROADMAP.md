@@ -317,40 +317,54 @@ hub.affected.read
 
 Future targets remain unadvertised until their corresponding Hub-owned surfaces are implemented.
 
-## 0.6.0 — Services and IndexNow
+## 0.6.0 — Services and IndexNow — in progress
 
-- ask IndexNow through `PLG_invokeService()` to queue all affected URLs
-- include Static Page URLs whose rendered topic links changed because of assignment changes or topic metadata changes
-- batch and deduplicate URLs in IndexNow, not Hub
-- establish generic service conventions reusable by other plugins
-- expose IndexNow status in Hub only as information when the IndexNow plugin provides it
-- never duplicate IndexNow transport or queue logic inside Hub
+Implemented first integration slice:
 
-Preferred flows:
+- IndexNow 1.3.0 `develop-1.3.0` now exposes the native Geeklog capability `indexnow.urls.submit` through action `submit_urls`;
+- Hub resolves anonymously readable URLs for pillar/context pages affected by relationship, lifecycle or topic changes;
+- Hub delegates those URLs through `PLG_invokeService('indexnow', 'submit_urls', ...)`;
+- Hub deliberately excludes the directly changed object because IndexNow already receives that object through its own `PLG_itemSaved()` / `PLG_itemDeleted()` listener;
+- missing or older IndexNow installations remain an optional no-op and never break Hub lifecycle handling;
+- Hub never calls `send_to_indexnow()`, reads IndexNow configuration, manages its key, stores submission state or duplicates transport logic;
+- URL deduplication, batch sizing, validation, submission and history remain owned by IndexNow;
+- IndexNow's current 1.3.0 architecture uses immediate/batch submission rather than introducing a general asynchronous queue.
+
+Current flow:
 
 ```text
-Content saved
+Content saved/deleted
     ↓
-PLG_itemSaved()
+PLG_itemSaved() / PLG_itemDeleted()
+    ├── IndexNow submits the changed object itself
     ↓
-Hub determines affected pages
+Hub determines other affected context pages
     ↓
-IndexNow service
+Hub resolves their anonymous public URLs
     ↓
-queue / deduplicate / submit
+PLG_invokeService('indexnow', 'submit_urls', ...)
+    ↓
+IndexNow deduplicates / batches / validates / submits / records history
 ```
+
+Topic-driven flow:
 
 ```text
 Topic assignment / topic metadata changed
     ↓
-Hub identifies affected Static Pages
+Hub identifies affected Static Page pillars
     ↓
-Hub resolves their public URLs
+Hub resolves their anonymous public URLs
     ↓
-IndexNow service
-    ↓
-queue / deduplicate / submit
+IndexNow native submit_urls service
 ```
+
+Remaining 0.6.0 work:
+
+- complete CI/contract coverage for the Hub ↔ IndexNow service boundary;
+- expose IndexNow availability/status in Hub only if IndexNow provides a read-only normalized status service;
+- document the service dependency and graceful-degradation behavior;
+- review whether any additional generic service convention is justified by a real second consumer before adding abstractions.
 
 ## 0.7.0 — Specialized plugin rendering
 
