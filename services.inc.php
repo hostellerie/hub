@@ -209,3 +209,27 @@ function service_pillar_read_hub($args, &$output, &$svc_msg)
         'relations' => $items,
     ), $output, $svc_msg);
 }
+
+
+/**
+ * hub.editorial.summary
+ *
+ * Return a structural, deterministic summary of the approved Hub editorial
+ * graph. This surface intentionally excludes integrity/SEO health and inferred
+ * suggestions.
+ */
+function service_editorial_summary_hub($args, &$output, &$svc_msg)
+{
+    if (!HUB_SERVICE_authorized()) {
+        return HUB_SERVICE_denied($output, $svc_msg);
+    }
+
+    $args = is_array($args) ? $args : array();
+    $includeDisabled = !empty($args['include_disabled']);
+    $summary = HUB_editorialSummary($includeDisabled);
+
+    return HUB_SERVICE_ok(array(
+        'capability' => 'hub.editorial.summary',
+        'summary' => $summary,
+    ), $output, $svc_msg);
+}
