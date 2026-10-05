@@ -64,6 +64,7 @@ hubAssert(HUB_normalizeObjectType('maps<script>') === 'mapsscript', 'unsafe type
 hubAssert(HUB_normalizeObjectId('  abc-123  ') === 'abc-123', 'object id normalization');
 hubAssert(HUB_normalizeRelationRole('sub-pillar') === 'sub-pillar', 'structural relation role is preserved');
 hubAssert(HUB_normalizeRelationRole(' SATELLITE ') === 'satellite', 'relation role normalization is case-insensitive');
+hubAssert(HUB_normalizeRelationRole('equivalent') === 'equivalent', 'equivalent-content structural role is preserved');
 hubAssert(HUB_normalizeRelationRole('guide') === 'related', 'relation role normalization defaults editorial functions to related');
 hubAssert(HUB_normalizeRelationRole('anything') === 'related', 'relation role normalization defaults unknown values');
 hubAssert(HUB_normalizeEditorialRole(' GUIDE ') === 'guide', 'editorial role normalization preserves guide');
