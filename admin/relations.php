@@ -221,8 +221,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $position = isset($_POST['position']) ? (int) $_POST['position'] : 0;
             $enabled = !empty($_POST['is_enabled']) ? 1 : 0;
+            $relationRole = isset($_POST['relation_role']) ? (string) $_POST['relation_role'] : 'related';
 
-            $saved = HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position, $enabled);
+            $saved = HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position, $enabled, 0, $relationRole);
             $message = $saved
                 ? '<div class="hub-rel-message">Relation saved.</div>'
                 : '<div class="hub-rel-message hub-rel-error">Unable to save relation. Check the pillar and unique type + id.</div>';
@@ -237,6 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $staticPages = HUB_relAdminStaticPages();
 $objectTypes = HUB_relationObjectTypes();
+$relationRoles = HUB_relationRoles();
 $pillars = HUB_getPillars(true);
 $showSuggestions = isset($_GET['suggest']) && $_GET['suggest'] === '1';
 $pillarSuggestions = $showSuggestions
@@ -277,7 +279,7 @@ $content = '<style>'
 $content .= HUB_adminNavigation('relations');
 
 $content .= '<h1>Pillars &amp; manual relations</h1>';
-$content .= '<p>Hub 0.4.0 stores only stable <code>type + id</code> identities. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
+$content .= '<p>Hub 0.5.0 stores stable <code>type + id</code> identities plus a Hub-owned structural role for each approved relation. Titles and URLs are resolved dynamically from the owning Geeklog provider.</p>';
 $content .= '<p class="hub-rel-muted">Known relation types are discovered from active Geeklog Item Info providers. When a provider exposes the shared collection contract, Hub can also list its selectable objects without querying plugin-private tables. Choose <em>Custom / other…</em> only when a provider type is not listed.</p>';
 $content .= $message;
 
@@ -384,6 +386,14 @@ if (empty($pillars)) {
                     . '<input type="hidden" name="item_type" value="' . HUB_relAdminEscape($relation['item_type']) . '">'
                     . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($relation['item_id']) . '">'
                     . '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (int) $relation['position'] . '"></label>'
+                    . '<label>Role<select name="relation_role">';
+                foreach ($relationRoles as $roleValue => $roleLabel) {
+                    $selected = HUB_normalizeRelationRole(isset($relation['relation_role']) ? $relation['relation_role'] : 'related') === $roleValue
+                        ? ' selected' : '';
+                    $content .= '<option value="' . HUB_relAdminEscape($roleValue) . '"' . $selected . '>'
+                        . HUB_relAdminEscape($roleLabel) . '</option>';
+                }
+                $content .= '</select></label>'
                     . '<div class="hub-rel-relation-main"><strong><code>' . $relationIdentity . '</code></strong><br>'
                     . HUB_relAdminEscape($resolved['title'])
                     . (!empty($resolved['url']) ? ' · <a href="' . HUB_relAdminEscape($resolved['url']) . '">View</a>' : '')
@@ -464,6 +474,7 @@ if (empty($pillars)) {
                         . '<input type="hidden" name="item_type" value="article">'
                         . '<input type="hidden" name="item_id_manual" value="' . HUB_relAdminEscape($sid) . '">'
                         . '<input type="hidden" name="position" value="' . (int) $suggestionPosition . '">'
+                        . '<input type="hidden" name="relation_role" value="satellite">'
                         . '<input type="hidden" name="is_enabled" value="1">'
                         . '<button type="submit" class="uk-button">Add relation</button></form></div>';
                     $suggestionPosition += 10;
@@ -495,6 +506,13 @@ if (empty($pillars)) {
         $content .= '<label id="' . $hubItemSelectId . '-wrap">Item<select class="hub-rel-item-select" id="' . $hubItemSelectId . '" name="item_id_choice" disabled><option value="">Select a type first</option></select></label>';
         $content .= '<label id="' . $hubItemManualId . '-wrap" style="display:none">Item id<input type="text" id="' . $hubItemManualId . '" name="item_id_manual" maxlength="128" autocomplete="off"></label>';
         $content .= '<label>Order<input type="number" name="position" min="0" max="65535" value="' . (count($relations) * 10 + 10) . '"></label>';
+        $content .= '<label>Role<select name="relation_role">';
+        foreach ($relationRoles as $roleValue => $roleLabel) {
+            $selected = $roleValue === 'related' ? ' selected' : '';
+            $content .= '<option value="' . HUB_relAdminEscape($roleValue) . '"' . $selected . '>'
+                . HUB_relAdminEscape($roleLabel) . '</option>';
+        }
+        $content .= '</select></label>';
         $content .= '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1" checked><span>Enabled</span></label>';
         $content .= '<div><button type="submit" class="uk-button uk-button-primary">Add relation</button></div>';
         $content .= '</div><div class="hub-rel-form-note" id="' . $hubItemNoteId . '"></div></form>';
