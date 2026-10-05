@@ -216,6 +216,55 @@ function HUB_integrityReciprocalEvidence($pillar, $relation, $uid = 0)
 }
 
 /**
+ * Describe one administrator-approved equivalent-content relation.
+ *
+ * Equivalence itself is never inferred here. This helper only describes
+ * site/language evidence around a relation already marked "equivalent".
+ *
+ * @param array $sourceLanguage
+ * @param array $targetLanguage
+ * @param array $targetSite
+ * @return array
+ */
+function HUB_integrityEquivalenceContext($sourceLanguage, $targetLanguage, $targetSite)
+{
+    $sourceLanguage = is_array($sourceLanguage) ? $sourceLanguage : array();
+    $targetLanguage = is_array($targetLanguage) ? $targetLanguage : array();
+    $targetSite = is_array($targetSite) ? $targetSite : array();
+
+    $sourceKnown = !empty($sourceLanguage['object_language_known'])
+        && !empty($sourceLanguage['object_language']);
+    $targetKnown = !empty($targetLanguage['object_language_known'])
+        && !empty($targetLanguage['object_language']);
+
+    if ($sourceKnown && $targetKnown) {
+        $sourceValue = strtolower(trim((string) $sourceLanguage['object_language']));
+        $targetValue = strtolower(trim((string) $targetLanguage['object_language']));
+        $languageStatus = $sourceValue === $targetValue
+            ? 'same-language-review'
+            : 'cross-language';
+    } else {
+        $languageStatus = 'language-unverified';
+    }
+
+    if (!empty($targetSite['cross_site'])) {
+        $siteStatus = 'cross-site';
+    } elseif (!empty($targetSite['current_site'])) {
+        $siteStatus = 'current-site';
+    } else {
+        $siteStatus = 'unknown';
+    }
+
+    return array(
+        'approved_equivalence' => true,
+        'language_status' => $languageStatus,
+        'site_status' => $siteStatus,
+        'source_language' => $sourceKnown ? (string) $sourceLanguage['object_language'] : '',
+        'target_language' => $targetKnown ? (string) $targetLanguage['object_language'] : '',
+    );
+}
+
+/**
  * Build deterministic integrity diagnostics for one approved Hub pillar.
  *
  * This verifies stable identities and resolvability through Geeklog contracts.
@@ -252,6 +301,9 @@ function HUB_integrityPillar($pillar, $uid = 0)
             'title' => isset($source['title']) ? (string) $source['title'] : '',
             'url' => isset($source['url']) ? (string) $source['url'] : '',
             'diagnostic' => isset($source['diagnostic']) ? (string) $source['diagnostic'] : '',
+            'site_context' => function_exists('HUB_siteUrlContext')
+                ? HUB_siteUrlContext(isset($source['url']) ? (string) $source['url'] : '')
+                : array(),
             'language_context' => function_exists('HUB_objectLanguageContext')
                 ? HUB_objectLanguageContext($sourceType, $sourceId, $uid)
                 : array(),
@@ -264,6 +316,13 @@ function HUB_integrityPillar($pillar, $uid = 0)
         'cross_site_relations' => 0,
         'current_site_relations' => 0,
         'unknown_site_relations' => 0,
+        'equivalents' => array(
+            'total' => 0,
+            'cross_language' => 0,
+            'same_language_review' => 0,
+            'language_unverified' => 0,
+            'cross_site' => 0,
+        ),
         'backlink' => array(
             'hub_managed' => 0,
             'integration_available' => 0,
@@ -305,6 +364,32 @@ function HUB_integrityPillar($pillar, $uid = 0)
             $result['current_site_relations']++;
         } else {
             $result['unknown_site_relations']++;
+        }
+
+        $relationRole = isset($relation['relation_role'])
+            ? HUB_normalizeRelationRole($relation['relation_role'])
+            : 'related';
+        $equivalenceContext = array();
+
+        if ($relationRole === 'equivalent') {
+            $equivalenceContext = HUB_integrityEquivalenceContext(
+                isset($result['source']['language_context']) ? $result['source']['language_context'] : array(),
+                $languageContext,
+                $siteUrlContext
+            );
+            $result['equivalents']['total']++;
+
+            if ($equivalenceContext['language_status'] === 'cross-language') {
+                $result['equivalents']['cross_language']++;
+            } elseif ($equivalenceContext['language_status'] === 'same-language-review') {
+                $result['equivalents']['same_language_review']++;
+            } else {
+                $result['equivalents']['language_unverified']++;
+            }
+
+            if ($equivalenceContext['site_status'] === 'cross-site') {
+                $result['equivalents']['cross_site']++;
+            }
         }
 
         if ($exists) {
@@ -358,9 +443,7 @@ function HUB_integrityPillar($pillar, $uid = 0)
         $result['relations'][] = array(
             'type' => $type,
             'id' => $id,
-            'relation_role' => isset($relation['relation_role'])
-                ? HUB_normalizeRelationRole($relation['relation_role'])
-                : 'related',
+            'relation_role' => $relationRole,
             'editorial_role' => isset($relation['editorial_role'])
                 ? HUB_normalizeEditorialRole($relation['editorial_role'])
                 : '',
@@ -370,6 +453,7 @@ function HUB_integrityPillar($pillar, $uid = 0)
             'url' => $targetUrl,
             'site_context' => $siteUrlContext,
             'language_context' => $languageContext,
+            'equivalence_context' => $equivalenceContext,
             'diagnostic' => $renderable ? '' : (isset($resolved['diagnostic']) ? (string) $resolved['diagnostic'] : ''),
             'backlink_evidence' => $backlink,
             'reciprocal_evidence' => $reciprocal,
@@ -1013,6 +1097,13 @@ function HUB_integritySummary($uid = 0)
         'cross_site_relations' => 0,
         'current_site_relations' => 0,
         'unknown_site_relations' => 0,
+        'equivalents' => array(
+            'total' => 0,
+            'cross_language' => 0,
+            'same_language_review' => 0,
+            'language_unverified' => 0,
+            'cross_site' => 0,
+        ),
         'unresolved_pillar_sources' => 0,
         'health' => array(
             'healthy' => 0,
@@ -1056,6 +1147,14 @@ function HUB_integritySummary($uid = 0)
             ? (int) $diagnostic['current_site_relations'] : 0;
         $summary['unknown_site_relations'] += isset($diagnostic['unknown_site_relations'])
             ? (int) $diagnostic['unknown_site_relations'] : 0;
+
+        if (!empty($diagnostic['equivalents']) && is_array($diagnostic['equivalents'])) {
+            foreach ($summary['equivalents'] as $key => $value) {
+                if (isset($diagnostic['equivalents'][$key])) {
+                    $summary['equivalents'][$key] += (int) $diagnostic['equivalents'][$key];
+                }
+            }
+        }
 
         if (empty($diagnostic['source']['resolved'])) {
             $summary['unresolved_pillar_sources']++;
