@@ -1,8 +1,8 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.5.0` (next implementation milestone)
+**Current development milestone:** `0.6.0` (next implementation milestone)
 
-**Implemented baseline:** `0.4.0` functional scope is complete in the current codebase. The lifecycle/dependency-graph work described in `0.5.0` is not yet implemented.
+**Implemented baseline:** `0.5.0` lifecycle and dependency-graph scope is complete in the current codebase.
 
 ## Vision
 
@@ -266,7 +266,7 @@ Relationship-role evolution before richer grouped rendering:
 - use roles to group public sections without changing content ownership
 - never infer or overwrite an administrator-approved role silently
 
-## 0.5.0 — Lifecycle and dependency graph — in progress
+## 0.5.0 — Lifecycle and dependency graph — implemented
 
 Implemented scope:
 
