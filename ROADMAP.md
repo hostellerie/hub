@@ -447,7 +447,7 @@ The normalized editorial summary is therefore the first reusable "marketing mapp
 - suggest complementary content without automatically changing editorial relationships — implemented for Static Page pillar → article candidates through `HUB_editorialSuggestions()` and read-only `hub.suggestions.read`
 - allow administrators to approve, dismiss or defer suggestions so repeated audits remain useful — implemented. Dismissed suggestions remain hidden until restored; deferred suggestions are persisted with an expiry and automatically return after 30 days; active decisions can be restored from Relations administration
 - generate an editorial roadmap directly from the current inventory and relationship graph
-- display generated roadmaps in Hub administration with clear sections for pillars, satellites, missing links, candidate content and editorial gaps
+- display generated roadmaps in Hub administration with clear sections for pillars, satellites, missing links, candidate content and editorial gaps — editorial gaps/content opportunities are now displayed and can be dismissed, deferred for 30 days or restored
 - provide a one-click Markdown download of the generated roadmap
 - optionally provide a structured JSON export of the same roadmap/inventory for external consumers
 - keep roadmap generation deterministic and explainable by default; every recommendation must retain its evidence
