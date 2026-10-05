@@ -191,6 +191,8 @@ The suggestion service never creates or changes a relationship. Each current can
 
 Engagement and publication date are transparent ranking evidence only: shared topics determine candidate eligibility first, then views/comments may prioritize candidates with equivalent thematic evidence. Hub does not treat popularity as editorial approval. Keyword-based matching is intentionally deferred until Geeklog/providers expose a stable shared metadata contract; Hub does not parse HTML returned by `PLG_getRelatedItems()` to infer identities.
 
+Temporal review signals are also advisory only. Hub can expose publication age plus explicit year/version markers found in article title/content (for example `2024`, `26.8`, `v1.5.0`) and recommend human review, but it never labels the content stale or obsolete automatically.
+
 ### Editorial / marketing mapping
 
 Hub 0.8.0 exposes `hub.editorial.summary` as a read-only structural view of the approved relationship graph. It reports pillar/relation counts, structural roles, provider participation, nested pillars and multi-parent items without creating a second graph or duplicating provider content. Monitor and other consumers should use this service rather than query Hub persistence directly.
