@@ -141,7 +141,9 @@ function HUB_handleItemSaved($id, $type, $oldId = '', $subType = '')
 
     if ($oldId !== '' && (string) $oldId !== (string) $identity['id']) {
         $oldIdentity = HUB_normalizeLifecycleIdentity($oldId, $type, $subType);
-        foreach (HUB_getAffectedContexts($oldIdentity['type'], $oldIdentity['id']) as $oldContext) {
+        $oldContexts = HUB_getAffectedContexts($oldIdentity['type'], $oldIdentity['id']);
+
+        foreach ($oldContexts as $oldContext) {
             $found = false;
             foreach ($contexts as $context) {
                 if ((int) $context['pillar_id'] === (int) $oldContext['pillar_id']) {
@@ -153,7 +155,20 @@ function HUB_handleItemSaved($id, $type, $oldId = '', $subType = '')
                 $contexts[] = $oldContext;
             }
         }
-        HUB_invalidateAffectedContexts($contexts, $oldIdentity['type'], $oldIdentity['id']);
+
+        $migration = HUB_migrateObjectIdentity(
+            $identity['type'],
+            $oldIdentity['id'],
+            $identity['id']
+        );
+
+        // If Hub references were migrated successfully, recalculate the new
+        // context set so callers receive the current graph identity.
+        if (!empty($migration['changed']) && empty($migration['collisions']) && empty($migration['error'])) {
+            $contexts = HUB_getAffectedContexts($identity['type'], $identity['id']);
+        }
+
+        HUB_invalidateAffectedContexts($oldContexts, $oldIdentity['type'], $oldIdentity['id']);
     }
 
     HUB_invalidateAffectedContexts($contexts, $identity['type'], $identity['id']);
