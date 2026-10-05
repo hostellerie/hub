@@ -1,0 +1,156 @@
+<?php
+
+require_once '../../../lib-common.php';
+require_once '../../auth.inc.php';
+require_once $_CONF['path'] . 'plugins/hub/lib-admin-ui.php';
+
+if (!SEC_hasRights('hub.admin')) {
+    COM_accessLog('User ' . (int) $_USER['uid'] . ' attempted to access Hub integrity administration without permission.');
+    $display = COM_startBlock('Access denied') . 'You do not have sufficient rights to access this page.' . COM_endBlock();
+    COM_output(COM_createHTMLDocument($display));
+    exit;
+}
+
+function HUB_integrityAdminEscape($value)
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+$summary = function_exists('HUB_integritySummary')
+    ? HUB_integritySummary(0)
+    : array();
+
+$content = HUB_adminNavigation('integrity');
+$content .= '<h1>Integrity &amp; cluster health</h1>';
+$content .= '<p>This 0.9.0 view reports only diagnostics Hub can verify through its approved graph and public Geeklog contracts. '
+    . 'Backlink integration availability is not presented as proof that a provider rendered a backlink.</p>';
+
+$content .= '<h2>Overview</h2>';
+$content .= '<ul>'
+    . '<li>Enabled pillars: ' . (isset($summary['pillars']) ? (int) $summary['pillars'] : 0) . '</li>'
+    . '<li>Approved relations: ' . (isset($summary['relations']) ? (int) $summary['relations'] : 0) . '</li>'
+    . '<li>Resolved relations: ' . (isset($summary['resolved_relations']) ? (int) $summary['resolved_relations'] : 0) . '</li>'
+    . '<li>Unresolved relations: ' . (isset($summary['unresolved_relations']) ? (int) $summary['unresolved_relations'] : 0) . '</li>'
+    . '<li>Renderable outgoing targets: ' . (isset($summary['renderable_relations']) ? (int) $summary['renderable_relations'] : 0) . '</li>'
+    . '<li>Non-renderable outgoing targets: ' . (isset($summary['non_renderable_relations']) ? (int) $summary['non_renderable_relations'] : 0) . '</li>'
+    . '<li>Unresolved pillar sources: ' . (isset($summary['unresolved_pillar_sources']) ? (int) $summary['unresolved_pillar_sources'] : 0) . '</li>'
+    . '</ul>';
+
+$backlink = isset($summary['backlink']) && is_array($summary['backlink'])
+    ? $summary['backlink']
+    : array();
+
+$content .= '<h2>Backlink integration evidence</h2>';
+$content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
+    . '<th>Evidence level</th><th>Relations</th><th>Meaning</th>'
+    . '</tr></thead><tbody>'
+    . '<tr><td><code>hub-managed</code></td><td>' . (isset($backlink['hub_managed']) ? (int) $backlink['hub_managed'] : 0) . '</td>'
+    . '<td>Hub owns the known public rendering path.</td></tr>'
+    . '<tr><td><code>integration-available</code></td><td>' . (isset($backlink['integration_available']) ? (int) $backlink['integration_available'] : 0) . '</td>'
+    . '<td>A generic integration hook is available; runtime backlink output is not asserted.</td></tr>'
+    . '<tr><td><code>unconfirmed</code></td><td>' . (isset($backlink['unconfirmed']) ? (int) $backlink['unconfirmed'] : 0) . '</td>'
+    . '<td>No confirmed generic backlink placement contract is available.</td></tr>'
+    . '</tbody></table>';
+
+$providers = isset($summary['providers']) && is_array($summary['providers'])
+    ? $summary['providers']
+    : array();
+
+$content .= '<h2>Provider integrity</h2>';
+if (empty($providers)) {
+    $content .= '<p>No enabled approved relation is currently available.</p>';
+} else {
+    $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
+        . '<th>Provider</th><th>Relations</th><th>Resolved</th><th>Unresolved</th>'
+        . '</tr></thead><tbody>';
+    foreach ($providers as $provider => $stats) {
+        $content .= '<tr><td><code>' . HUB_integrityAdminEscape($provider) . '</code></td>'
+            . '<td>' . (isset($stats['relations']) ? (int) $stats['relations'] : 0) . '</td>'
+            . '<td>' . (isset($stats['resolved']) ? (int) $stats['resolved'] : 0) . '</td>'
+            . '<td>' . (isset($stats['unresolved']) ? (int) $stats['unresolved'] : 0) . '</td></tr>';
+    }
+    $content .= '</tbody></table>';
+}
+
+$pillars = isset($summary['pillar_items']) && is_array($summary['pillar_items'])
+    ? $summary['pillar_items']
+    : array();
+
+$content .= '<h2>Pillar diagnostics</h2>';
+if (empty($pillars)) {
+    $content .= '<p>No enabled pillar is currently available.</p>';
+} else {
+    foreach ($pillars as $pillar) {
+        $source = isset($pillar['source']) && is_array($pillar['source'])
+            ? $pillar['source']
+            : array();
+        $sourceIdentity = (isset($source['type']) ? $source['type'] : '')
+            . ':' . (isset($source['id']) ? $source['id'] : '');
+
+        $content .= '<details style="margin:0 0 12px;border:1px solid #d7d7d7;border-radius:4px;padding:10px">'
+            . '<summary style="cursor:pointer"><strong><code>'
+            . HUB_integrityAdminEscape($sourceIdentity) . '</code></strong> — '
+            . (isset($pillar['relation_count']) ? (int) $pillar['relation_count'] : 0)
+            . ' relation(s), '
+            . (isset($pillar['unresolved_relations']) ? (int) $pillar['unresolved_relations'] : 0)
+            . ' unresolved</summary>';
+
+        if (empty($source['resolved'])) {
+            $content .= '<p><strong>Pillar source unresolved:</strong> '
+                . HUB_integrityAdminEscape(isset($source['diagnostic']) ? $source['diagnostic'] : '')
+                . '</p>';
+        }
+
+        $relations = isset($pillar['relations']) && is_array($pillar['relations'])
+            ? $pillar['relations']
+            : array();
+
+        if (empty($relations)) {
+            $content .= '<p>No enabled relation.</p></details>';
+            continue;
+        }
+
+        $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
+            . '<th>Identity</th><th>Structural</th><th>Editorial</th><th>Target</th><th>Backlink evidence</th>'
+            . '</tr></thead><tbody>';
+
+        foreach ($relations as $relation) {
+            $identity = (isset($relation['type']) ? $relation['type'] : '')
+                . ':' . (isset($relation['id']) ? $relation['id'] : '');
+            $targetStatus = !empty($relation['renderable_from_pillar'])
+                ? 'renderable'
+                : 'unresolved / non-renderable';
+            $evidence = isset($relation['backlink_evidence']) && is_array($relation['backlink_evidence'])
+                ? $relation['backlink_evidence']
+                : array();
+
+            $content .= '<tr><td><code>' . HUB_integrityAdminEscape($identity) . '</code>'
+                . (!empty($relation['title']) ? '<br>' . HUB_integrityAdminEscape($relation['title']) : '')
+                . '</td><td><code>' . HUB_integrityAdminEscape(
+                    isset($relation['relation_role']) ? $relation['relation_role'] : 'related'
+                ) . '</code></td>'
+                . '<td>' . (!empty($relation['editorial_role'])
+                    ? '<code>' . HUB_integrityAdminEscape($relation['editorial_role']) . '</code>'
+                    : '—') . '</td>'
+                . '<td>' . HUB_integrityAdminEscape($targetStatus)
+                . (!empty($relation['diagnostic'])
+                    ? '<br><small>' . HUB_integrityAdminEscape($relation['diagnostic']) . '</small>'
+                    : '') . '</td>'
+                . '<td><code>' . HUB_integrityAdminEscape(
+                    isset($evidence['verification']) ? $evidence['verification'] : 'unconfirmed'
+                ) . '</code><br><small>'
+                . HUB_integrityAdminEscape(isset($evidence['label']) ? $evidence['label'] : '')
+                . '</small></td></tr>';
+        }
+
+        $content .= '</tbody></table></details>';
+    }
+}
+
+$content .= '<h2>Scope boundary</h2>'
+    . '<p>This first 0.9.0 slice does not yet claim actual reciprocal-link presence for generic providers, '
+    . 'orphan status, canonical consistency, sitemap/feed coverage or full cluster-health scoring. '
+    . 'Those checks will build on this normalized integrity model.</p>';
+
+$display = COM_startBlock('Hub integrity & cluster health') . $content . COM_endBlock();
+COM_output(COM_createHTMLDocument($display));
