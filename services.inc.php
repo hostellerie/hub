@@ -193,6 +193,12 @@ function service_pillar_read_hub($args, &$output, &$svc_msg)
             'relation_role' => isset($relation['relation_role'])
                 ? HUB_normalizeRelationRole($relation['relation_role'])
                 : 'related',
+            'relation_role' => isset($relation['relation_role'])
+                ? HUB_normalizeRelationRole($relation['relation_role'])
+                : 'related',
+            'editorial_role' => isset($relation['editorial_role'])
+                ? HUB_normalizeEditorialRole($relation['editorial_role'])
+                : '',
             'position' => isset($relation['position']) ? (int) $relation['position'] : 0,
             'is_enabled' => !empty($relation['is_enabled']),
         );
@@ -204,6 +210,9 @@ function service_pillar_read_hub($args, &$output, &$svc_msg)
             'pillar_id' => (int) $pillar['id'],
             'source_type' => (string) $pillar['source_type'],
             'source_id' => (string) $pillar['source_id'],
+            'editorial_role' => isset($pillar['editorial_role'])
+                ? HUB_normalizeEditorialRole($pillar['editorial_role'])
+                : '',
             'is_enabled' => !empty($pillar['is_enabled']),
         ),
         'relations' => $items,
