@@ -306,3 +306,12 @@ For feeds/syndication, Hub recognizes:
 - the shared `content.syndication` capability declaration.
 
 These diagnostics are opportunities, not failures. A provider may legitimately be unsuitable for feeds. Hub never becomes the XML Sitemap or feed generator and does not duplicate provider-owned distribution logic.
+
+
+## Active site context (0.10.0)
+
+Hub 0.10.0 starts multisite support by consuming the site context that Geeklog has already selected. `HUB_siteContext()` exposes the active site URL, admin URL, host, scheme, site name and current Geeklog language as a read-only context object.
+
+Hub deliberately does **not** select a site from the incoming host itself and does not persist a second Hub-owned site identifier. This follows the multisite Memorandum: plugins consume the active Geeklog configuration rather than implement parallel host routing.
+
+Hub read services can include this site context so callers can distinguish which active site produced relationship, editorial and integrity data. `HUB_siteUrlContext()` can also classify a resolved URL as current-site, relative/current-site, or cross-site without modifying the relationship graph.
