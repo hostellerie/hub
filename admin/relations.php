@@ -139,6 +139,31 @@ function HUB_relAdminSuggestedArticles($pillar, $relations, $limit = 10)
             ? $candidate['ranking']
             : array();
 
+        $reviewReasons = array();
+        $olderYears = array();
+        $versionMarkers = array();
+
+        if (!empty($candidate['evidence']) && is_array($candidate['evidence'])) {
+            foreach ($candidate['evidence'] as $evidence) {
+                if (!is_array($evidence)
+                    || !isset($evidence['signal'])
+                    || $evidence['signal'] !== 'temporal-marker'
+                ) {
+                    continue;
+                }
+
+                $reviewReasons = !empty($evidence['review_reasons']) && is_array($evidence['review_reasons'])
+                    ? array_values($evidence['review_reasons'])
+                    : array();
+                $olderYears = !empty($evidence['older_year_markers']) && is_array($evidence['older_year_markers'])
+                    ? array_values($evidence['older_year_markers'])
+                    : array();
+                $versionMarkers = !empty($evidence['version_markers']) && is_array($evidence['version_markers'])
+                    ? array_values($evidence['version_markers'])
+                    : array();
+            }
+        }
+
         $articles[] = array(
             'sid' => isset($candidate['id']) ? (string) $candidate['id'] : '',
             'title' => isset($candidate['title']) ? (string) $candidate['title'] : '',
@@ -146,6 +171,9 @@ function HUB_relAdminSuggestedArticles($pillar, $relations, $limit = 10)
             'hub_views' => isset($ranking['views']) ? (int) $ranking['views'] : 0,
             'hub_comments' => isset($ranking['comments']) ? (int) $ranking['comments'] : 0,
             'hub_published_at' => isset($ranking['published_at']) ? (string) $ranking['published_at'] : '',
+            'hub_review_reasons' => $reviewReasons,
+            'hub_older_years' => $olderYears,
+            'hub_version_markers' => $versionMarkers,
         );
     }
 
@@ -456,12 +484,33 @@ if (empty($pillars)) {
                         $rankingNote .= ' · published ' . $publishedAt;
                     }
 
+                    $reviewNote = '';
+                    $olderYears = isset($articleSuggestion['hub_older_years']) && is_array($articleSuggestion['hub_older_years'])
+                        ? $articleSuggestion['hub_older_years']
+                        : array();
+                    $versionMarkers = isset($articleSuggestion['hub_version_markers']) && is_array($articleSuggestion['hub_version_markers'])
+                        ? $articleSuggestion['hub_version_markers']
+                        : array();
+
+                    $reviewParts = array();
+                    if (!empty($olderYears)) {
+                        $reviewParts[] = 'dated marker: ' . implode(', ', $olderYears);
+                    }
+                    if (!empty($versionMarkers)) {
+                        $reviewParts[] = 'version marker: ' . implode(', ', $versionMarkers);
+                    }
+                    if (!empty($reviewParts)) {
+                        $reviewNote = '<br><strong>Review signal:</strong> '
+                            . HUB_relAdminEscape(implode(' · ', $reviewParts));
+                    }
+
                     $content .= '<div class="hub-rel-suggest-row"><div><strong>'
                         . HUB_relAdminEscape($title) . '</strong><br><code>article:'
                         . HUB_relAdminEscape($sid) . '</code></div><div class="hub-rel-reason">Shared specific topic'
                         . (count($topics) === 1 ? ': ' : 's: ')
                         . HUB_relAdminEscape(implode(', ', $topics))
                         . '<br>' . HUB_relAdminEscape($rankingNote)
+                        . $reviewNote
                         . '</div><form method="post" action="relations.php">'
                         . HUB_relAdminTokenField()
                         . '<input type="hidden" name="hub_action" value="save_relation">'
