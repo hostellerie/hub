@@ -456,6 +456,100 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
     return array(
         'schema' => 1,
         'generated_from' => array('shared-topic'),
+        'pillar_candidates' => $pillarId > 0
+            ? array()
+            : HUB_editorialPillarCandidates($limitPerPillar),
         'pillars' => $rows,
     );
+}
+
+
+/**
+ * Suggest Static Pages that may deserve promotion to Hub pillars.
+ *
+ * Evidence is deterministic: the page has one or more specific Geeklog topics
+ * and those topics currently contain published articles visible to the caller.
+ *
+ * @param int $limit
+ * @return array
+ */
+function HUB_editorialPillarCandidates($limit = 10)
+{
+    if (!function_exists('HUB_linkAuditStaticPages')
+        || !function_exists('HUB_linkAuditArticlesByTopics')
+    ) {
+        return array();
+    }
+
+    $existing = array();
+    foreach (HUB_getPillars(true) as $pillar) {
+        if (is_array($pillar)
+            && isset($pillar['source_type'], $pillar['source_id'])
+            && (string) $pillar['source_type'] === 'staticpages'
+        ) {
+            $existing[(string) $pillar['source_id']] = true;
+        }
+    }
+
+    $candidates = array();
+
+    foreach (HUB_linkAuditStaticPages() as $page) {
+        $pageId = isset($page['sp_id']) ? HUB_normalizeObjectId($page['sp_id']) : '';
+        if ($pageId === '' || isset($existing[$pageId])) {
+            continue;
+        }
+
+        $topicContext = HUB_editorialTopicContext($pageId);
+        if (empty($topicContext['ids'])) {
+            continue;
+        }
+
+        $articles = HUB_linkAuditArticlesByTopics($topicContext['ids']);
+        if (empty($articles)) {
+            continue;
+        }
+
+        $topics = array();
+        foreach ($topicContext['labels'] as $tid => $label) {
+            $topics[] = array(
+                'id' => (string) $tid,
+                'label' => (string) $label,
+            );
+        }
+
+        usort($topics, function ($left, $right) {
+            return strcmp((string) $left['id'], (string) $right['id']);
+        });
+
+        $candidates[] = array(
+            'type' => 'staticpages',
+            'id' => $pageId,
+            'title' => isset($page['sp_title']) && (string) $page['sp_title'] !== ''
+                ? (string) $page['sp_title']
+                : $pageId,
+            'score' => count($articles),
+            'evidence' => array(
+                array(
+                    'signal' => 'shared-topic',
+                    'topics' => $topics,
+                    'matching_article_count' => count($articles),
+                ),
+            ),
+        );
+    }
+
+    usort($candidates, function ($left, $right) {
+        if ((int) $left['score'] !== (int) $right['score']) {
+            return (int) $left['score'] > (int) $right['score'] ? -1 : 1;
+        }
+
+        $titleCompare = strcasecmp((string) $left['title'], (string) $right['title']);
+        if ($titleCompare !== 0) {
+            return $titleCompare;
+        }
+
+        return strcmp((string) $left['id'], (string) $right['id']);
+    });
+
+    return array_slice($candidates, 0, max(1, (int) $limit));
 }
