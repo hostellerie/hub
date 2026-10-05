@@ -10,6 +10,7 @@ $hubEditorialPillars = array(
 
 $hubHiddenSuggestions = array();
 $hubEditorialCloseMode = false;
+$hubEditorialGapMode = false;
 
 $hubEditorialRelations = array(
     1 => array(
@@ -79,7 +80,27 @@ function HUB_staticPageTopicContext($pageId)
 
 function HUB_linkAuditArticlesByTopics(array $topicIds)
 {
-    global $hubEditorialCloseMode;
+    global $hubEditorialCloseMode, $hubEditorialGapMode;
+
+    if ($hubEditorialGapMode) {
+        $topicId = isset($topicIds[0]) ? (string) $topicIds[0] : '';
+        if ($topicId === 'seo') {
+            return array();
+        }
+        if ($topicId === 'content') {
+            return array(
+                array(
+                    'sid' => 'single-content',
+                    'title' => 'Single content article',
+                    'hub_topics' => array('content' => 'Content'),
+                    'hits' => 10,
+                    'comments' => 0,
+                    'date' => '2025-04-01 00:00:00',
+                ),
+            );
+        }
+        return array();
+    }
 
     if ($hubEditorialCloseMode) {
         return array(
@@ -236,6 +257,29 @@ hubEditorialAssert(empty($hiddenCloseCandidates), 'dismissed/deferred close-cont
 unset($hubHiddenSuggestions['close-content:1:article-pair:' . $pairId]);
 $hubEditorialCloseMode = false;
 
+$hubEditorialGapMode = true;
+$contentGaps = HUB_editorialContentGaps($hubEditorialPillars[0], 10);
+hubEditorialAssert(count($contentGaps) === 2, 'content-gap detection distinguishes zero and single article coverage');
+
+$gapsByTopic = array();
+foreach ($contentGaps as $gap) {
+    $gapsByTopic[$gap['topic_id']] = $gap;
+}
+hubEditorialAssert($gapsByTopic['seo']['kind'] === 'create-content', 'zero article topic becomes create-content opportunity');
+hubEditorialAssert($gapsByTopic['seo']['article_count'] === 0, 'zero article gap exposes exact coverage count');
+hubEditorialAssert($gapsByTopic['seo']['priority'] === 100, 'zero article gap gets highest deterministic priority');
+hubEditorialAssert($gapsByTopic['content']['kind'] === 'review-thin-coverage', 'single article topic becomes thin coverage review');
+hubEditorialAssert($gapsByTopic['content']['article_count'] === 1, 'thin coverage gap exposes exact coverage count');
+hubEditorialAssert($gapsByTopic['content']['priority'] === 50, 'thin coverage gap gets lower deterministic priority');
+hubEditorialAssert($gapsByTopic['seo']['evidence'][0]['signal'] === 'topic-coverage', 'content gap keeps topic-coverage evidence');
+
+$hubHiddenSuggestions['content-gap:1:topic:seo'] = true;
+$hiddenContentGaps = HUB_editorialContentGaps($hubEditorialPillars[0], 10);
+hubEditorialAssert(count($hiddenContentGaps) === 1, 'dismissed/deferred content gap is filtered');
+hubEditorialAssert($hiddenContentGaps[0]['topic_id'] === 'content', 'unhidden content gap remains visible');
+unset($hubHiddenSuggestions['content-gap:1:topic:seo']);
+$hubEditorialGapMode = false;
+
 $temporal = HUB_editorialTemporalSignals(array(
     'title' => 'LibreOffice 2024 and 26.8',
     'introtext' => 'Upgrade notes for v1.5.0',
@@ -283,6 +327,7 @@ hubEditorialAssert($roadmap['scope'] === 'editorial-0.8', 'editorial roadmap dec
 hubEditorialAssert($roadmap['executive_summary']['pillars'] === 3, 'editorial roadmap reuses structural summary');
 hubEditorialAssert($roadmap['executive_summary']['new_pillar_opportunities'] === 1, 'editorial roadmap exposes new pillar opportunities');
 hubEditorialAssert(isset($roadmap['executive_summary']['close_content_review_pairs']), 'editorial roadmap exposes close-content review count');
+hubEditorialAssert(isset($roadmap['executive_summary']['content_gaps']), 'editorial roadmap exposes content-gap count');
 hubEditorialAssert(!empty($roadmap['existing_pillars']), 'editorial roadmap exposes existing pillars');
 hubEditorialAssert(!empty($roadmap['prioritized_next_actions']), 'editorial roadmap exposes prioritized next actions');
 hubEditorialAssert(in_array('cluster-health', $roadmap['deferred_diagnostics'], true), '0.9 cluster health stays explicitly deferred');
@@ -293,6 +338,7 @@ hubEditorialAssert(strpos($markdown, '# Editorial roadmap') !== false, 'roadmap 
 hubEditorialAssert(strpos($markdown, '## Existing pillars') !== false, 'roadmap Markdown exposes existing pillars');
 hubEditorialAssert(strpos($markdown, '## New pillar opportunities') !== false, 'roadmap Markdown exposes pillar opportunities');
 hubEditorialAssert(strpos($markdown, '## Potential cannibalization / close-content review') !== false, 'roadmap Markdown exposes close-content review section');
+hubEditorialAssert(strpos($markdown, '## Content gaps to create or refresh') !== false, 'roadmap Markdown exposes content-gap section');
 hubEditorialAssert(strpos($markdown, '## Prioritized next actions') !== false, 'roadmap Markdown exposes prioritized actions');
 hubEditorialAssert(strpos($markdown, '## Deferred diagnostics') !== false, 'roadmap Markdown states deferred diagnostics');
 
@@ -314,6 +360,10 @@ hubEditorialAssert(strpos($adminSource, 'HUB_saveRelation(') === false, 'editori
 hubEditorialAssert(strpos($adminSource, 'editorial.php?export=md') !== false, 'editorial admin exposes Markdown roadmap export');
 hubEditorialAssert(strpos($adminSource, 'editorial.php?export=json') !== false, 'editorial admin exposes JSON roadmap export');
 hubEditorialAssert(strpos($adminSource, 'Editorial roadmap preview') !== false, 'editorial admin exposes roadmap preview');
+hubEditorialAssert(strpos($adminSource, 'Content gaps / opportunities') !== false, 'editorial admin exposes content-gap opportunities');
+hubEditorialAssert(strpos($adminSource, 'Create-content opportunity') !== false, 'editorial admin explains zero-coverage gaps');
+hubEditorialAssert(strpos($adminSource, 'Thin coverage review') !== false, 'editorial admin explains thin-coverage gaps');
+hubEditorialAssert(strpos($adminSource, 'content_gap_decision') !== false, 'editorial admin exposes persisted content-gap decisions');
 $relationsAdminSource = file_get_contents(dirname(__DIR__) . '/admin/relations.php');
 hubEditorialAssert(strpos($relationsAdminSource, 'Review signal:') !== false, 'temporal review signals are visible in relation suggestions');
 hubEditorialAssert(strpos($relationsAdminSource, 'dated marker:') !== false, 'relation suggestions explain dated marker evidence');
