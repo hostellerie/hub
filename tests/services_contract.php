@@ -84,6 +84,28 @@ function HUB_editorialInventory($includeDisabled = false)
     );
 }
 
+function HUB_integritySummary($uid = 0)
+{
+    return array(
+        'schema' => 1,
+        'scope' => 'integrity-0.9',
+        'pillars' => 1,
+        'relations' => 2,
+        'resolved_relations' => 1,
+        'unresolved_relations' => 1,
+        'renderable_relations' => 1,
+        'non_renderable_relations' => 1,
+        'unresolved_pillar_sources' => 0,
+        'backlink' => array(
+            'hub_managed' => 1,
+            'integration_available' => 1,
+            'unconfirmed' => 0,
+        ),
+        'providers' => array(),
+        'pillar_items' => array(),
+    );
+}
+
 function HUB_editorialSuggestions($pillarId = 0, $limit = 20)
 {
     return array(
@@ -299,6 +321,14 @@ hubServiceAssert($status === PLG_RET_OK, 'global suggestions read returns OK');
 hubServiceAssert(count($output['suggestions']['pillar_candidates']) === 1, 'global suggestions expose pillar candidates');
 hubServiceAssert($output['suggestions']['pillar_candidates'][0]['id'] === 'new-pillar', 'pillar candidate keeps stable Static Page identity');
 
+$output = null;
+$messages = null;
+$status = service_integrity_summary_hub(array(), $output, $messages);
+hubServiceAssert($status === PLG_RET_OK, 'integrity summary returns OK');
+hubServiceAssert($output['capability'] === 'hub.integrity.summary', 'integrity service identifies its capability');
+hubServiceAssert($output['summary']['scope'] === 'integrity-0.9', 'integrity service returns 0.9 scope');
+hubServiceAssert($output['summary']['unresolved_relations'] === 1, 'integrity service returns normalized unresolved count');
+
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
 hubServiceAssert(strpos($functionsSource, 'function plugin_wsEnabled_hub()') !== false, 'Hub enables the native service dispatcher');
 hubServiceAssert(strpos($functionsSource, "'hub.affected.read'") !== false, 'implemented affected service is advertised as a capability');
@@ -307,5 +337,6 @@ hubServiceAssert(strpos($functionsSource, "'hub.related.read'") !== false, 'impl
 hubServiceAssert(strpos($functionsSource, "'hub.pillar.read'") !== false, 'implemented pillar service is advertised as a capability');
 hubServiceAssert(strpos($functionsSource, "'hub.editorial.summary'") !== false, 'implemented editorial summary is advertised as a capability');
 hubServiceAssert(strpos($functionsSource, "'hub.suggestions.read'") !== false, 'implemented suggestions service is advertised as a capability');
+hubServiceAssert(strpos($functionsSource, "'hub.integrity.summary'") !== false, 'implemented integrity service is advertised as a capability');
 
 echo "Hub service contract tests passed." . PHP_EOL;
