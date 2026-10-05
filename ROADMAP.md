@@ -268,41 +268,32 @@ Relationship-role evolution before richer grouped rendering:
 
 ## 0.5.0 — Lifecycle and dependency graph — in progress
 
-Current code status before 0.5.0 work:
+Implemented scope:
 
-- 0.4.0 public bidirectional navigation is implemented;
-- Hub currently has no `plugin_itemsaved_hub()` / `plugin_itemdeleted_hub()` lifecycle listener callbacks;
-- Hub now exposes the first implemented read/service capability: `hub.affected.read`;
-- `plugin_getcapabilities_hub()` advertises only implemented Hub capabilities;
-- relation persistence currently stores stable identity, order and enabled state only; richer dependency/editorial graph semantics remain future work.
-
-Implemented first lifecycle slice:
-
-- consume `PLG_itemSaved()` / `PLG_itemDeleted()` notifications through compatible Hub listeners;
+- consume `PLG_itemSaved()` / `PLG_itemDeleted()` notifications through callbacks compatible with Geeklog 2.1.1 and 2.2.x;
 - normalize lifecycle identities, including legacy dotted subtype notation and Core `story` → `article` identity;
-- resolve enabled Hub pillar contexts affected when a pillar source or related object changes;
-- invalidate only the affected relationship/pillar caches;
-- preserve Hub-owned relationship records when a provider object is deleted so integrity diagnostics can expose the unresolved identity;
-- declare the implemented lifecycle listener contract while keeping future `hub.*` capabilities unadvertised;
-- cover lifecycle identity, affected-context resolution, cache invalidation and delete-preservation behavior with contract tests.
+- migrate Hub-owned stable references when providers report `old_id → new_id`, with collision preflight and no provider-owned writes;
+- preserve unresolved Hub relations when provider content is deleted so integrity diagnostics can expose stale identities;
+- detect all enabled pillar contexts affected by a changed pillar source or related item;
+- detect Static Page pillar contexts affected by normal Static Page topic-assignment saves and by later topic metadata changes;
+- invalidate only relevant article/Static Page relationship caches;
+- maintain a provider-neutral dependency graph based on stable `type + id` identities;
+- traverse the graph bidirectionally with bounded depth, cycle protection and support for multiple approved parents;
+- support multi-level editorial structures such as `hub → pillar → sub-pillar → satellite` and `pillar → map → marker` without changing provider ownership;
+- store explicit Hub-owned structural edge roles through `relation_role`: `related`, `sub-pillar`, `satellite`, `support`;
+- keep structural edge roles separate from future editorial-function metadata such as `guide`, `tutorial`, `reference`, `case-study` or `download`;
+- expose read-only Hub services protected by `hub.admin`:
+  - `hub.affected.read`;
+  - `hub.context.read`;
+  - `hub.related.read`;
+  - `hub.pillar.read`;
+- advertise only Hub capabilities whose corresponding service surface is implemented;
+- provide contract tests for lifecycle handling, identity migration, topic impact, graph traversal, cycle/multi-parent behavior, service ACLs, schema upgrade and structural relation roles;
+- upgrade existing 0.4.x development installations to 0.5.0 by adding `relation_role` with neutral `related` defaults and removing the obsolete `title_override` persistence column.
 
-Remaining implementation target:
+No separate Hub metadata cache is introduced in 0.5.0; provider metadata remains resolved dynamically through Geeklog contracts. Therefore there is no additional metadata-cache refresh layer to maintain in this milestone.
 
-- safely handle provider identity changes reported through `old_id` so Hub-owned stable references do not become stale — implemented with collision preflight and Hub-only identity migration;
-- detect Static Page contexts affected by topic assignment or topic metadata changes — implemented through normal Static Page save lifecycle plus topic-driven pillar impact lookup;
-- refresh any Hub-owned cached metadata introduced by later 0.5.x work
-- refresh cached metadata
-- detect all pillar pages affected by a changed item
-- detect Static Pages whose public rendering changes when topic assignments are added or removed
-- detect Static Pages affected when an assigned topic is renamed, removed or otherwise changes its public label/URL
-- invalidate relevant Hub caches
-- maintain a dependency graph based on stable content identity — implemented with cycle-safe bidirectional traversal over approved Hub relations
-- keep the dependency/editorial model graph-shaped rather than enforcing a single-parent tree: a content object may participate in several approved contexts — implemented by allowing one stable identity to resolve through multiple parent pillars
-- support multi-level editorial structures such as hub → pillar → sub-pillar → satellite and pillar → map → marker without changing source ownership — implemented structurally when a related object is itself registered as a pillar source
-- keep graph edges explicit and typed so a sub-pillar can itself be a pillar in another approved context — implemented with Hub-owned `relation_role` values `related`, `sub-pillar`, `satellite` and `support`; editorial-function metadata remains a separate future concern
-- expose affected-page/context information through reusable Hub services for administration and future external consumers — implemented as read-only `hub.affected.read`, `hub.context.read`, `hub.related.read` and `hub.pillar.read`
-
-Shared Hub capability targets from the Memorandum (advertise each capability only when its corresponding Hub-owned surface is implemented):
+Shared Hub capability targets from the Memorandum:
 
 ```text
 hub.context.read
@@ -315,7 +306,16 @@ hub.interoperability.summary
 dashboard.summary
 ```
 
-These capabilities must be advertised only when the corresponding Hub-owned read/service surface is implemented.
+Implemented and advertised in 0.5.0:
+
+```text
+hub.context.read
+hub.related.read
+hub.pillar.read
+hub.affected.read
+```
+
+Future targets remain unadvertised until their corresponding Hub-owned surfaces are implemented.
 
 ## 0.6.0 — Services and IndexNow
 
