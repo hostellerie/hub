@@ -289,7 +289,7 @@ Implemented first lifecycle slice:
 Remaining implementation target:
 
 - safely handle provider identity changes reported through `old_id` so Hub-owned stable references do not become stale — implemented with collision preflight and Hub-only identity migration;
-- detect Static Page contexts affected by topic assignment or topic metadata changes;
+- detect Static Page contexts affected by topic assignment or topic metadata changes — implemented through normal Static Page save lifecycle plus topic-driven pillar impact lookup;
 - refresh any Hub-owned cached metadata introduced by later 0.5.x work
 - refresh cached metadata
 - detect all pillar pages affected by a changed item
