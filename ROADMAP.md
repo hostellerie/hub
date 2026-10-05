@@ -1,8 +1,8 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.9.0` (in development)
+**Current development milestone:** `0.10.0` (in development)
 
-**Implemented baseline:** `0.8.0` discovery, editorial inventory, explainable suggestions, decisions and roadmap scope is complete in the current codebase.
+**Implemented baseline:** `0.9.0` SEO, cluster-health and integrity scope is functionally complete within the current shared interoperability contracts.
 
 ## Vision
 
