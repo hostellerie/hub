@@ -2,7 +2,7 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.10.0 (development)** builds on the completed 0.9 integrity layer with multisite and multilingual relationship context while keeping provider/site ownership outside Hub.
+Version **1.0.0 (development)** is the stabilization milestone for the completed relationship, lifecycle, editorial, integrity, multisite and multilingual-context layers. No release is implied until the 1.0 compatibility, upgrade and documentation checks are complete.
 
 ## Requirements
 
