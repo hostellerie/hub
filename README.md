@@ -237,3 +237,14 @@ Hub stores these decisions separately from approved relationships in `hub_sugges
 Hub 0.8.0 can flag article pairs for human review when they belong to the same Static Page pillar topic context and their titles are lexically close. The first deterministic rule requires at least one shared specific topic, at least two common significant title tokens, and Jaccard title-token similarity of 50% or more.
 
 This is not an automatic SEO cannibalization diagnosis. Hub exposes the exact shared topics, common title tokens and similarity score, and never merges, redirects or rewrites content. Review pairs can be deferred for 30 days, dismissed, or restored through Relations administration.
+
+
+## Content-gap opportunities
+
+Hub 0.8.0 can identify simple deterministic topic-coverage gaps for Static Page pillars. For each specific Geeklog topic assigned to a pillar:
+
+- **0 published articles** → create-content opportunity;
+- **1 published article** → thin-coverage review;
+- **2 or more published articles** → no content-gap signal from this rule.
+
+These are editorial planning signals, not SEO verdicts. Each gap keeps its topic identity and exact published-article count as evidence. Content-gap suggestions can be deferred for 30 days, dismissed, or restored from Editorial mapping.
