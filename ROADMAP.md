@@ -361,8 +361,8 @@ IndexNow native submit_urls service
 
 Remaining 0.6.0 work:
 
-- complete CI/contract coverage for the Hub ↔ IndexNow service boundary;
-- expose IndexNow availability/status in Hub only if IndexNow provides a read-only normalized status service;
+- complete CI/contract coverage for the Hub ↔ IndexNow service boundary — implemented for submission delegation, missing-service degradation and normalized status reads;
+- expose IndexNow availability/status in Hub only if IndexNow provides a read-only normalized status service — implemented through `indexnow.status.read`, shown as informational state in Hub administration;
 - document the service dependency and graceful-degradation behavior;
 - review whether any additional generic service convention is justified by a real second consumer before adding abstractions.
 
