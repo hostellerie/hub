@@ -261,7 +261,7 @@ $hubIntegrityRelations = array(
 $graph = HUB_integrityGraphDiagnostics();
 hubIntegrityAssert($graph['counts']['cycles'] === 1, 'graph diagnostics detect pillar cycle');
 hubIntegrityAssert($graph['counts']['self_relations'] === 1, 'graph diagnostics detect self-relation');
-hubIntegrityAssert($graph['counts']['multi_parent_items'] === 0, 'graph diagnostics do not invent multi-parent participation');
+hubIntegrityAssert($graph['counts']['multi_parent_items'] === 1, 'graph diagnostics report multi-parent participation without treating it as an error');
 
 $collisions = HUB_integrityCanonicalCollisions(0);
 hubIntegrityAssert(count($collisions) === 1, 'canonical diagnostics detect identities resolving to the same URL');
