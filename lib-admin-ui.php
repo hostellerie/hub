@@ -9,6 +9,7 @@ function HUB_adminNavigation($active)
     $items = array(
         'home' => array('index.php', 'Hub home'),
         'relations' => array('relations.php', 'Pillars & manual relations'),
+        'editorial' => array('editorial.php', 'Editorial mapping'),
         'audit' => array('audit.php', 'Plugin interoperability audit'),
         'link-audit' => array('link-audit.php', 'Article link audit'),
     );
