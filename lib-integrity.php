@@ -608,6 +608,154 @@ function HUB_integrityCanonicalCollisions($uid = 0)
 }
 
 /**
+ * List provider-owned content that is visible through the shared collection
+ * contract but not currently present in the enabled Hub graph.
+ *
+ * This is deliberately named "hub-unconnected", not "orphan": Hub does not
+ * know every hyperlink or navigation path on the site and therefore cannot
+ * infer global SEO orphan status from its relationship graph alone.
+ *
+ * Core article SQL helpers are intentionally not used here. Providers only
+ * participate when the shared public collection contract is available.
+ *
+ * @param int $limitPerProvider
+ * @return array
+ */
+function HUB_integrityUnconnectedContent($limitPerProvider = 100)
+{
+    $limitPerProvider = max(1, min(200, (int) $limitPerProvider));
+
+    $connected = array();
+    foreach (HUB_getPillars(false) as $pillar) {
+        if (!is_array($pillar) || empty($pillar['id'])) {
+            continue;
+        }
+
+        $sourceKey = HUB_graphIdentityKey(
+            isset($pillar['source_type']) ? $pillar['source_type'] : '',
+            isset($pillar['source_id']) ? $pillar['source_id'] : ''
+        );
+        if ($sourceKey !== '') {
+            $connected[$sourceKey] = true;
+        }
+
+        foreach (HUB_getRelations((int) $pillar['id'], false) as $relation) {
+            if (!is_array($relation)) {
+                continue;
+            }
+
+            $key = HUB_graphIdentityKey(
+                isset($relation['item_type']) ? $relation['item_type'] : '',
+                isset($relation['item_id']) ? $relation['item_id'] : ''
+            );
+            if ($key !== '') {
+                $connected[$key] = true;
+            }
+        }
+    }
+
+    $providers = array();
+    $total = 0;
+
+    $types = function_exists('HUB_relationObjectTypes')
+        ? HUB_relationObjectTypes()
+        : array();
+
+    foreach ($types as $type) {
+        $type = HUB_normalizeObjectType($type);
+        if ($type === '') {
+            continue;
+        }
+
+        // Do not use Core article SQL discovery for this cross-provider
+        // diagnostic. Only the shared collection contract qualifies.
+        if (!function_exists('HUB_relationCollectionSupported')
+            || !HUB_relationCollectionSupported($type)
+        ) {
+            continue;
+        }
+
+        $collection = HUB_relationObjectOptions($type, $limitPerProvider);
+        if (empty($collection['supported'])) {
+            continue;
+        }
+
+        $items = isset($collection['items']) && is_array($collection['items'])
+            ? $collection['items']
+            : array();
+
+        $unconnected = array();
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $id = isset($item['id']) ? HUB_normalizeObjectId($item['id']) : '';
+            if ($id === '') {
+                continue;
+            }
+
+            $key = HUB_graphIdentityKey($type, $id);
+            if ($key === '' || isset($connected[$key])) {
+                continue;
+            }
+
+            $unconnected[] = array(
+                'type' => $type,
+                'id' => $id,
+                'title' => isset($item['title']) ? (string) $item['title'] : $id,
+                'url' => isset($item['url']) ? (string) $item['url'] : '',
+                'status' => 'hub-unconnected',
+                'evidence' => array(
+                    'signal' => 'content.collection',
+                    'graph_membership' => 'absent',
+                ),
+            );
+        }
+
+        if (empty($unconnected)) {
+            continue;
+        }
+
+        usort($unconnected, function ($left, $right) {
+            $titleCmp = strcasecmp(
+                isset($left['title']) ? (string) $left['title'] : '',
+                isset($right['title']) ? (string) $right['title'] : ''
+            );
+            if ($titleCmp !== 0) {
+                return $titleCmp;
+            }
+
+            return strcmp(
+                isset($left['id']) ? (string) $left['id'] : '',
+                isset($right['id']) ? (string) $right['id'] : ''
+            );
+        });
+
+        $providers[$type] = array(
+            'status' => 'collection-reviewed',
+            'collection_limit' => $limitPerProvider,
+            'returned_items' => count($items),
+            'hub_unconnected_count' => count($unconnected),
+            'possibly_truncated' => count($items) >= $limitPerProvider,
+            'items' => $unconnected,
+        );
+        $total += count($unconnected);
+    }
+
+    ksort($providers, SORT_STRING);
+
+    return array(
+        'status' => 'hub-unconnected',
+        'scope' => 'shared-content-collections-only',
+        'limit_per_provider' => $limitPerProvider,
+        'total' => $total,
+        'providers' => $providers,
+        'note' => 'Hub-unconnected means absent from the enabled Hub graph; it does not mean SEO orphan.',
+    );
+}
+
+/**
  * Build normalized integrity summary for all enabled Hub pillars.
  *
  * @param int $uid
@@ -644,6 +792,7 @@ function HUB_integritySummary($uid = 0)
         'providers' => array(),
         'graph' => array(),
         'canonical_collisions' => array(),
+        'unconnected_content' => array(),
         'pillar_items' => array(),
     );
 
@@ -703,6 +852,7 @@ function HUB_integritySummary($uid = 0)
 
     $summary['graph'] = HUB_integrityGraphDiagnostics();
     $summary['canonical_collisions'] = HUB_integrityCanonicalCollisions($uid);
+    $summary['unconnected_content'] = HUB_integrityUnconnectedContent(100);
 
     ksort($summary['providers'], SORT_STRING);
     usort($summary['pillar_items'], function ($left, $right) {
