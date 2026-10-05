@@ -1044,6 +1044,7 @@ function HUB_editorialRoadmap($candidateLimit = 10)
     $existingPillars = array();
     $temporalReview = array();
     $closeContentReview = array();
+    $contentGaps = array();
     $actions = array();
 
     $inventoryPillars = isset($inventory['pillars']) && is_array($inventory['pillars'])
@@ -1065,6 +1066,9 @@ function HUB_editorialRoadmap($candidateLimit = 10)
         $closeContent = isset($candidateRow['close_content']) && is_array($candidateRow['close_content'])
             ? $candidateRow['close_content']
             : array();
+        $pillarContentGaps = isset($candidateRow['content_gaps']) && is_array($candidateRow['content_gaps'])
+            ? $candidateRow['content_gaps']
+            : array();
 
         $existingPillars[] = array(
             'pillar_id' => $pillarId,
@@ -1075,7 +1079,27 @@ function HUB_editorialRoadmap($candidateLimit = 10)
                 : 0,
             'strongest_candidates' => array_slice($candidates, 0, 5),
             'close_content_review' => array_slice($closeContent, 0, 5),
+            'content_gaps' => array_slice($pillarContentGaps, 0, 5),
         );
+
+        foreach ($pillarContentGaps as $gap) {
+            if (!is_array($gap)) {
+                continue;
+            }
+
+            $contentGaps[] = $gap;
+            $actions[] = array(
+                'kind' => 'review-content-gap',
+                'pillar_id' => $pillarId,
+                'type' => 'topic',
+                'id' => isset($gap['topic_id']) ? (string) $gap['topic_id'] : '',
+                'title' => isset($gap['topic_label']) ? (string) $gap['topic_label'] : '',
+                'priority' => isset($gap['priority']) ? (int) $gap['priority'] : 0,
+                'reason' => isset($gap['kind']) && $gap['kind'] === 'create-content'
+                    ? 'Content gap: no published article for pillar topic'
+                    : 'Thin topic coverage: only one published article',
+            );
+        }
 
         foreach ($closeContent as $pair) {
             if (!is_array($pair)) {
@@ -1193,9 +1217,11 @@ function HUB_editorialRoadmap($candidateLimit = 10)
             'relation_candidates' => count($actions) - count($pillarCandidates),
             'temporal_review_candidates' => count($temporalReview),
             'close_content_review_pairs' => count($closeContentReview),
+            'content_gaps' => count($contentGaps),
         ),
         'existing_pillars' => $existingPillars,
         'new_pillar_opportunities' => $pillarCandidates,
+        'content_gaps' => $contentGaps,
         'close_content_review' => $closeContentReview,
         'temporal_review_candidates' => $temporalReview,
         'prioritized_next_actions' => $actions,
@@ -1233,6 +1259,7 @@ function HUB_editorialRoadmapMarkdown($roadmap)
         '- Relation candidates: ' . (isset($summary['relation_candidates']) ? (int) $summary['relation_candidates'] : 0),
         '- Temporal review candidates: ' . (isset($summary['temporal_review_candidates']) ? (int) $summary['temporal_review_candidates'] : 0),
         '- Close-content review pairs: ' . (isset($summary['close_content_review_pairs']) ? (int) $summary['close_content_review_pairs'] : 0),
+        '- Content gaps: ' . (isset($summary['content_gaps']) ? (int) $summary['content_gaps'] : 0),
         '',
         '## Existing pillars',
         '',
@@ -1285,6 +1312,25 @@ function HUB_editorialRoadmapMarkdown($roadmap)
             $lines[] = '- ' . $identity . ' — '
                 . (isset($candidate['title']) ? $candidate['title'] : '')
                 . ' (score ' . (isset($candidate['score']) ? (int) $candidate['score'] : 0) . ')';
+        }
+    }
+
+    $lines[] = '';
+    $lines[] = '## Content gaps to create or refresh';
+    $lines[] = '';
+    $gaps = isset($roadmap['content_gaps']) && is_array($roadmap['content_gaps'])
+        ? $roadmap['content_gaps']
+        : array();
+    if (empty($gaps)) {
+        $lines[] = '_None detected._';
+    } else {
+        foreach ($gaps as $gap) {
+            $kind = isset($gap['kind']) ? (string) $gap['kind'] : '';
+            $topicLabel = isset($gap['topic_label']) ? (string) $gap['topic_label'] : '';
+            $articleCount = isset($gap['article_count']) ? (int) $gap['article_count'] : 0;
+            $lines[] = '- ' . $topicLabel . ' — ' . $kind
+                . ' (' . $articleCount . ' published article'
+                . ($articleCount === 1 ? '' : 's') . ')';
         }
     }
 
