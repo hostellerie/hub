@@ -67,7 +67,7 @@ function plugin_getcapabilities_hub()
     return array(
         'schema' => 1,
         'roles' => array('relationship', 'orchestrator', 'service'),
-        'capabilities' => array('hub.affected.read', 'hub.context.read', 'hub.related.read', 'hub.pillar.read', 'hub.editorial.summary'),
+        'capabilities' => array('hub.affected.read', 'hub.context.read', 'hub.related.read', 'hub.pillar.read', 'hub.editorial.summary', 'hub.suggestions.read'),
         'lifecycle' => array(
             'emits' => array(),
             'listens' => array('item.saved', 'item.deleted'),
