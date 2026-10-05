@@ -572,7 +572,7 @@ This phase remains secondary to the single-site relationship graph and should re
 - keep site/domain identity available as relationship context in multisite deployments without merging provider-owned databases or identities — first slice implemented as `HUB_siteContext()` derived only from the active Geeklog site configuration; Hub read services expose this context without persisting a second site identifier
 - allow approved cross-site relationships when the source and destination objects are resolvable through shared Geeklog contracts
 - accept optional generic language metadata when exposed by the owning provider — first read-only implementation accepts a non-empty `language` value only when Item Info returns it explicitly; otherwise object language remains unknown and active site language is kept separate
-- allow an optional equivalent-content relation between resolvable objects in different languages or sites
+- allow an optional equivalent-content relation between resolvable objects in different languages or sites — explicit `relation_role = equivalent` is now available; administrators approve the relation and Hub does not infer equivalence automatically
 - expose cross-site / cross-language diagnostics without treating a missing translation as an error
 - allow diagnostics for suspicious cross-domain or cross-language links when the relevant site/language metadata is available — cross-site relation context is now reported from resolved URLs as `current-site`, `cross-site` or `unknown`; cross-site remains contextual information, not an error by default
 - keep hreflang generation, translation workflow and language-specific SEO ownership outside Hub; Hub may expose context to the responsible plugin or external consumer
