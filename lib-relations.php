@@ -325,6 +325,155 @@ function HUB_deleteRelation($relationId)
     return true;
 }
 
+
+/**
+ * Migrate Hub-owned stable references when a provider changes an object ID.
+ *
+ * The provider remains authoritative for its content. Hub updates only its own
+ * pillar/relation identities. A complete preflight is performed first so an
+ * existing target identity never causes a partial logical migration.
+ *
+ * @param string $itemType
+ * @param string $oldId
+ * @param string $newId
+ * @return array
+ */
+function HUB_migrateObjectIdentity($itemType, $oldId, $newId)
+{
+    global $_TABLES;
+
+    $itemType = HUB_normalizeObjectType($itemType);
+    $oldId = HUB_normalizeObjectId($oldId);
+    $newId = HUB_normalizeObjectId($newId);
+
+    $result = array(
+        'changed' => false,
+        'pillar_updated' => false,
+        'relations_updated' => 0,
+        'collisions' => array(),
+        'error' => '',
+    );
+
+    if ($itemType === '' || $oldId === '' || $newId === '' || $oldId === $newId) {
+        return $result;
+    }
+
+    $typeSql = DB_escapeString($itemType);
+    $oldSql = DB_escapeString($oldId);
+    $newSql = DB_escapeString($newId);
+
+    $oldPillar = HUB_findPillar($itemType, $oldId);
+    if (is_array($oldPillar)) {
+        $newPillar = HUB_findPillar($itemType, $newId);
+        if (is_array($newPillar) && (int) $newPillar['id'] !== (int) $oldPillar['id']) {
+            $result['collisions'][] = array(
+                'kind' => 'pillar',
+                'pillar_id' => (int) $oldPillar['id'],
+                'target_pillar_id' => (int) $newPillar['id'],
+            );
+        }
+    }
+
+    $relations = array();
+    $relationResult = DB_query(
+        "SELECT id, pillar_id FROM {$_TABLES['hub_relations']} "
+        . "WHERE item_type = '" . $typeSql . "' "
+        . "AND item_id = '" . $oldSql . "' "
+        . "ORDER BY id ASC",
+        1
+    );
+
+    if ($relationResult === false) {
+        $result['error'] = 'Unable to inspect existing Hub relations for identity migration.';
+        return $result;
+    }
+
+    while ($relation = DB_fetchArray($relationResult)) {
+        if (!is_array($relation)) {
+            continue;
+        }
+
+        $relationId = isset($relation['id']) ? (int) $relation['id'] : 0;
+        $pillarId = isset($relation['pillar_id']) ? (int) $relation['pillar_id'] : 0;
+        if ($relationId < 1 || $pillarId < 1) {
+            continue;
+        }
+
+        $relations[] = array(
+            'id' => $relationId,
+            'pillar_id' => $pillarId,
+        );
+
+        $collisionResult = DB_query(
+            "SELECT id FROM {$_TABLES['hub_relations']} "
+            . "WHERE pillar_id = " . $pillarId . " "
+            . "AND item_type = '" . $typeSql . "' "
+            . "AND item_id = '" . $newSql . "' "
+            . "AND id <> " . $relationId . " LIMIT 1",
+            1
+        );
+
+        if ($collisionResult === false) {
+            $result['error'] = 'Unable to validate Hub relation identity migration.';
+            return $result;
+        }
+
+        if (DB_numRows($collisionResult) > 0) {
+            $collision = DB_fetchArray($collisionResult);
+            $result['collisions'][] = array(
+                'kind' => 'relation',
+                'relation_id' => $relationId,
+                'pillar_id' => $pillarId,
+                'target_relation_id' => is_array($collision) && isset($collision['id'])
+                    ? (int) $collision['id']
+                    : 0,
+            );
+        }
+    }
+
+    // Do not partially rewrite Hub's graph when the target identity already
+    // exists. The old references remain visible through integrity diagnostics.
+    if (!empty($result['collisions'])) {
+        return $result;
+    }
+
+    $now = time();
+
+    if (is_array($oldPillar)) {
+        DB_query(
+            "UPDATE {$_TABLES['hub_pillars']} SET "
+            . "source_id = '" . $newSql . "', modified = " . $now . " "
+            . "WHERE id = " . (int) $oldPillar['id'],
+            1
+        );
+        if (DB_error()) {
+            $result['error'] = 'Unable to migrate Hub pillar identity.';
+            return $result;
+        }
+        $result['pillar_updated'] = true;
+        $result['changed'] = true;
+    }
+
+    if (!empty($relations)) {
+        DB_query(
+            "UPDATE {$_TABLES['hub_relations']} SET "
+            . "item_id = '" . $newSql . "', modified = " . $now . " "
+            . "WHERE item_type = '" . $typeSql . "' "
+            . "AND item_id = '" . $oldSql . "'",
+            1
+        );
+        if (DB_error()) {
+            $result['error'] = 'Unable to migrate Hub relation identities.';
+            return $result;
+        }
+
+        $result['relations_updated'] = count($relations);
+        $result['changed'] = true;
+    }
+
+    return $result;
+}
+
 function HUB_relationObjectTypes()
 {
     global $_PLUGINS;
