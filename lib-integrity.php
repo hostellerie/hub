@@ -252,6 +252,9 @@ function HUB_integrityPillar($pillar, $uid = 0)
             'title' => isset($source['title']) ? (string) $source['title'] : '',
             'url' => isset($source['url']) ? (string) $source['url'] : '',
             'diagnostic' => isset($source['diagnostic']) ? (string) $source['diagnostic'] : '',
+            'language_context' => function_exists('HUB_objectLanguageContext')
+                ? HUB_objectLanguageContext($sourceType, $sourceId, $uid)
+                : array(),
         ),
         'relation_count' => count($relations),
         'resolved_relations' => 0,
@@ -291,6 +294,9 @@ function HUB_integrityPillar($pillar, $uid = 0)
         $targetUrl = isset($resolved['url']) ? (string) $resolved['url'] : '';
         $siteUrlContext = function_exists('HUB_siteUrlContext')
             ? HUB_siteUrlContext($targetUrl)
+            : array();
+        $languageContext = function_exists('HUB_objectLanguageContext')
+            ? HUB_objectLanguageContext($type, $id, $uid)
             : array();
 
         if (!empty($siteUrlContext['cross_site'])) {
@@ -363,6 +369,7 @@ function HUB_integrityPillar($pillar, $uid = 0)
             'title' => isset($resolved['title']) ? (string) $resolved['title'] : '',
             'url' => $targetUrl,
             'site_context' => $siteUrlContext,
+            'language_context' => $languageContext,
             'diagnostic' => $renderable ? '' : (isset($resolved['diagnostic']) ? (string) $resolved['diagnostic'] : ''),
             'backlink_evidence' => $backlink,
             'reciprocal_evidence' => $reciprocal,
