@@ -569,12 +569,12 @@ Until such a shared contract exists:
 
 This phase remains secondary to the single-site relationship graph and should reuse shared provider metadata rather than introduce Hub-specific translation or SEO contracts.
 
-- keep site/domain identity available as relationship context in multisite deployments without merging provider-owned databases or identities
+- keep site/domain identity available as relationship context in multisite deployments without merging provider-owned databases or identities — first slice implemented as `HUB_siteContext()` derived only from the active Geeklog site configuration; Hub read services expose this context without persisting a second site identifier
 - allow approved cross-site relationships when the source and destination objects are resolvable through shared Geeklog contracts
 - accept optional generic language metadata when exposed by the owning provider
 - allow an optional equivalent-content relation between resolvable objects in different languages or sites
 - expose cross-site / cross-language diagnostics without treating a missing translation as an error
-- allow diagnostics for suspicious cross-domain or cross-language links when the relevant site/language metadata is available
+- allow diagnostics for suspicious cross-domain or cross-language links when the relevant site/language metadata is available — URL context now distinguishes current-site vs cross-site destinations from the configured active site host; no cross-site verdict is attached to relationships yet
 - keep hreflang generation, translation workflow and language-specific SEO ownership outside Hub; Hub may expose context to the responsible plugin or external consumer
 - keep network-level inventories provider-agnostic and explainable, with each object retaining its owning site/plugin identity
 
