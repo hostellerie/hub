@@ -39,7 +39,7 @@ function HUB_normalizeObjectId($id)
 function HUB_normalizeRelationRole($role)
 {
     $role = strtolower(trim((string) $role));
-    return in_array($role, array('related', 'sub-pillar', 'satellite', 'support'), true)
+    return in_array($role, array('related', 'sub-pillar', 'satellite', 'support', 'equivalent'), true)
         ? $role : 'related';
 }
 
@@ -194,6 +194,7 @@ hubEditorialAssert($summary['roles']['sub-pillar'] === 2, 'sub-pillar edges are 
 hubEditorialAssert($summary['roles']['satellite'] === 2, 'satellite edges are counted');
 hubEditorialAssert($summary['roles']['support'] === 1, 'support edges are counted');
 hubEditorialAssert($summary['roles']['related'] === 0, 'neutral related edges are counted separately');
+hubEditorialAssert($summary['roles']['equivalent'] === 0, 'equivalent structural edges are counted separately');
 hubEditorialAssert($summary['providers']['staticpages'] === 2, 'Static Page provider count is normalized');
 hubEditorialAssert($summary['providers']['article'] === 3, 'article provider count is normalized');
 hubEditorialAssert($summary['nested_pillars'] === 1, 'related identities that are also pillars are counted as nested pillars');
