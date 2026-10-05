@@ -1,8 +1,8 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.7.0` (next implementation milestone)
+**Current development milestone:** `0.8.0` (next implementation milestone)
 
-**Implemented baseline:** `0.6.0` service-based IndexNow integration scope is complete in the current codebase.
+**Implemented baseline:** `0.7.0` provider-owned specialized rendering scope is complete in the current codebase.
 
 ## Vision
 
@@ -366,7 +366,7 @@ Completed 0.6.0 validation:
 - README documents the optional dependency and graceful-degradation behavior;
 - no extra generic abstraction was added without a demonstrated second consumer.
 
-## 0.7.0 — Specialized plugin rendering — in progress
+## 0.7.0 — Specialized plugin rendering — implemented
 
 Implemented first rendering slice:
 
@@ -397,12 +397,12 @@ exactly one provider renderer?
     └── no / empty / error → Hub generic relation links
 ```
 
-Remaining 0.7.0 work:
+Completed 0.7.0 validation:
 
-- complete CI validation on Hub and Videos branches;
-- document the provider-render contract and approval-preserving boundary;
-- verify public output/fallback behavior with the Videos reference implementation;
-- keep Blocks/Autotags as provider implementation details rather than creating Hub-specific copies of their engines.
+- Hub and Videos CI are green on the shared render contract;
+- README/roadmaps document the provider-render and approval-preserving boundary;
+- contract tests verify specialized output, ambiguity handling and generic fallback behavior;
+- Blocks/Autotags remain provider implementation details and Hub contains no copy of the Videos recommendation engine.
 
 ## 0.8.0 — Discovery, editorial inventory and suggestions — planned
 
