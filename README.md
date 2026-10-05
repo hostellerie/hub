@@ -211,7 +211,7 @@ When IndexNow exposes the `indexnow.urls.submit` capability, Hub submits only ad
 
 ## Development archive
 
-The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.9.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-1.0.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
 
 
 ## Editorial roadmap exports
