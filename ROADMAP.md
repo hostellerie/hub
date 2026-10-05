@@ -580,10 +580,10 @@ This phase remains secondary to the single-site relationship graph and should re
 
 ## 1.0.0 — Stable Hub — stabilization milestone
 
-- stable relationship and context model
-- stable use of shared Geeklog interoperability contracts
-- migration and upgrade path
-- documentation for plugin authors
+- stable relationship and context model — implemented baseline from 0.3 through 0.10; 1.0 stabilization now focuses on compatibility, upgrade and documentation verification
+- stable use of shared Geeklog interoperability contracts — documented in `docs/plugin-author-guide.md` and kept provider-neutral
+- migration and upgrade path — documented in `docs/upgrade.md` and covered by `tests/upgrade_contract.php`; real database upgrade smoke test remains a release check
+- documentation for plugin authors — implemented in `docs/plugin-author-guide.md`
 - compatibility matrix for major Geeklog plugins
 - tested packaging for supported Geeklog/PHP matrix
 - documented service surface for other trusted Geeklog components
