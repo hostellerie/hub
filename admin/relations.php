@@ -641,6 +641,87 @@ if (empty($pillars)) {
                 }
             }
             $content .= '</div>';
+
+            $closeContentPairs = function_exists('HUB_editorialCloseContentCandidates')
+                ? HUB_editorialCloseContentCandidates($pillar, 10)
+                : array();
+            $content .= '<div class="hub-rel-suggest"><h3>Close-content review</h3>';
+            if (empty($closeContentPairs)) {
+                $content .= '<p class="hub-rel-muted">No article pair currently meets the deterministic close-content review threshold.</p>';
+            } else {
+                foreach ($closeContentPairs as $pair) {
+                    $left = isset($pair['left']) && is_array($pair['left']) ? $pair['left'] : array();
+                    $right = isset($pair['right']) && is_array($pair['right']) ? $pair['right'] : array();
+                    $pairId = isset($pair['pair_id']) ? (string) $pair['pair_id'] : '';
+                    $score = isset($pair['score']) ? (int) $pair['score'] : 0;
+                    $commonTokens = array();
+                    $sharedTopics = array();
+
+                    if (!empty($pair['evidence']) && is_array($pair['evidence'])) {
+                        foreach ($pair['evidence'] as $evidence) {
+                            if (!is_array($evidence) || empty($evidence['signal'])) {
+                                continue;
+                            }
+                            if ($evidence['signal'] === 'shared-topic'
+                                && !empty($evidence['topics'])
+                                && is_array($evidence['topics'])
+                            ) {
+                                foreach ($evidence['topics'] as $topic) {
+                                    if (is_array($topic) && isset($topic['label'])) {
+                                        $sharedTopics[] = (string) $topic['label'];
+                                    }
+                                }
+                            }
+                            if ($evidence['signal'] === 'title-token-overlap'
+                                && !empty($evidence['common_tokens'])
+                                && is_array($evidence['common_tokens'])
+                            ) {
+                                $commonTokens = array_values($evidence['common_tokens']);
+                            }
+                        }
+                    }
+
+                    $leftIdentity = (isset($left['type']) ? $left['type'] : '')
+                        . ':' . (isset($left['id']) ? $left['id'] : '');
+                    $rightIdentity = (isset($right['type']) ? $right['type'] : '')
+                        . ':' . (isset($right['id']) ? $right['id'] : '');
+
+                    $content .= '<div class="hub-rel-suggest-row"><div><strong>'
+                        . HUB_relAdminEscape(isset($left['title']) ? $left['title'] : $leftIdentity)
+                        . '</strong><br><code>' . HUB_relAdminEscape($leftIdentity) . '</code><br><strong>'
+                        . HUB_relAdminEscape(isset($right['title']) ? $right['title'] : $rightIdentity)
+                        . '</strong><br><code>' . HUB_relAdminEscape($rightIdentity) . '</code></div>'
+                        . '<div class="hub-rel-reason"><strong>Human review only</strong><br>'
+                        . 'Title similarity: ' . $score . '%'
+                        . (!empty($sharedTopics)
+                            ? '<br>Shared topic(s): ' . HUB_relAdminEscape(implode(', ', $sharedTopics))
+                            : '')
+                        . (!empty($commonTokens)
+                            ? '<br>Common title tokens: ' . HUB_relAdminEscape(implode(', ', $commonTokens))
+                            : '')
+                        . '</div><div class="hub-rel-actions">'
+                        . '<form method="post" action="relations.php?suggest=1">'
+                        . HUB_relAdminTokenField()
+                        . '<input type="hidden" name="hub_action" value="suggestion_decision">'
+                        . '<input type="hidden" name="suggestion_kind" value="close-content">'
+                        . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
+                        . '<input type="hidden" name="item_type" value="article-pair">'
+                        . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($pairId) . '">'
+                        . '<input type="hidden" name="decision_action" value="defer">'
+                        . '<button type="submit" class="uk-button">Defer 30 days</button></form>'
+                        . '<form method="post" action="relations.php?suggest=1">'
+                        . HUB_relAdminTokenField()
+                        . '<input type="hidden" name="hub_action" value="suggestion_decision">'
+                        . '<input type="hidden" name="suggestion_kind" value="close-content">'
+                        . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
+                        . '<input type="hidden" name="item_type" value="article-pair">'
+                        . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($pairId) . '">'
+                        . '<input type="hidden" name="decision_action" value="dismiss">'
+                        . '<button type="submit" class="uk-button">Dismiss</button></form>'
+                        . '</div></div>';
+                }
+            }
+            $content .= '</div>';
         }
 
         $content .= '<h3>Add relation</h3>';
