@@ -588,6 +588,27 @@ This phase remains secondary to the single-site relationship graph and should re
 - tested packaging for supported PHP matrix — CI runs the contract suite on PHP 5.6, 8.1 and 8.3 before packaging; full Geeklog 2.1.1/2.2.2 runtime smoke tests remain release checks
 - documented service surface for other trusted Geeklog components — implemented in `docs/services.md` and kept aligned with advertised `hub.*` capabilities
 
+### 1.0 release-readiness status
+
+Automated stabilization is now in place:
+
+- the complete Hub contract suite passes on PHP 5.6, 8.1 and 8.3;
+- the shared Geeklog Core API contract is checked against official tags v2.1.2 (legacy lifecycle shape) and v2.2.2 (subtype-aware lifecycle shape);
+- packaging runs only after both the PHP matrix and Core API matrix pass;
+- the 1.0 archive must contain the plugin-author guide, service reference, compatibility matrix and upgrade guide;
+- the upgrade path is covered by a dedicated structural contract.
+
+Release blockers that still require a real Geeklog runtime:
+
+- fresh install on Geeklog 2.2.2;
+- in-place upgrade from an older Hub persisted schema;
+- Geeklog 2.1.1 runtime smoke test using the official 2.1.1 distribution;
+- Geeklog 2.2.2 runtime smoke test;
+- visual/public rendering inspection for article and Static Page relationships;
+- administration-page smoke test and service ACL verification in a real installation.
+
+These runtime checks must be completed before 1.0.0 is treated as a published stable release.
+
 ## Integration with Hello
 
 Hello is the registered-user communication and newsletter plugin.
