@@ -2,7 +2,7 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.6.0 (development)** builds on the completed 0.5.0 lifecycle/dependency graph and adds optional service-based delegation of Hub-affected public URLs to IndexNow.
+Version **0.7.0 (development)** builds on the completed lifecycle/dependency graph and IndexNow service integration with provider-owned specialized rendering for approved Hub relations.
 
 ## Requirements
 
@@ -186,10 +186,16 @@ These surfaces are protected by `hub.admin`. Hub advertises only capabilities wh
 
 Structural `relation_role` is intentionally separate from future editorial-function metadata such as `guide`, `tutorial`, `reference` or `case-study`.
 
-### IndexNow integration (0.6.0 development)
+### Provider-owned specialized rendering
+
+Hub can discover provider-declared `*.render` capabilities backed by native Geeklog `*_render` services. For one unambiguous renderer, Hub passes only the approved relation identities for that provider and lets the provider own filtering, presentation and CSS dependencies. If specialized rendering is unavailable, ambiguous, empty or fails, Hub automatically keeps its generic relationship links.
+
+Videos 0.21.0 is the reference implementation through `videos.recommendations.render`. Hub does not call Videos private rendering functions and does not allow the renderer to expand a pillar beyond its approved Videos relations.
+
+### IndexNow integration (0.6.0)
 
 When IndexNow exposes the `indexnow.urls.submit` capability, Hub submits only additional public context pages affected by a Hub relationship, lifecycle or topic change. The directly changed object remains IndexNow's own lifecycle responsibility. Hub calls the native Geeklog `PLG_invokeService()` dispatcher and never reads the IndexNow key, calls its transport helpers, deduplicates URL batches or stores submission history. Older or absent IndexNow versions are a graceful no-op. When IndexNow also exposes `indexnow.status.read`, Hub administration shows only normalized readiness information (transport mode, key readiness, history availability and latest submission status); Hub never receives the key value or local key-file path.
 
 ## Development archive
 
-The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.6.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.7.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
