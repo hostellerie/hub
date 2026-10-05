@@ -86,9 +86,21 @@ hubEditorialAssert($summary['multi_parent_items'] === 2, 'multi-parent identitie
 hubEditorialAssert(count($summary['pillar_items']) === 3, 'per-pillar structural summaries are exposed');
 hubEditorialAssert($summary['pillar_items'][0]['pillar_id'] === 1, 'pillar summaries are deterministic by id');
 
+$inventory = HUB_editorialInventory(false);
+hubEditorialAssert($inventory['schema'] === 1, 'editorial inventory schema is explicit');
+hubEditorialAssert(count($inventory['pillars']) === 3, 'editorial inventory exposes every approved pillar');
+hubEditorialAssert(count($inventory['pillars'][0]['items']) === 2, 'pillar inventory exposes approved relation identities');
+hubEditorialAssert($inventory['pillars'][0]['items'][0]['relation_role'] === 'sub-pillar', 'inventory preserves structural relation roles');
+hubEditorialAssert($inventory['pillars'][0]['items'][0]['is_nested_pillar'] === true, 'inventory identifies related objects that are also pillars');
+hubEditorialAssert($inventory['pillars'][0]['items'][0]['nested_pillar_id'] === 2, 'inventory exposes nested pillar identity without duplicating content');
+hubEditorialAssert($inventory['pillars'][0]['items'][0]['parent_count'] === 2, 'inventory exposes multi-parent participation');
+hubEditorialAssert($inventory['pillars'][0]['items'][1]['type'] === 'article', 'inventory remains provider-neutral by stable type + id');
+
 $source = file_get_contents(dirname(__DIR__) . '/lib-editorial.php');
 hubEditorialAssert(strpos($source, 'HUB_resolveObject(') === false, 'structural summary does not mix provider metadata resolution');
 hubEditorialAssert(strpos($source, 'HUB_linkAudit') === false, 'structural summary does not mix SEO/link diagnostics');
-hubEditorialAssert(strpos($source, 'suggest') === false, 'structural summary does not mix inferred suggestions');
+hubEditorialAssert(strpos($source, 'HUB_resolveObject(') === false, 'editorial models do not mix provider metadata resolution');
+hubEditorialAssert(strpos($source, 'HUB_linkAudit') === false, 'editorial models do not mix SEO/link diagnostics');
+hubEditorialAssert(strpos($source, 'suggest') === false, 'editorial models do not mix inferred suggestions');
 
 echo "Hub editorial summary contract tests passed." . PHP_EOL;
