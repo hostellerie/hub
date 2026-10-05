@@ -50,32 +50,11 @@ function HUB_relAdminStaticPages()
 
 function HUB_relAdminTopicContext($pageId)
 {
-    $context = function_exists('HUB_staticPageTopicContext')
-        ? HUB_staticPageTopicContext($pageId)
-        : array('specific_topics' => array());
-
-    $topics = isset($context['specific_topics']) && is_array($context['specific_topics'])
-        ? $context['specific_topics']
-        : array();
-
-    $ids = array();
-    $labels = array();
-    foreach ($topics as $topic) {
-        $tid = isset($topic['tid']) ? (string) $topic['tid'] : '';
-        if ($tid === '') {
-            continue;
-        }
-
-        $ids[] = $tid;
-        $labels[$tid] = isset($topic['topic']) && (string) $topic['topic'] !== ''
-            ? (string) $topic['topic']
-            : $tid;
+    if (function_exists('HUB_editorialTopicContext')) {
+        return HUB_editorialTopicContext($pageId);
     }
 
-    return array(
-        'ids' => array_values(array_unique($ids)),
-        'labels' => $labels,
-    );
+    return array('ids' => array(), 'labels' => array());
 }
 
 function HUB_relAdminSuggestedPillars($staticPages, $pillars, $limit = 8)
@@ -131,40 +110,44 @@ function HUB_relAdminSuggestedPillars($staticPages, $pillars, $limit = 8)
 
 function HUB_relAdminSuggestedArticles($pillar, $relations, $limit = 10)
 {
-    if (!isset($pillar['source_type'], $pillar['source_id'])
-        || (string) $pillar['source_type'] !== 'staticpages'
-    ) {
+    if (!function_exists('HUB_editorialArticleCandidates')) {
         return array();
     }
 
-    $topicContext = HUB_relAdminTopicContext($pillar['source_id']);
-    if (empty($topicContext['ids']) || !function_exists('HUB_linkAuditArticlesByTopics')) {
-        return array();
+    $articles = array();
+
+    foreach (HUB_editorialArticleCandidates($pillar, $relations, $limit) as $candidate) {
+        $topics = array();
+
+        if (!empty($candidate['evidence']) && is_array($candidate['evidence'])) {
+            foreach ($candidate['evidence'] as $evidence) {
+                if (!is_array($evidence)
+                    || !isset($evidence['signal'])
+                    || $evidence['signal'] !== 'shared-topic'
+                    || empty($evidence['topics'])
+                    || !is_array($evidence['topics'])
+                ) {
+                    continue;
+                }
+
+                foreach ($evidence['topics'] as $topic) {
+                    if (is_array($topic) && isset($topic['id'])) {
+                        $topics[(string) $topic['id']] = isset($topic['label'])
+                            ? (string) $topic['label']
+                            : (string) $topic['id'];
+                    }
+                }
+            }
+        }
+
+        $articles[] = array(
+            'sid' => isset($candidate['id']) ? (string) $candidate['id'] : '',
+            'title' => isset($candidate['title']) ? (string) $candidate['title'] : '',
+            'hub_topics' => $topics,
+        );
     }
 
-    $existing = array();
-    foreach ($relations as $relation) {
-        if (isset($relation['item_type'], $relation['item_id'])
-            && (string) $relation['item_type'] === 'article'
-        ) {
-            $existing[(string) $relation['item_id']] = true;
-        }
-    }
-
-    $suggestions = array();
-    foreach (HUB_linkAuditArticlesByTopics($topicContext['ids']) as $article) {
-        $sid = isset($article['sid']) ? (string) $article['sid'] : '';
-        if ($sid === '' || isset($existing[$sid])) {
-            continue;
-        }
-
-        $suggestions[] = $article;
-        if (count($suggestions) >= max(1, (int) $limit)) {
-            break;
-        }
-    }
-
-    return $suggestions;
+    return $articles;
 }
 
 if (isset($_GET['hub_ajax']) && $_GET['hub_ajax'] === 'items') {
