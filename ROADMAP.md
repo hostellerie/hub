@@ -303,6 +303,7 @@ hub.affected.read
 hub.integrity.summary
 hub.suggestions.read
 hub.interoperability.summary
+hub.editorial.summary
 dashboard.summary
 ```
 
@@ -404,7 +405,29 @@ Completed 0.7.0 validation:
 - contract tests verify specialized output, ambiguity handling and generic fallback behavior;
 - Blocks/Autotags remain provider implementation details and Hub contains no copy of the Videos recommendation engine.
 
-## 0.8.0 — Discovery, editorial inventory and suggestions — planned
+## 0.8.0 — Discovery, editorial inventory and suggestions — in progress
+
+### Marketing/editorial mapping
+
+Hub's marketing/editorial mapping is a **read model over the existing approved relationship graph**, not a second graph, parallel persistence layer or separate marketing module.
+
+Implemented first 0.8.0 slice:
+
+- expose `hub.editorial.summary` as a deterministic read-only structural summary for Monitor, Agent, Eclipse and other capability-aware consumers;
+- count approved pillars, relations and structural roles (`related`, `sub-pillar`, `satellite`, `support`);
+- summarize relation participation by provider;
+- expose nested-pillar and multi-parent counts without enforcing a tree;
+- expose deterministic per-pillar structural summaries;
+- keep provider metadata resolution, integrity/SEO health and inferred suggestions outside this first summary so consumers do not conflate approved structure with diagnostics;
+- keep all relationship ownership inside Hub and require consumers such as Monitor to use Hub services rather than query Hub tables or recompute the graph.
+
+Boundary with 0.9.0:
+
+- **0.8.0** owns discovery, editorial inventory, topic/coverage opportunities and explainable suggestions;
+- **0.9.0** owns cluster health, unresolved/broken relationships, reciprocal-link health, orphan/integrity diagnostics and canonical consistency.
+
+The normalized editorial summary is therefore the first reusable "marketing mapping" surface, while richer inventory and opportunity detection will build on the same graph rather than introduce new persistence.
+
 
 - extend the 0.1.1 topic audit beyond core articles
 - use topics, keywords and `PLG_getRelatedItems()`
