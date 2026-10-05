@@ -54,6 +54,7 @@ function HUB_relationRoles()
         'sub-pillar' => 'Sub-pillar',
         'satellite' => 'Satellite',
         'support' => 'Support',
+        'equivalent' => 'Equivalent content',
     );
 }
 
