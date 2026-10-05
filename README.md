@@ -248,3 +248,16 @@ Hub 0.8.0 can identify simple deterministic topic-coverage gaps for Static Page 
 - **2 or more published articles** → no content-gap signal from this rule.
 
 These are editorial planning signals, not SEO verdicts. Each gap keeps its topic identity and exact published-article count as evidence. Content-gap suggestions can be deferred for 30 days, dismissed, or restored from Editorial mapping.
+
+
+## Integrity summary (0.9.0)
+
+Hub 0.9.0 introduces `hub.integrity.summary`, a normalized read-only diagnostic surface over the approved relationship graph. The first slice reports pillar-source resolution, approved relation resolution/renderability, provider participation and backlink-integration evidence.
+
+Backlink diagnostics deliberately distinguish three evidence levels:
+
+- **hub-managed** — Hub owns the known rendering path;
+- **integration-available** — a generic provider integration hook is available, but runtime output is not asserted;
+- **unconfirmed** — Hub has no confirmed generic backlink placement contract.
+
+This prevents Monitor, Agent or other consumers from treating integration capability as proof that a backlink is present on a rendered provider page.
