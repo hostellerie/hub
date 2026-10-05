@@ -534,7 +534,7 @@ Hub stores approved relationship
 - identify related content clusters with weak or missing internal-link connections — Hub can now identify provider content absent from the Hub graph where a public collection contract exists; true site-wide weak-link/orphan analysis remains separate
 - orphaned-item checks — first safe precursor implemented as `hub-unconnected`: content returned by a provider's shared `content.collection` contract but absent from the enabled Hub graph; this is explicitly not labelled as global SEO orphan status
 - broken/missing object checks — first implementation reports unresolved pillar sources and unresolved approved relation identities through `HUB_integritySummary()`
-- sitemap/feed integration opportunities
+- sitemap/feed integration opportunities — implemented as provider-owned contract diagnostics aligned with the Memorandum: native `plugin_collectSitemapItems_*()` preferred, `content.collection` recognized as XML Sitemap fallback, and `content.syndication` / native feed callbacks reported without making Hub the distribution owner
 - affected-page diagnostics — implemented by enriching `hub.affected.read` with current public resolution, URL, dependency reasons and resolved/unresolved affected-page counts while reusing `HUB_getAffectedContexts()` as the single dependency source
 - relationship graph diagnostics — implemented first for unresolved sources/targets, non-renderable targets, runtime-unverified reciprocal links, empty pillars, self-relations, pillar cycles and informational multi-parent participation
 - canonical URL consistency checks — first provider-neutral collision check implemented by detecting distinct stable identities that resolve to the same normalized public URL
