@@ -29,6 +29,12 @@ $providers = isset($summary['providers']) && is_array($summary['providers'])
 $pillars = isset($summary['pillar_items']) && is_array($summary['pillar_items'])
     ? $summary['pillar_items'] : array();
 
+$inventory = function_exists('HUB_editorialInventory')
+    ? HUB_editorialInventory(false)
+    : array('pillars' => array());
+$inventoryPillars = isset($inventory['pillars']) && is_array($inventory['pillars'])
+    ? $inventory['pillars'] : array();
+
 $content = HUB_adminNavigation('editorial');
 $content .= '<h1>Editorial mapping</h1>';
 $content .= '<p>This is a read-only structural view of Hub&#039;s approved editorial graph. '
@@ -106,6 +112,59 @@ if (empty($pillars)) {
     }
 
     $content .= '</tbody></table>';
+}
+
+$content .= '<h2>Approved relation inventory</h2>';
+if (empty($inventoryPillars)) {
+    $content .= '<p>No approved relation is currently available in the structural inventory.</p>';
+} else {
+    foreach ($inventoryPillars as $inventoryPillar) {
+        $source = HUB_editorialAdminEscape(
+            (isset($inventoryPillar['source_type']) ? $inventoryPillar['source_type'] : '')
+            . ':'
+            . (isset($inventoryPillar['source_id']) ? $inventoryPillar['source_id'] : '')
+        );
+        $items = isset($inventoryPillar['items']) && is_array($inventoryPillar['items'])
+            ? $inventoryPillar['items'] : array();
+
+        $content .= '<details style="margin:0 0 12px;border:1px solid #d7d7d7;border-radius:4px;padding:10px">'
+            . '<summary style="cursor:pointer"><strong>' . $source . '</strong> — '
+            . count($items) . ' approved item(s)</summary>';
+
+        if (empty($items)) {
+            $content .= '<p style="margin:10px 0 0">No approved item.</p></details>';
+            continue;
+        }
+
+        $content .= '<table class="uk-table uk-table-divider uk-table-small" style="margin-top:10px"><thead><tr>'
+            . '<th>Role</th><th>Identity</th><th>Position</th><th>Nested pillar</th><th>Parents</th>'
+            . '</tr></thead><tbody>';
+
+        foreach ($items as $item) {
+            $identity = HUB_editorialAdminEscape(
+                (isset($item['type']) ? $item['type'] : '')
+                . ':'
+                . (isset($item['id']) ? $item['id'] : '')
+            );
+            $role = HUB_editorialAdminEscape(
+                isset($item['relation_role']) ? $item['relation_role'] : 'related'
+            );
+            $nested = !empty($item['is_nested_pillar'])
+                ? 'yes'
+                . (!empty($item['nested_pillar_id'])
+                    ? ' (#' . (int) $item['nested_pillar_id'] . ')'
+                    : '')
+                : 'no';
+
+            $content .= '<tr><td><code>' . $role . '</code></td>'
+                . '<td><code>' . $identity . '</code></td>'
+                . '<td>' . (isset($item['position']) ? (int) $item['position'] : 0) . '</td>'
+                . '<td>' . HUB_editorialAdminEscape($nested) . '</td>'
+                . '<td>' . (isset($item['parent_count']) ? (int) $item['parent_count'] : 0) . '</td></tr>';
+        }
+
+        $content .= '</tbody></table></details>';
+    }
 }
 
 $content .= '<h2>Scope boundary</h2>';
