@@ -135,10 +135,17 @@ function HUB_relAdminSuggestedArticles($pillar, $relations, $limit = 10)
             }
         }
 
+        $ranking = isset($candidate['ranking']) && is_array($candidate['ranking'])
+            ? $candidate['ranking']
+            : array();
+
         $articles[] = array(
             'sid' => isset($candidate['id']) ? (string) $candidate['id'] : '',
             'title' => isset($candidate['title']) ? (string) $candidate['title'] : '',
             'hub_topics' => $topics,
+            'hub_views' => isset($ranking['views']) ? (int) $ranking['views'] : 0,
+            'hub_comments' => isset($ranking['comments']) ? (int) $ranking['comments'] : 0,
+            'hub_published_at' => isset($ranking['published_at']) ? (string) $ranking['published_at'] : '',
         );
     }
 
@@ -438,12 +445,23 @@ if (empty($pillars)) {
                     $topics = isset($articleSuggestion['hub_topics']) && is_array($articleSuggestion['hub_topics'])
                         ? array_values($articleSuggestion['hub_topics'])
                         : array();
+                    $views = isset($articleSuggestion['hub_views']) ? (int) $articleSuggestion['hub_views'] : 0;
+                    $comments = isset($articleSuggestion['hub_comments']) ? (int) $articleSuggestion['hub_comments'] : 0;
+                    $publishedAt = isset($articleSuggestion['hub_published_at'])
+                        ? (string) $articleSuggestion['hub_published_at']
+                        : '';
+                    $rankingNote = $views . ' view' . ($views === 1 ? '' : 's')
+                        . ' · ' . $comments . ' comment' . ($comments === 1 ? '' : 's');
+                    if ($publishedAt !== '') {
+                        $rankingNote .= ' · published ' . $publishedAt;
+                    }
 
                     $content .= '<div class="hub-rel-suggest-row"><div><strong>'
                         . HUB_relAdminEscape($title) . '</strong><br><code>article:'
                         . HUB_relAdminEscape($sid) . '</code></div><div class="hub-rel-reason">Shared specific topic'
                         . (count($topics) === 1 ? ': ' : 's: ')
                         . HUB_relAdminEscape(implode(', ', $topics))
+                        . '<br>' . HUB_relAdminEscape($rankingNote)
                         . '</div><form method="post" action="relations.php">'
                         . HUB_relAdminTokenField()
                         . '<input type="hidden" name="hub_action" value="save_relation">'
