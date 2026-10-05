@@ -66,6 +66,10 @@ hubAssert(HUB_normalizeRelationRole('sub-pillar') === 'sub-pillar', 'structural 
 hubAssert(HUB_normalizeRelationRole(' SATELLITE ') === 'satellite', 'relation role normalization is case-insensitive');
 hubAssert(HUB_normalizeRelationRole('guide') === 'related', 'relation role normalization defaults editorial functions to related');
 hubAssert(HUB_normalizeRelationRole('anything') === 'related', 'relation role normalization defaults unknown values');
+hubAssert(HUB_normalizeEditorialRole(' GUIDE ') === 'guide', 'editorial role normalization preserves guide');
+hubAssert(HUB_normalizeEditorialRole('case-study') === 'case-study', 'editorial role normalization preserves case-study');
+hubAssert(HUB_normalizeEditorialRole('sub-pillar') === '', 'structural role is not accepted as editorial function');
+hubAssert(HUB_normalizeEditorialRole('anything') === '', 'unknown editorial role is discarded');
 
 $resolved = HUB_resolveObject('article', 'story-1');
 hubAssert(!empty($resolved['exists']), 'known object resolves');
@@ -169,5 +173,31 @@ if (strpos($sqlInstallSource, 'title_override') !== false
     || strpos($upgradeSource, 'DROP COLUMN title_override') === false
 ) {
     fwrite(STDERR, "Hub 0.5.0 must remove obsolete pillar title override persistence\n");
+    exit(1);
+}
+
+
+if (strpos($relationsSource, 'function HUB_editorialRoles()') === false
+    || strpos($relationsSource, 'function HUB_normalizeEditorialRole($role)') === false
+    || strpos($relationsSource, "function HUB_savePillar(\$pillarId, \$sourceType, \$sourceId, \$isEnabled = 1, \$ownerId = 0, \$editorialRole = '')") === false
+    || strpos($relationsSource, "function HUB_saveRelation(\$relationId, \$pillarId, \$itemType, \$itemId, \$position = 0, \$isEnabled = 1, \$ownerId = 0, \$relationRole = 'related', \$editorialRole = '')") === false
+) {
+    fwrite(STDERR, "Hub editorial role persistence contract missing\n");
+    exit(1);
+}
+
+if (substr_count($sqlInstallSource, "editorial_role varchar(32) NOT NULL DEFAULT ''") < 2
+    || strpos($upgradeSource, "ADD editorial_role varchar(32) NOT NULL DEFAULT '' AFTER source_id") === false
+    || strpos($upgradeSource, "ADD editorial_role varchar(32) NOT NULL DEFAULT '' AFTER relation_role") === false
+) {
+    fwrite(STDERR, "Hub 0.8.0 editorial role schema contract missing\n");
+    exit(1);
+}
+
+$relationsAdminSource = file_get_contents(dirname(__DIR__) . '/admin/relations.php');
+if (strpos($relationsAdminSource, 'name="editorial_role"') === false
+    || strpos($relationsAdminSource, 'HUB_editorialRoles()') === false
+) {
+    fwrite(STDERR, "Hub editorial role administration contract missing\n");
     exit(1);
 }
