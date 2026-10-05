@@ -2,7 +2,7 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.5.0 (development)** extends the 0.4.0 public bidirectional navigation with content lifecycle handling, affected-context detection, graph traversal, read-only Hub services and explicit structural relation roles.
+Version **0.6.0 (development)** builds on the completed 0.5.0 lifecycle/dependency graph and adds optional service-based delegation of Hub-affected public URLs to IndexNow.
 
 ## Requirements
 
@@ -173,7 +173,7 @@ The audit also reports native Geeklog distribution contracts without changing Hu
 
 These capabilities are informational interoperability signals. Hub does not read another plugin's tables to infer them.
 
-## 0.5.0 development services
+## Hub read services
 
 Hub currently exposes these read-only administrator services through Geeklog's native service dispatcher:
 
@@ -186,6 +186,10 @@ These surfaces are protected by `hub.admin`. Hub advertises only capabilities wh
 
 Structural `relation_role` is intentionally separate from future editorial-function metadata such as `guide`, `tutorial`, `reference` or `case-study`.
 
+### IndexNow integration (0.6.0 development)
+
+When IndexNow exposes the `indexnow.urls.submit` capability, Hub submits only additional public context pages affected by a Hub relationship, lifecycle or topic change. The directly changed object remains IndexNow's own lifecycle responsibility. Hub calls the native Geeklog `PLG_invokeService()` dispatcher and never reads the IndexNow key, calls its transport helpers, deduplicates URL batches or stores submission history. Older or absent IndexNow versions are a graceful no-op.
+
 ## Development archive
 
-The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.5.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.6.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
