@@ -81,7 +81,7 @@ function HUB_findPillar($type, $id)
 function HUB_getRelations($pillarId, $includeDisabled = true)
 {
     return (int) $pillarId === 7
-        ? array(array('item_type' => 'article', 'item_id' => 'story-1', 'position' => 10, 'is_enabled' => 1))
+        ? array(array('item_type' => 'article', 'item_id' => 'story-1', 'relation_role' => 'satellite', 'position' => 10, 'is_enabled' => 1))
         : array();
 }
 
@@ -154,6 +154,7 @@ hubServiceAssert($status === PLG_RET_OK, 'pillar read returns OK');
 hubServiceAssert($output['capability'] === 'hub.pillar.read', 'pillar service identifies its capability');
 hubServiceAssert($output['pillar']['source_id'] === 'guide', 'pillar service returns stable source identity');
 hubServiceAssert(count($output['relations']) === 1, 'pillar service returns relation identities');
+hubServiceAssert($output['relations'][0]['relation_role'] === 'satellite', 'pillar service returns structural role');
 
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
 hubServiceAssert(strpos($functionsSource, 'function plugin_wsEnabled_hub()') !== false, 'Hub enables the native service dispatcher');
