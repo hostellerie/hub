@@ -55,6 +55,36 @@ function HUB_graphContext($type, $id, $depth = 4, $includeDisabled = false)
     );
 }
 
+function HUB_graphNeighbors($type, $id, $includeDisabled = false)
+{
+    return array(
+        'parents' => array(array('type' => 'staticpages', 'id' => 'guide')),
+        'children' => array(array('type' => 'article', 'id' => 'child-1')),
+        'edges' => array(),
+    );
+}
+
+function HUB_getPillar($pillarId)
+{
+    return (int) $pillarId === 7
+        ? array('id' => 7, 'source_type' => 'staticpages', 'source_id' => 'guide', 'is_enabled' => 1)
+        : false;
+}
+
+function HUB_findPillar($type, $id)
+{
+    return ((string) $type === 'staticpages' && (string) $id === 'guide')
+        ? HUB_getPillar(7)
+        : false;
+}
+
+function HUB_getRelations($pillarId, $includeDisabled = true)
+{
+    return (int) $pillarId === 7
+        ? array(array('item_type' => 'article', 'item_id' => 'story-1', 'position' => 10, 'is_enabled' => 1))
+        : array();
+}
+
 require_once dirname(__DIR__) . '/services.inc.php';
 
 function hubServiceAssert($condition, $message)
@@ -110,9 +140,26 @@ hubServiceAssert($output['capability'] === 'hub.context.read', 'context service 
 hubServiceAssert($output['context']['max_depth'] === 3, 'context service forwards requested traversal depth');
 hubServiceAssert(count($output['context']['nodes']) === 2, 'context service returns graph nodes');
 
+$output = null;
+$messages = null;
+$status = service_related_read_hub(array('type' => 'article', 'id' => 'story-1'), $output, $messages);
+hubServiceAssert($status === PLG_RET_OK, 'related read returns OK');
+hubServiceAssert($output['capability'] === 'hub.related.read', 'related service identifies its capability');
+hubServiceAssert(count($output['parents']) === 1, 'related service returns immediate parents');
+
+$output = null;
+$messages = null;
+$status = service_pillar_read_hub(array('pillar_id' => 7), $output, $messages);
+hubServiceAssert($status === PLG_RET_OK, 'pillar read returns OK');
+hubServiceAssert($output['capability'] === 'hub.pillar.read', 'pillar service identifies its capability');
+hubServiceAssert($output['pillar']['source_id'] === 'guide', 'pillar service returns stable source identity');
+hubServiceAssert(count($output['relations']) === 1, 'pillar service returns relation identities');
+
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
 hubServiceAssert(strpos($functionsSource, 'function plugin_wsEnabled_hub()') !== false, 'Hub enables the native service dispatcher');
 hubServiceAssert(strpos($functionsSource, "'hub.affected.read'") !== false, 'implemented affected service is advertised as a capability');
 hubServiceAssert(strpos($functionsSource, "'hub.context.read'") !== false, 'implemented context service is advertised as a capability');
+hubServiceAssert(strpos($functionsSource, "'hub.related.read'") !== false, 'implemented related service is advertised as a capability');
+hubServiceAssert(strpos($functionsSource, "'hub.pillar.read'") !== false, 'implemented pillar service is advertised as a capability');
 
 echo "Hub service contract tests passed." . PHP_EOL;
