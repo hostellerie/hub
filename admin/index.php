@@ -22,5 +22,46 @@ $content .= '<li><a href="audit.php">Plugin interoperability audit</a> — inspe
 $content .= '<li><a href="link-audit.php">Article link audit</a> — review article-to-Static-Page contextual link opportunities.</li>';
 $content .= '</ul>';
 
+$indexNow = function_exists('HUB_indexNowStatus') ? HUB_indexNowStatus() : array('available' => false);
+$content .= '<h2>IndexNow integration</h2>';
+
+if (empty($indexNow['available'])) {
+    $content .= '<p>IndexNow service integration is not available. Hub continues normally without indexing delegation.</p>';
+} else {
+    $data = isset($indexNow['data']) && is_array($indexNow['data']) ? $indexNow['data'] : array();
+    $key = isset($data['key']) && is_array($data['key']) ? $data['key'] : array();
+    $transport = isset($data['transport']) && is_array($data['transport']) ? $data['transport'] : array();
+    $latest = isset($data['latest_submission']) && is_array($data['latest_submission'])
+        ? $data['latest_submission'] : array();
+
+    $ready = !empty($key['present']) && !empty($key['valid'])
+        && !empty($key['file_exists']) && !empty($key['file_readable']) && !empty($key['file_matches']);
+
+    $content .= '<p><strong>Status:</strong> ' . ($ready ? 'Ready' : 'Needs attention') . '</p>';
+    $content .= '<ul>';
+    $content .= '<li>Transport: ' . htmlspecialchars(
+        isset($transport['mode']) ? (string) $transport['mode'] : 'unknown',
+        ENT_QUOTES,
+        'UTF-8'
+    ) . '</li>';
+    $content .= '<li>Key configured: ' . (!empty($key['present']) ? 'yes' : 'no') . '</li>';
+    $content .= '<li>Key valid: ' . (!empty($key['valid']) ? 'yes' : 'no') . '</li>';
+    $content .= '<li>Key file ready: ' . (
+        !empty($key['file_exists']) && !empty($key['file_readable']) && !empty($key['file_matches'])
+            ? 'yes' : 'no'
+    ) . '</li>';
+    $content .= '<li>Submission history available: ' . (!empty($data['history_available']) ? 'yes' : 'no') . '</li>';
+    $content .= '</ul>';
+
+    if (!empty($latest)) {
+        $latestStatus = isset($latest['status']) ? (string) $latest['status'] : 'unknown';
+        $latestAt = isset($latest['submitted_at']) ? (string) $latest['submitted_at'] : '';
+        $content .= '<p>Latest submission: <strong>'
+            . htmlspecialchars($latestStatus, ENT_QUOTES, 'UTF-8') . '</strong>'
+            . ($latestAt !== '' ? ' — ' . htmlspecialchars($latestAt, ENT_QUOTES, 'UTF-8') : '')
+            . '</p>';
+    }
+}
+
 $display = COM_startBlock('Hub administration') . $content . COM_endBlock();
 COM_output(COM_createHTMLDocument($display));
