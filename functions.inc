@@ -20,6 +20,7 @@ require_once $hub_path . 'lib-audit-cache.php';
 require_once $hub_path . 'lib-link-audit.php';
 require_once $hub_path . 'lib-relations.php';
 require_once $hub_path . 'lib-graph.php';
+require_once $hub_path . 'lib-suggestion-decisions.php';
 require_once $hub_path . 'lib-editorial.php';
 require_once $hub_path . 'lib-lifecycle.php';
 require_once $hub_path . 'lib-indexnow.php';
@@ -144,6 +145,10 @@ function plugin_upgrade_hub()
         }
     }
 
+    if (!HUB_updateSchema_0_8_0()) {
+        return false;
+    }
+
     $codeVersion = plugin_chkVersion_hub();
     DB_query(
         "UPDATE {$_TABLES['plugins']} SET pi_version = '" . DB_escapeString($codeVersion)
@@ -157,7 +162,7 @@ function plugin_upgrade_hub()
 function plugin_autouninstall_hub()
 {
     return array(
-        'tables'     => array('hub_pillars', 'hub_relations'),
+        'tables'     => array('hub_pillars', 'hub_relations', 'hub_suggestion_decisions'),
         'groups'     => array('Hub Admin'),
         'features'   => array('hub.admin'),
         'php_blocks' => array(),
