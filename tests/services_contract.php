@@ -36,6 +36,25 @@ function HUB_getAffectedContexts($type, $id, $includeDisabled = false)
     );
 }
 
+function HUB_graphContext($type, $id, $depth = 4, $includeDisabled = false)
+{
+    return array(
+        'start' => array('type' => $type, 'id' => $id),
+        'max_depth' => (int) $depth,
+        'nodes' => array(
+            array('type' => $type, 'id' => $id, 'depth' => 0),
+            array('type' => 'staticpages', 'id' => 'guide', 'depth' => 1),
+        ),
+        'edges' => array(
+            array(
+                'from' => array('type' => 'staticpages', 'id' => 'guide'),
+                'to' => array('type' => $type, 'id' => $id),
+                'kind' => 'related',
+            ),
+        ),
+    );
+}
+
 require_once dirname(__DIR__) . '/services.inc.php';
 
 function hubServiceAssert($condition, $message)
@@ -78,8 +97,22 @@ $status = service_affected_read_hub(
 );
 hubServiceAssert($status === PLG_RET_PERMISSION_DENIED, 'service enforces hub.admin ACL');
 
+$hubServiceAuthorized = true;
+$output = null;
+$messages = null;
+$status = service_context_read_hub(
+    array('type' => 'article', 'id' => 'story-1', 'depth' => 3),
+    $output,
+    $messages
+);
+hubServiceAssert($status === PLG_RET_OK, 'context read returns OK');
+hubServiceAssert($output['capability'] === 'hub.context.read', 'context service identifies its capability');
+hubServiceAssert($output['context']['max_depth'] === 3, 'context service forwards requested traversal depth');
+hubServiceAssert(count($output['context']['nodes']) === 2, 'context service returns graph nodes');
+
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
 hubServiceAssert(strpos($functionsSource, 'function plugin_wsEnabled_hub()') !== false, 'Hub enables the native service dispatcher');
 hubServiceAssert(strpos($functionsSource, "'hub.affected.read'") !== false, 'implemented affected service is advertised as a capability');
+hubServiceAssert(strpos($functionsSource, "'hub.context.read'") !== false, 'implemented context service is advertised as a capability');
 
 echo "Hub service contract tests passed." . PHP_EOL;
