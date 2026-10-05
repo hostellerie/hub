@@ -226,10 +226,17 @@ function service_editorial_summary_hub($args, &$output, &$svc_msg)
 
     $args = is_array($args) ? $args : array();
     $includeDisabled = !empty($args['include_disabled']);
+    $includeInventory = !empty($args['include_inventory']);
     $summary = HUB_editorialSummary($includeDisabled);
 
-    return HUB_SERVICE_ok(array(
+    $payload = array(
         'capability' => 'hub.editorial.summary',
         'summary' => $summary,
-    ), $output, $svc_msg);
+    );
+
+    if ($includeInventory && function_exists('HUB_editorialInventory')) {
+        $payload['inventory'] = HUB_editorialInventory($includeDisabled);
+    }
+
+    return HUB_SERVICE_ok($payload, $output, $svc_msg);
 }
