@@ -213,9 +213,15 @@ if (empty($inventoryPillars)) {
         $items = isset($inventoryPillar['items']) && is_array($inventoryPillar['items'])
             ? $inventoryPillar['items'] : array();
 
+        $pillarEditorialRole = isset($inventoryPillar['editorial_role'])
+            ? (string) $inventoryPillar['editorial_role']
+            : '';
         $content .= '<details style="margin:0 0 12px;border:1px solid #d7d7d7;border-radius:4px;padding:10px">'
-            . '<summary style="cursor:pointer"><strong>' . $source . '</strong> — '
-            . count($items) . ' approved item(s)</summary>';
+            . '<summary style="cursor:pointer"><strong>' . $source . '</strong>'
+            . ($pillarEditorialRole !== ''
+                ? ' · editorial: <code>' . HUB_editorialAdminEscape($pillarEditorialRole) . '</code>'
+                : '')
+            . ' — ' . count($items) . ' approved item(s)</summary>';
 
         if (empty($items)) {
             $content .= '<p style="margin:10px 0 0">No approved item.</p></details>';
@@ -223,7 +229,7 @@ if (empty($inventoryPillars)) {
         }
 
         $content .= '<table class="uk-table uk-table-divider uk-table-small" style="margin-top:10px"><thead><tr>'
-            . '<th>Role</th><th>Identity</th><th>Position</th><th>Nested pillar</th><th>Parents</th>'
+            . '<th>Structural role</th><th>Editorial role</th><th>Identity</th><th>Position</th><th>Nested pillar</th><th>Parents</th>'
             . '</tr></thead><tbody>';
 
         foreach ($items as $item) {
@@ -235,6 +241,9 @@ if (empty($inventoryPillars)) {
             $role = HUB_editorialAdminEscape(
                 isset($item['relation_role']) ? $item['relation_role'] : 'related'
             );
+            $editorialRole = HUB_editorialAdminEscape(
+                isset($item['editorial_role']) ? $item['editorial_role'] : ''
+            );
             $nested = !empty($item['is_nested_pillar'])
                 ? 'yes'
                 . (!empty($item['nested_pillar_id'])
@@ -243,6 +252,7 @@ if (empty($inventoryPillars)) {
                 : 'no';
 
             $content .= '<tr><td><code>' . $role . '</code></td>'
+                . '<td>' . ($editorialRole !== '' ? '<code>' . $editorialRole . '</code>' : '—') . '</td>'
                 . '<td><code>' . $identity . '</code></td>'
                 . '<td>' . (isset($item['position']) ? (int) $item['position'] : 0) . '</td>'
                 . '<td>' . HUB_editorialAdminEscape($nested) . '</td>'
