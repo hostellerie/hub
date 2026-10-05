@@ -431,11 +431,11 @@ The normalized editorial summary is therefore the first reusable "marketing mapp
 
 - extend the 0.1.1 topic audit beyond core articles
 - use topics, keywords and `PLG_getRelatedItems()`
-- build a continuously refreshed editorial inventory from the real Hub relationship graph
-- keep that inventory provider-agnostic: satellites are stable `type + id` objects, not only Core articles or Static Pages
+- build a continuously refreshed editorial inventory from the real Hub relationship graph — implemented as deterministic `HUB_editorialInventory()` over approved Hub identities
+- keep that inventory provider-agnostic: satellites are stable `type + id` objects, not only Core articles or Static Pages — implemented
 - treat articles, Static Pages, Maps objects (including maps and markers when exposed as resolvable content), Documents items, Videos items and Forum topics as first-class pillar satellites when their providers expose the shared Geeklog contracts
 - allow future content providers to participate without adding hard-coded Hub-only satellite types
-- expose a pillar → satellites → missing links → candidate content view comparable to the manually maintained editorial inventory used in `hostellerie/ecologie`
+- expose a pillar → approved items structural inventory in administration and optionally through `hub.editorial.summary?include_inventory`; missing links and candidate content remain subsequent 0.8/0.9 layers
 - flag satellites that belong to a pillar but do not contain a contextual link back to it
 - flag pillars that do not point to their strongest or most useful approved satellites
 - detect thematically close content that is not yet connected to the relevant pillar or cluster
