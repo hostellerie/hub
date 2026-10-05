@@ -43,6 +43,7 @@ jobs:
           php tests/relations_contract.php
           php tests/lifecycle_contract.php
           php tests/graph_contract.php
+          php tests/editorial_contract.php
           php tests/services_contract.php
           php tests/render_contract.php
           php tests/indexnow_contract.php
@@ -91,6 +92,7 @@ jobs:
             hub/lib-render.php \
             hub/lib-relations.php \
             hub/lib-graph.php \
+            hub/lib-editorial.php \
             hub/lib-indexnow.php \
             hub/lib-lifecycle.php \
             hub/services.inc.php \
