@@ -193,9 +193,6 @@ function service_pillar_read_hub($args, &$output, &$svc_msg)
             'relation_role' => isset($relation['relation_role'])
                 ? HUB_normalizeRelationRole($relation['relation_role'])
                 : 'related',
-            'relation_role' => isset($relation['relation_role'])
-                ? HUB_normalizeRelationRole($relation['relation_role'])
-                : 'related',
             'editorial_role' => isset($relation['editorial_role'])
                 ? HUB_normalizeEditorialRole($relation['editorial_role'])
                 : '',
