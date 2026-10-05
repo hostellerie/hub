@@ -201,6 +201,7 @@ $roadmapSummary = isset($roadmap['executive_summary']) && is_array($roadmap['exe
 $content .= '<ul>'
     . '<li>New pillar opportunities: ' . (isset($roadmapSummary['new_pillar_opportunities']) ? (int) $roadmapSummary['new_pillar_opportunities'] : 0) . '</li>'
     . '<li>Relation candidates: ' . (isset($roadmapSummary['relation_candidates']) ? (int) $roadmapSummary['relation_candidates'] : 0) . '</li>'
+    . '<li>Close-content review pairs: ' . (isset($roadmapSummary['close_content_review_pairs']) ? (int) $roadmapSummary['close_content_review_pairs'] : 0) . '</li>'
     . '<li>Temporal review candidates: ' . (isset($roadmapSummary['temporal_review_candidates']) ? (int) $roadmapSummary['temporal_review_candidates'] : 0) . '</li>'
     . '</ul>';
 
