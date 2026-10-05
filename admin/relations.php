@@ -438,6 +438,12 @@ foreach ($staticPages as $page) {
         . HUB_relAdminEscape($page['sp_title'] . ' [' . $page['sp_id'] . ']') . '</option>';
 }
 $content .= '</select></label>';
+$content .= '<label>Editorial role<select name="editorial_role">';
+foreach ($editorialRoles as $roleValue => $roleLabel) {
+    $content .= '<option value="' . HUB_relAdminEscape($roleValue) . '">'
+        . HUB_relAdminEscape($roleLabel) . '</option>';
+}
+$content .= '</select></label>';
 $content .= '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1" checked><span>Enabled</span></label>';
 $content .= '<div><button type="submit" class="uk-button uk-button-primary">Add pillar</button></div></div></form></div>';
 
@@ -480,6 +486,14 @@ if (empty($pillars)) {
         $content .= '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">';
         $content .= '<input type="hidden" name="source_id" value="' . HUB_relAdminEscape($pillar['source_id']) . '">';
         $content .= '<div class="hub-rel-grid">';
+        $content .= '<label>Editorial role<select name="editorial_role">';
+        foreach ($editorialRoles as $roleValue => $roleLabel) {
+            $selected = HUB_normalizeEditorialRole(isset($pillar['editorial_role']) ? $pillar['editorial_role'] : '') === $roleValue
+                ? ' selected' : '';
+            $content .= '<option value="' . HUB_relAdminEscape($roleValue) . '"' . $selected . '>'
+                . HUB_relAdminEscape($roleLabel) . '</option>';
+        }
+        $content .= '</select></label>';
         $content .= '<label class="hub-rel-check"><input type="checkbox" name="is_enabled" value="1"' . (!empty($pillar['is_enabled']) ? ' checked' : '') . '><span>Enabled</span></label>';
         $content .= '<div><button type="submit" class="uk-button">Update pillar</button></div></div></form>';
 
@@ -501,6 +515,14 @@ if (empty($pillars)) {
                     . '<label>Role<select name="relation_role">';
                 foreach ($relationRoles as $roleValue => $roleLabel) {
                     $selected = HUB_normalizeRelationRole(isset($relation['relation_role']) ? $relation['relation_role'] : 'related') === $roleValue
+                        ? ' selected' : '';
+                    $content .= '<option value="' . HUB_relAdminEscape($roleValue) . '"' . $selected . '>'
+                        . HUB_relAdminEscape($roleLabel) . '</option>';
+                }
+                $content .= '</select></label>'
+                    . '<label>Editorial role<select name="editorial_role">';
+                foreach ($editorialRoles as $roleValue => $roleLabel) {
+                    $selected = HUB_normalizeEditorialRole(isset($relation['editorial_role']) ? $relation['editorial_role'] : '') === $roleValue
                         ? ' selected' : '';
                     $content .= '<option value="' . HUB_relAdminEscape($roleValue) . '"' . $selected . '>'
                         . HUB_relAdminEscape($roleLabel) . '</option>';
@@ -754,6 +776,12 @@ if (empty($pillars)) {
         foreach ($relationRoles as $roleValue => $roleLabel) {
             $selected = $roleValue === 'related' ? ' selected' : '';
             $content .= '<option value="' . HUB_relAdminEscape($roleValue) . '"' . $selected . '>'
+                . HUB_relAdminEscape($roleLabel) . '</option>';
+        }
+        $content .= '</select></label>';
+        $content .= '<label>Editorial role<select name="editorial_role">';
+        foreach ($editorialRoles as $roleValue => $roleLabel) {
+            $content .= '<option value="' . HUB_relAdminEscape($roleValue) . '">'
                 . HUB_relAdminEscape($roleLabel) . '</option>';
         }
         $content .= '</select></label>';
