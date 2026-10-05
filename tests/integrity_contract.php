@@ -76,6 +76,21 @@ function HUB_normalizeEditorialRole($role)
         ? $role : '';
 }
 
+function plugin_collectSitemapItems_documents()
+{
+    return array();
+}
+
+function plugin_getfeednames_documents()
+{
+    return array('documents');
+}
+
+function plugin_getfeedcontent_documents()
+{
+    return array();
+}
+
 function HUB_relationObjectTypes()
 {
     return array('article', 'videos', 'documents');
@@ -279,6 +294,16 @@ hubIntegrityAssert($unconnected['providers']['videos']['items'][0]['evidence']['
 hubIntegrityAssert(!isset($unconnected['providers']['article']), 'core article SQL discovery is excluded from provider collection diagnostic');
 hubIntegrityAssert(strpos($unconnected['note'], 'does not mean SEO orphan') !== false, 'unconnected diagnostic rejects orphan overclaim');
 
+$distribution = HUB_integrityDistributionOpportunities();
+hubIntegrityAssert($distribution['scope'] === 'provider-distribution-contracts', 'distribution diagnostic scope is explicit');
+hubIntegrityAssert($distribution['providers']['article']['sitemap']['status'] === 'core-owned', 'distribution diagnostics keep article ownership in Core');
+hubIntegrityAssert($distribution['providers']['article']['syndication']['status'] === 'core-owned', 'article syndication is not reassigned to Hub');
+hubIntegrityAssert($distribution['providers']['videos']['sitemap']['status'] === 'collection-fallback', 'collection-capable provider exposes sitemap fallback opportunity');
+hubIntegrityAssert($distribution['providers']['documents']['sitemap']['status'] === 'native-collector', 'native sitemap collector is preferred');
+hubIntegrityAssert($distribution['providers']['documents']['syndication']['status'] === 'native-callbacks', 'native feed callbacks are detected');
+hubIntegrityAssert(in_array('review-syndication-if-content-is-feed-worthy', $distribution['providers']['videos']['opportunities'], true), 'feed review remains optional and content-dependent');
+hubIntegrityAssert(strpos($distribution['note'], 'not SEO failures') !== false, 'distribution opportunities are not reported as SEO failures');
+
 $summary = HUB_integritySummary(0);
 hubIntegrityAssert($summary['schema'] === 1, 'integrity summary schema is explicit');
 hubIntegrityAssert($summary['scope'] === 'integrity-0.9', 'integrity summary scope is explicit');
@@ -295,6 +320,7 @@ hubIntegrityAssert(isset($summary['graph']['counts']), 'integrity summary expose
 hubIntegrityAssert(isset($summary['canonical_collisions']), 'integrity summary exposes canonical collision diagnostics');
 hubIntegrityAssert(isset($summary['unconnected_content']), 'integrity summary exposes provider content unconnected from Hub graph');
 hubIntegrityAssert($summary['unconnected_content']['status'] === 'hub-unconnected', 'integrity summary preserves non-orphan terminology');
+hubIntegrityAssert(isset($summary['distribution']['providers']), 'integrity summary exposes provider distribution diagnostics');
 
 $hubIntegrityPillars = array(
     array('id' => 10, 'source_type' => 'staticpages', 'source_id' => 'cycle-a', 'editorial_role' => '', 'is_enabled' => 1),
