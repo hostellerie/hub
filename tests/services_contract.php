@@ -156,6 +156,28 @@ function HUB_editorialSuggestions($pillarId = 0, $limit = 20)
     );
 }
 
+function HUB_integrityAffectedPages($type, $id, $includeDisabled = false)
+{
+    return array(
+        'object' => array('type' => (string) $type, 'id' => (string) $id),
+        'context_count' => 1,
+        'public_page_count' => 1,
+        'unresolved_page_count' => 0,
+        'contexts' => array(
+            array(
+                'pillar_id' => 7,
+                'source_type' => 'staticpages',
+                'source_id' => 'guide',
+                'reasons' => array('related-item'),
+                'public_resolved' => true,
+                'title' => 'Guide',
+                'url' => '/guide',
+                'diagnostic' => '',
+            ),
+        ),
+    );
+}
+
 function HUB_getAffectedContexts($type, $id, $includeDisabled = false)
 {
     return array(
@@ -242,6 +264,10 @@ hubServiceAssert($output['object']['type'] === 'article', 'service normalizes ob
 hubServiceAssert($output['object']['id'] === 'story-1', 'service normalizes object id');
 hubServiceAssert($output['count'] === 1, 'service exposes affected-context count');
 hubServiceAssert($output['contexts'][0]['pillar_id'] === 7, 'service reuses Hub affected-context resolver');
+hubServiceAssert(isset($output['diagnostics']), 'affected service exposes public page diagnostics');
+hubServiceAssert($output['diagnostics']['public_page_count'] === 1, 'affected diagnostics expose resolved public page count');
+hubServiceAssert($output['diagnostics']['unresolved_page_count'] === 0, 'affected diagnostics expose unresolved public page count');
+hubServiceAssert($output['diagnostics']['contexts'][0]['reasons'] === array('related-item'), 'affected diagnostics preserve dependency reason');
 
 $output = null;
 $messages = null;
