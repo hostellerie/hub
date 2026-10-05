@@ -1,8 +1,8 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.10.0` (in development)
+**Current development milestone:** `1.0.0` (stabilization in development)
 
-**Implemented baseline:** `0.9.0` SEO, cluster-health and integrity scope is functionally complete within the current shared interoperability contracts.
+**Implemented baseline:** `0.10.0` multisite and multilingual context is functionally complete within the current shared interoperability contracts.
 
 ## Vision
 
@@ -565,7 +565,7 @@ Until such a shared contract exists:
 - generic reciprocal-link placement remains "runtime-unverified" when Hub does not own rendering;
 - Hub reports structural/integrity evidence rather than inventing site-wide SEO certainty.
 
-## 0.10.0 — Multisite and multilingual context
+## 0.10.0 — Multisite and multilingual context — functionally implemented
 
 This phase remains secondary to the single-site relationship graph and should reuse shared provider metadata rather than introduce Hub-specific translation or SEO contracts.
 
@@ -578,7 +578,7 @@ This phase remains secondary to the single-site relationship graph and should re
 - keep hreflang generation, translation workflow and language-specific SEO ownership outside Hub; Hub may expose context to the responsible plugin or external consumer — current 0.10 diagnostics deliberately stop at approved equivalence + evidence and do not emit hreflang
 - keep network-level inventories provider-agnostic and explainable, with each object retaining its owning site/plugin identity — the editorial inventory is now explicitly scoped as `active-site-graph`, exposes the active Geeklog site context at the inventory root, and keeps provider ownership through stable `type + id`; remote-site identity is derived contextually from resolved URLs rather than persisted as a second Hub-owned identifier
 
-## 1.0.0 — Stable Hub
+## 1.0.0 — Stable Hub — stabilization milestone
 
 - stable relationship and context model
 - stable use of shared Geeklog interoperability contracts
