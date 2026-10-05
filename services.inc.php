@@ -190,6 +190,9 @@ function service_pillar_read_hub($args, &$output, &$svc_msg)
         $items[] = array(
             'type' => isset($relation['item_type']) ? (string) $relation['item_type'] : '',
             'id' => isset($relation['item_id']) ? (string) $relation['item_id'] : '',
+            'relation_role' => isset($relation['relation_role'])
+                ? HUB_normalizeRelationRole($relation['relation_role'])
+                : 'related',
             'position' => isset($relation['position']) ? (int) $relation['position'] : 0,
             'is_enabled' => !empty($relation['is_enabled']),
         );
