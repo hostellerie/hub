@@ -342,6 +342,268 @@ function HUB_integrityPillar($pillar, $uid = 0)
 }
 
 /**
+ * Normalize one resolved public URL for duplicate/canonical consistency checks.
+ *
+ * @param string $url
+ * @return string
+ */
+function HUB_integrityCanonicalUrlKey($url)
+{
+    $url = trim(html_entity_decode((string) $url, ENT_QUOTES, 'UTF-8'));
+    if ($url === '') {
+        return '';
+    }
+
+    $parts = parse_url($url);
+    if ($parts === false) {
+        return strtolower(rtrim($url, '/'));
+    }
+
+    $scheme = isset($parts['scheme']) ? strtolower((string) $parts['scheme']) : '';
+    $host = isset($parts['host']) ? strtolower((string) $parts['host']) : '';
+    if (strpos($host, 'www.') === 0) {
+        $host = substr($host, 4);
+    }
+
+    $path = isset($parts['path']) ? preg_replace('#/+#', '/', (string) $parts['path']) : '';
+    if ($path !== '/') {
+        $path = rtrim($path, '/');
+    }
+
+    $query = array();
+    if (!empty($parts['query'])) {
+        parse_str((string) $parts['query'], $query);
+        ksort($query);
+    }
+
+    // Treat http/https as the same public destination for consistency review.
+    $base = $host !== '' ? $host . $path : $path;
+    if ($host === '' && $scheme !== '') {
+        $base = $scheme . ':' . $base;
+    }
+
+    return $base . (empty($query) ? '' : '?' . http_build_query($query, '', '&'));
+}
+
+/**
+ * Inspect Hub-owned graph structure independently from provider content.
+ *
+ * Multi-parent participation is informational and valid. Self-relations and
+ * cycles are review signals because they can produce confusing editorial
+ * navigation even though traversal remains cycle-safe.
+ *
+ * @return array
+ */
+function HUB_integrityGraphDiagnostics()
+{
+    $pillars = HUB_getPillars(false);
+    $pillarByIdentity = array();
+    $pillarById = array();
+
+    foreach ($pillars as $pillar) {
+        if (!is_array($pillar) || empty($pillar['id'])) {
+            continue;
+        }
+
+        $key = HUB_graphIdentityKey(
+            isset($pillar['source_type']) ? $pillar['source_type'] : '',
+            isset($pillar['source_id']) ? $pillar['source_id'] : ''
+        );
+        if ($key === '') {
+            continue;
+        }
+
+        $pillarByIdentity[$key] = (int) $pillar['id'];
+        $pillarById[(int) $pillar['id']] = $pillar;
+    }
+
+    $edges = array();
+    $parentCounts = array();
+    $selfRelations = array();
+
+    foreach ($pillarById as $pillarId => $pillar) {
+        $sourceKey = HUB_graphIdentityKey($pillar['source_type'], $pillar['source_id']);
+        foreach (HUB_getRelations($pillarId, false) as $relation) {
+            if (!is_array($relation)) {
+                continue;
+            }
+
+            $targetKey = HUB_graphIdentityKey(
+                isset($relation['item_type']) ? $relation['item_type'] : '',
+                isset($relation['item_id']) ? $relation['item_id'] : ''
+            );
+            if ($targetKey === '') {
+                continue;
+            }
+
+            if (!isset($parentCounts[$targetKey])) {
+                $parentCounts[$targetKey] = array();
+            }
+            $parentCounts[$targetKey][$pillarId] = true;
+
+            if ($targetKey === $sourceKey) {
+                $selfRelations[] = array(
+                    'pillar_id' => $pillarId,
+                    'identity' => $sourceKey,
+                    'relation_id' => isset($relation['id']) ? (int) $relation['id'] : 0,
+                );
+            }
+
+            if (isset($pillarByIdentity[$targetKey])) {
+                if (!isset($edges[$sourceKey])) {
+                    $edges[$sourceKey] = array();
+                }
+                $edges[$sourceKey][$targetKey] = true;
+            }
+        }
+    }
+
+    $multiParent = array();
+    foreach ($parentCounts as $identity => $parents) {
+        if (count($parents) > 1) {
+            $multiParent[] = array(
+                'identity' => $identity,
+                'parent_pillar_ids' => array_map('intval', array_keys($parents)),
+            );
+        }
+    }
+
+    $cycles = array();
+    $visiting = array();
+    $visited = array();
+    $stack = array();
+
+    $walk = function ($node) use (&$walk, &$edges, &$visiting, &$visited, &$stack, &$cycles) {
+        if (isset($visited[$node])) {
+            return;
+        }
+
+        $visiting[$node] = true;
+        $stack[] = $node;
+
+        $targets = isset($edges[$node]) ? array_keys($edges[$node]) : array();
+        sort($targets, SORT_STRING);
+
+        foreach ($targets as $target) {
+            if (isset($visiting[$target])) {
+                $start = array_search($target, $stack, true);
+                if ($start !== false) {
+                    $cycle = array_slice($stack, $start);
+                    $cycle[] = $target;
+
+                    $members = array_slice($cycle, 0, -1);
+                    sort($members, SORT_STRING);
+                    $cycleKey = implode('|', $members);
+                    $cycles[$cycleKey] = $cycle;
+                }
+                continue;
+            }
+
+            if (!isset($visited[$target])) {
+                $walk($target);
+            }
+        }
+
+        array_pop($stack);
+        unset($visiting[$node]);
+        $visited[$node] = true;
+    };
+
+    $nodes = array_keys($pillarByIdentity);
+    sort($nodes, SORT_STRING);
+    foreach ($nodes as $node) {
+        $walk($node);
+    }
+
+    ksort($cycles, SORT_STRING);
+
+    return array(
+        'self_relations' => $selfRelations,
+        'cycles' => array_values($cycles),
+        'multi_parent_items' => $multiParent,
+        'counts' => array(
+            'self_relations' => count($selfRelations),
+            'cycles' => count($cycles),
+            'multi_parent_items' => count($multiParent),
+        ),
+    );
+}
+
+/**
+ * Detect multiple Hub identities resolving to the same public URL.
+ *
+ * @param int $uid
+ * @return array
+ */
+function HUB_integrityCanonicalCollisions($uid = 0)
+{
+    $byUrl = array();
+
+    foreach (HUB_getPillars(false) as $pillar) {
+        if (!is_array($pillar) || empty($pillar['id'])) {
+            continue;
+        }
+
+        $objects = array(array(
+            'type' => isset($pillar['source_type']) ? $pillar['source_type'] : '',
+            'id' => isset($pillar['source_id']) ? $pillar['source_id'] : '',
+        ));
+
+        foreach (HUB_getRelations((int) $pillar['id'], false) as $relation) {
+            if (is_array($relation)) {
+                $objects[] = array(
+                    'type' => isset($relation['item_type']) ? $relation['item_type'] : '',
+                    'id' => isset($relation['item_id']) ? $relation['item_id'] : '',
+                );
+            }
+        }
+
+        foreach ($objects as $object) {
+            $type = HUB_normalizeObjectType($object['type']);
+            $id = HUB_normalizeObjectId($object['id']);
+            $resolved = HUB_resolveObject($type, $id, $uid);
+            if (empty($resolved['exists']) || empty($resolved['url'])) {
+                continue;
+            }
+
+            $urlKey = HUB_integrityCanonicalUrlKey($resolved['url']);
+            if ($urlKey === '') {
+                continue;
+            }
+
+            $identity = $type . ':' . $id;
+            if (!isset($byUrl[$urlKey])) {
+                $byUrl[$urlKey] = array();
+            }
+            $byUrl[$urlKey][$identity] = array(
+                'type' => $type,
+                'id' => $id,
+                'url' => (string) $resolved['url'],
+            );
+        }
+    }
+
+    $collisions = array();
+    foreach ($byUrl as $urlKey => $identities) {
+        if (count($identities) < 2) {
+            continue;
+        }
+
+        ksort($identities, SORT_STRING);
+        $collisions[] = array(
+            'url_key' => $urlKey,
+            'identities' => array_values($identities),
+        );
+    }
+
+    usort($collisions, function ($left, $right) {
+        return strcmp((string) $left['url_key'], (string) $right['url_key']);
+    });
+
+    return $collisions;
+}
+
+/**
  * Build normalized integrity summary for all enabled Hub pillars.
  *
  * @param int $uid
@@ -376,6 +638,8 @@ function HUB_integritySummary($uid = 0)
             'unconfirmed' => 0,
         ),
         'providers' => array(),
+        'graph' => array(),
+        'canonical_collisions' => array(),
         'pillar_items' => array(),
     );
 
@@ -432,6 +696,9 @@ function HUB_integritySummary($uid = 0)
 
         $summary['pillar_items'][] = $diagnostic;
     }
+
+    $summary['graph'] = HUB_integrityGraphDiagnostics();
+    $summary['canonical_collisions'] = HUB_integrityCanonicalCollisions($uid);
 
     ksort($summary['providers'], SORT_STRING);
     usort($summary['pillar_items'], function ($left, $right) {
