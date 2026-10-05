@@ -18,7 +18,7 @@ if (!isset($_TABLES['hub_relations'])) {
 
 $_HUB_PLUGIN = array(
     'pi_name'       => 'hub',
-    'pi_version'    => '0.5.0',
+    'pi_version'    => '0.6.0',
     'gl_version'    => '2.1.1',
     'pi_url'        => 'https://github.com/hostellerie/hub',
     'GROUPS'        => array(
