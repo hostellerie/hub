@@ -19,6 +19,7 @@ require_once $hub_path . 'lib-distribution.php';
 require_once $hub_path . 'lib-audit-cache.php';
 require_once $hub_path . 'lib-link-audit.php';
 require_once $hub_path . 'lib-relations.php';
+require_once $hub_path . 'lib-lifecycle.php';
 require_once $hub_path . 'lib-staticpages.php';
 
 /**
@@ -281,4 +282,40 @@ function plugin_itemdisplay_hub($id, $type)
     }
 
     return array(true, $html);
+}
+
+
+/**
+ * React to Geeklog item-save lifecycle notifications.
+ *
+ * Geeklog 2.1.1 calls listeners with the legacy arguments while 2.2.2 may
+ * additionally provide a subtype. Optional parameters keep the callback
+ * compatible with both generations.
+ *
+ * @param string $id
+ * @param string $type
+ * @param string $old_id
+ * @param string $sub_type
+ * @return void
+ */
+function plugin_itemsaved_hub($id, $type, $old_id = '', $sub_type = '')
+{
+    HUB_handleItemSaved($id, $type, $old_id, $sub_type);
+}
+
+/**
+ * React to Geeklog item-delete lifecycle notifications.
+ *
+ * Hub deliberately preserves stored relationships when a provider removes an
+ * object. The existing integrity diagnostics then expose the unresolved stable
+ * identity instead of silently destroying editorial intent.
+ *
+ * @param string $id
+ * @param string $type
+ * @param string $sub_type
+ * @return void
+ */
+function plugin_itemdeleted_hub($id, $type, $sub_type = '')
+{
+    HUB_handleItemDeleted($id, $type, $sub_type);
 }
