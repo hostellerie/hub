@@ -438,12 +438,12 @@ The normalized editorial summary is therefore the first reusable "marketing mapp
 - expose a pillar → approved items structural inventory in administration and optionally through `hub.editorial.summary?include_inventory`; missing links and candidate content remain subsequent 0.8/0.9 layers
 - flag satellites that belong to a pillar but do not contain a contextual link back to it
 - flag pillars that do not point to their strongest or most useful approved satellites
-- detect thematically close content that is not yet connected to the relevant pillar or cluster
+- detect thematically close content that is not yet connected to the relevant pillar or cluster — first deterministic article-pair review implemented within Static Page pillar topic contexts using shared topics plus title-token Jaccard similarity
 - distinguish explicit Hub relations from inferred thematic proximity — implemented for shared-topic candidates by excluding already approved `type + id` identities
 - show why a candidate was detected: shared topics, keywords, related-items provider, existing links, engagement, or other transparent evidence — implemented first for `shared-topic`, with matched topic IDs/labels retained in candidate evidence
 - use provider-exposed engagement signals such as views or comments only as prioritization evidence, never as automatic editorial approval — implemented for article candidates after shared-topic eligibility
 - surface temporal signals such as publication/update age and obvious year/version markers so stale or strongly time-bound content can be reviewed — implemented as publication age plus explicit year/version-marker evidence. Hub only recommends human review; it does not classify content as stale or obsolete
-- allow explainable semantic-proximity / potential-cannibalization warnings as suggestions only; Hub must not auto-merge, redirect or rewrite content
+- allow explainable semantic-proximity / potential-cannibalization warnings as suggestions only; Hub must not auto-merge, redirect or rewrite content — implemented first as explainable lexical proximity (`shared-topic` + `title-token-overlap`, threshold ≥ 50% with at least two common title tokens). The result is explicitly a human-review signal, not a cannibalization verdict
 - suggest complementary content without automatically changing editorial relationships — implemented for Static Page pillar → article candidates through `HUB_editorialSuggestions()` and read-only `hub.suggestions.read`
 - allow administrators to approve, dismiss or defer suggestions so repeated audits remain useful — implemented. Dismissed suggestions remain hidden until restored; deferred suggestions are persisted with an expiry and automatically return after 30 days; active decisions can be restored from Relations administration
 - generate an editorial roadmap directly from the current inventory and relationship graph
