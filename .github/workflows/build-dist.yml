@@ -17,9 +17,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  compatibility:
+    name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '5.6'
+          - '8.1'
+          - '8.3'
 
     steps:
       - name: Check out source
@@ -28,9 +36,17 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: none
+
       - name: Validate PHP syntax
         shell: bash
         run: |
+          php -v
           find . -type f \( -name '*.php' -o -name '*.inc' \) \
             -not -path './.git/*' \
             -not -path './dist/*' \
@@ -50,6 +66,27 @@ jobs:
           php tests/services_contract.php
           php tests/render_contract.php
           php tests/indexnow_contract.php
+
+  build:
+    name: Package Hub
+    needs:
+      - compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up packaging PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: none
 
       - name: Build Geeklog plugin archive
         id: package
@@ -106,7 +143,10 @@ jobs:
             hub/admin/relations.php \
             hub/admin/integrity.php \
             hub/sql/mysql_install.php \
-            hub/public_html/hub.css
+            hub/public_html/hub.css \
+            hub/docs/plugin-author-guide.md \
+            hub/docs/services.md \
+            hub/docs/compatibility.md
           do
             printf '%s\n' "$archive_files" | grep -Fxq "$required_file" || {
               echo "Missing from archive: $required_file" >&2
