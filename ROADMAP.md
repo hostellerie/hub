@@ -524,21 +524,46 @@ human/editorial decision
 Hub stores approved relationship
 ```
 
-## 0.9.0 — SEO, cluster health and integrity — in progress
+## 0.9.0 — SEO, cluster health and integrity — functionally implemented within current shared contracts
 
-- extend the 0.1.1 link audit to saved Hub relationships and plugin-owned content across all supported providers
-- report cluster health per pillar across articles, Static Pages, Maps objects, Documents, Videos, Forum topics and future provider-owned content — first provider-neutral health states implemented as `healthy`, `attention` and `broken`, derived only from explainable integrity issues
-- report cluster health per pillar: satellites, reciprocal links, unresolved objects and unlinked candidates — first normalized integrity slice implemented for pillar source resolution, relation resolution/renderability, provider participation and backlink-integration evidence; administration view is available under **Integrity & cluster health**
-- identify satellites without a backlink to their pillar — reciprocal evidence is now normalized: Core article backlinks can be verified through Hub's owned placement path; generic provider fragments/integration remain explicitly runtime-unverified until the provider placement can be proven
-- identify pillars that omit important approved satellites from their outgoing links — approved targets now report resolved/renderable outgoing-link eligibility; richer omission/usefulness scoring remains future 0.9 work
-- identify related content clusters with weak or missing internal-link connections — Hub can now identify provider content absent from the Hub graph where a public collection contract exists; true site-wide weak-link/orphan analysis remains separate
-- orphaned-item checks — first safe precursor implemented as `hub-unconnected`: content returned by a provider's shared `content.collection` contract but absent from the enabled Hub graph; this is explicitly not labelled as global SEO orphan status
-- broken/missing object checks — first implementation reports unresolved pillar sources and unresolved approved relation identities through `HUB_integritySummary()`
-- sitemap/feed integration opportunities — implemented as provider-owned contract diagnostics aligned with the Memorandum: native `plugin_collectSitemapItems_*()` preferred, `content.collection` recognized as XML Sitemap fallback, and `content.syndication` / native feed callbacks reported without making Hub the distribution owner
-- affected-page diagnostics — implemented by enriching `hub.affected.read` with current public resolution, URL, dependency reasons and resolved/unresolved affected-page counts while reusing `HUB_getAffectedContexts()` as the single dependency source
-- relationship graph diagnostics — implemented first for unresolved sources/targets, non-renderable targets, runtime-unverified reciprocal links, empty pillars, self-relations, pillar cycles and informational multi-parent participation
-- canonical URL consistency checks — first provider-neutral collision check implemented by detecting distinct stable identities that resolve to the same normalized public URL
-- expose normalized diagnostics so Connector or administration tools can report them without reimplementing Hub logic — implemented first as read-only `hub.integrity.summary`
+### Implemented scope
+
+- extend the former article-only link audit into saved Hub relationship diagnostics across provider-owned content identities without querying provider-private tables;
+- report provider-neutral pillar health as `healthy`, `attention` or `broken`, with explicit issue codes rather than an opaque score;
+- report pillar source resolution, relation resolution/renderability, provider participation and backlink-integration evidence in **Integrity & cluster health**;
+- distinguish reciprocal-link evidence precisely:
+  - Core article backlinks may be reported as `hub-rendered` because Hub generates the expected fragment and owns the public placement path;
+  - generic provider fragments/integration remain explicitly runtime-unverified until provider placement can be proven;
+- detect approved relations that cannot produce a public outgoing pillar link because their target is unresolved or non-renderable;
+- expose `hub-unconnected` provider content returned by shared `content.collection` but absent from the enabled Hub graph, without mislabelling it as a global SEO orphan;
+- report unresolved pillar sources and unresolved approved relation identities through `HUB_integritySummary()`;
+- report sitemap/feed interoperability opportunities using provider-owned shared contracts:
+  - native `plugin_collectSitemapItems_*()` when available;
+  - `content.collection` as the documented XML Sitemap fallback;
+  - `content.syndication` or native feed callbacks for feed-capable providers;
+- enrich `hub.affected.read` with public-page resolution, URL, dependency reasons and resolved/unresolved affected-page counts while retaining `HUB_getAffectedContexts()` as the single dependency source;
+- diagnose self-relations, pillar cycles and informational multi-parent participation;
+- detect distinct stable identities resolving to the same normalized public URL as a canonical/public-destination review signal;
+- expose normalized read-only diagnostics through `hub.integrity.summary` so Monitor, Agent, Connector or administration tools do not reimplement Hub logic.
+
+### Deliberate boundary
+
+Hub 0.9.0 does **not** claim a complete site-wide internal-link graph.
+
+A true verdict such as:
+
+- "this page is globally orphaned";
+- "this cluster has only N inbound links";
+- "this provider page contains no contextual link to another arbitrary page";
+- "this page is weakly linked across the whole site";
+
+would require a shared, permission-aware provider/Core contract that exposes actual outbound/inbound page links or a normalized link graph. The current Memorandum does not define such a contract, and Hub must not obtain it by parsing provider HTML or querying provider-private tables.
+
+Until such a shared contract exists:
+
+- `hub-unconnected` means only "absent from the Hub relationship graph";
+- generic reciprocal-link placement remains "runtime-unverified" when Hub does not own rendering;
+- Hub reports structural/integrity evidence rather than inventing site-wide SEO certainty.
 
 ## 0.10.0 — Multisite and multilingual context
 
