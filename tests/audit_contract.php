@@ -815,6 +815,8 @@ if (strpos($integrityAdminSource, 'HUB_integritySummary(0)') === false
     || strpos($integrityAdminSource, 'Sitemap &amp; feed interoperability') === false
     || strpos($integrityAdminSource, 'Cross-site relation context') === false
     || strpos($integrityAdminSource, '<th>Language</th>') === false
+    || strpos($integrityAdminSource, 'Equivalent-content context') === false
+    || strpos($integrityAdminSource, 'does not infer equivalence or generate hreflang') === false
     || strpos($integrityAdminSource, 'Cross-site is contextual information, not an error by itself') === false
     || strpos($integrityAdminSource, 'Hub does not generate XML Sitemap or feed output') === false
     || strpos($adminUiSource, "'integrity' => array('integrity.php', 'Integrity & cluster health')") === false
