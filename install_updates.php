@@ -51,3 +51,59 @@ function HUB_updateSchema_0_3_0()
 
     return true;
 }
+
+
+/**
+ * Upgrade Hub relationship persistence for the 0.5.0 graph model.
+ *
+ * Existing rows keep the neutral structural role "related". The migration also
+ * repairs the historical fresh-install/upgrade divergence for title_override
+ * so both installation paths converge on the same schema.
+ *
+ * @return bool
+ */
+function HUB_updateSchema_0_5_0()
+{
+    global $_TABLES;
+
+    $checks = array(
+        array(
+            'table' => $_TABLES['hub_pillars'],
+            'column' => 'title_override',
+            'sql' => "ALTER TABLE {$_TABLES['hub_pillars']} "
+                . "ADD title_override varchar(255) NOT NULL DEFAULT '' AFTER source_id",
+        ),
+        array(
+            'table' => $_TABLES['hub_relations'],
+            'column' => 'relation_role',
+            'sql' => "ALTER TABLE {$_TABLES['hub_relations']} "
+                . "ADD relation_role varchar(32) NOT NULL DEFAULT 'related' AFTER item_id",
+        ),
+    );
+
+    foreach ($checks as $check) {
+        $result = DB_query(
+            "SHOW COLUMNS FROM " . $check['table']
+            . " LIKE '" . DB_escapeString($check['column']) . "'",
+            1
+        );
+
+        if ($result === false) {
+            return false;
+        }
+
+        if (DB_numRows($result) > 0) {
+            continue;
+        }
+
+        DB_query($check['sql'], 1);
+        if (DB_error()) {
+            if (function_exists('COM_errorLog')) {
+                COM_errorLog('Hub 0.5.0 schema upgrade failed for ' . $check['column'] . '.');
+            }
+            return false;
+        }
+    }
+
+    return true;
+}
