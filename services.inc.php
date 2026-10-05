@@ -1,0 +1,69 @@
+<?php
+
+if (isset($_SERVER['PHP_SELF'])
+    && strpos(strtolower((string) $_SERVER['PHP_SELF']), 'services.inc.php') !== false
+) {
+    die('This file can not be used on its own.');
+}
+
+function HUB_SERVICE_authorized()
+{
+    return function_exists('SEC_hasRights') && SEC_hasRights('hub.admin');
+}
+
+function HUB_SERVICE_denied(&$output, &$svc_msg)
+{
+    $output = array();
+    $svc_msg = array('Hub service access denied.');
+
+    return defined('PLG_RET_PERMISSION_DENIED') ? PLG_RET_PERMISSION_DENIED : -2;
+}
+
+function HUB_SERVICE_ok($value, &$output, &$svc_msg)
+{
+    $output = $value;
+    $svc_msg = array();
+
+    return defined('PLG_RET_OK') ? PLG_RET_OK : 0;
+}
+
+/**
+ * hub.affected.read
+ *
+ * Required arguments:
+ * - type: stable Geeklog/provider object type
+ * - id: stable object id
+ *
+ * Optional arguments:
+ * - include_disabled: include disabled pillars/relations in the result
+ */
+function service_affected_read_hub($args, &$output, &$svc_msg)
+{
+    if (!HUB_SERVICE_authorized()) {
+        return HUB_SERVICE_denied($output, $svc_msg);
+    }
+
+    $args = is_array($args) ? $args : array();
+    $type = isset($args['type']) ? HUB_normalizeObjectType($args['type']) : '';
+    $id = isset($args['id']) ? HUB_normalizeObjectId($args['id']) : '';
+    $includeDisabled = !empty($args['include_disabled']);
+
+    if ($type === '' || $id === '') {
+        $output = array();
+        $svc_msg = array('Hub affected-context service requires type and id.');
+
+        return defined('PLG_RET_ERROR') ? PLG_RET_ERROR : -1;
+    }
+
+    $contexts = HUB_getAffectedContexts($type, $id, $includeDisabled);
+
+    return HUB_SERVICE_ok(array(
+        'capability' => 'hub.affected.read',
+        'object' => array(
+            'type' => $type,
+            'id' => $id,
+        ),
+        'count' => count($contexts),
+        'contexts' => $contexts,
+    ), $output, $svc_msg);
+}
