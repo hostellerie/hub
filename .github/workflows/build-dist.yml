@@ -41,6 +41,7 @@ jobs:
         run: |
           php tests/audit_contract.php
           php tests/relations_contract.php
+          php tests/lifecycle_contract.php
 
       - name: Build Geeklog plugin archive
         id: package
@@ -85,6 +86,7 @@ jobs:
             hub/lib-metadata.php \
             hub/lib-render.php \
             hub/lib-relations.php \
+            hub/lib-lifecycle.php \
             hub/install_updates.php \
             hub/admin/relations.php \
             hub/sql/mysql_install.php \
