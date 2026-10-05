@@ -55,6 +55,38 @@ function HUB_normalizeObjectId($id)
     return trim((string) $id);
 }
 
+function HUB_siteUrlContext($url)
+{
+    $url = (string) $url;
+    if ($url === '') {
+        return array(
+            'url' => '',
+            'kind' => 'unknown',
+            'host' => '',
+            'current_site' => false,
+            'cross_site' => false,
+        );
+    }
+
+    if (strpos($url, 'https://en.example.test/') === 0) {
+        return array(
+            'url' => $url,
+            'kind' => 'absolute',
+            'host' => 'en.example.test',
+            'current_site' => false,
+            'cross_site' => true,
+        );
+    }
+
+    return array(
+        'url' => $url,
+        'kind' => strpos($url, 'http') === 0 ? 'absolute' : 'relative',
+        'host' => 'example.test',
+        'current_site' => true,
+        'cross_site' => false,
+    );
+}
+
 function HUB_graphIdentityKey($type, $id)
 {
     $type = HUB_normalizeObjectType($type);
@@ -153,7 +185,7 @@ function HUB_resolveObject($type, $id, $uid = 0)
         'staticpages:guide' => array('title' => 'Guide', 'url' => '/guide', 'exists' => true),
         'article:story-ok' => array('title' => 'Story', 'url' => '/story', 'exists' => true),
         'videos:video-ok' => array('title' => 'Video', 'url' => '/video', 'exists' => true),
-        'events:event-ok' => array('title' => 'Event', 'url' => '/event', 'exists' => true),
+        'events:event-ok' => array('title' => 'Event', 'url' => 'https://en.example.test/event', 'exists' => true),
         'staticpages:cycle-a' => array('title' => 'Cycle A', 'url' => '/cycle-a', 'exists' => true),
         'staticpages:cycle-b' => array('title' => 'Cycle B', 'url' => '/cycle-b', 'exists' => true),
         'article:canonical-a' => array('title' => 'Canonical A', 'url' => 'https://example.com/same/', 'exists' => true),
@@ -265,6 +297,10 @@ hubIntegrityAssert($pillar['resolved_relations'] === 3, 'pillar integrity counts
 hubIntegrityAssert($pillar['unresolved_relations'] === 1, 'pillar integrity counts unresolved relations');
 hubIntegrityAssert($pillar['renderable_relations'] === 3, 'pillar integrity counts renderable outgoing targets');
 hubIntegrityAssert($pillar['non_renderable_relations'] === 1, 'pillar integrity counts non-renderable outgoing targets');
+hubIntegrityAssert($pillar['cross_site_relations'] === 1, 'pillar integrity counts cross-site relation targets');
+hubIntegrityAssert($pillar['current_site_relations'] === 2, 'pillar integrity counts current-site relation targets');
+hubIntegrityAssert($pillar['unknown_site_relations'] === 1, 'pillar integrity counts unresolved/unknown site targets');
+hubIntegrityAssert($pillar['relations'][3]['site_context']['cross_site'] === true, 'relation exposes cross-site URL context');
 hubIntegrityAssert($pillar['backlink']['hub_managed'] === 1, 'pillar counts Hub-managed backlink paths');
 hubIntegrityAssert($pillar['backlink']['integration_available'] === 2, 'pillar counts generic provider integration availability');
 hubIntegrityAssert($pillar['backlink']['unconfirmed'] === 1, 'pillar counts unconfirmed backlink integrations');
@@ -310,6 +346,8 @@ hubIntegrityAssert($summary['scope'] === 'integrity-0.9', 'integrity summary sco
 hubIntegrityAssert($summary['pillars'] === 1, 'integrity summary counts pillars');
 hubIntegrityAssert($summary['relations'] === 4, 'integrity summary counts relations');
 hubIntegrityAssert($summary['unresolved_relations'] === 1, 'integrity summary aggregates unresolved relations');
+hubIntegrityAssert($summary['cross_site_relations'] === 1, 'integrity summary aggregates cross-site relation count');
+hubIntegrityAssert($summary['current_site_relations'] === 2, 'integrity summary aggregates current-site relation count');
 hubIntegrityAssert($summary['providers']['maps']['unresolved'] === 1, 'integrity summary aggregates provider unresolved state');
 hubIntegrityAssert($summary['providers']['videos']['resolved'] === 1, 'integrity summary aggregates provider resolved state');
 hubIntegrityAssert($summary['backlink']['integration_available'] === 2, 'integrity summary aggregates integration evidence');
