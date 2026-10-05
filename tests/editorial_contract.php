@@ -282,6 +282,7 @@ hubEditorialAssert($roadmap['schema'] === 1, 'editorial roadmap schema is explic
 hubEditorialAssert($roadmap['scope'] === 'editorial-0.8', 'editorial roadmap declares its 0.8 scope');
 hubEditorialAssert($roadmap['executive_summary']['pillars'] === 3, 'editorial roadmap reuses structural summary');
 hubEditorialAssert($roadmap['executive_summary']['new_pillar_opportunities'] === 1, 'editorial roadmap exposes new pillar opportunities');
+hubEditorialAssert(isset($roadmap['executive_summary']['close_content_review_pairs']), 'editorial roadmap exposes close-content review count');
 hubEditorialAssert(!empty($roadmap['existing_pillars']), 'editorial roadmap exposes existing pillars');
 hubEditorialAssert(!empty($roadmap['prioritized_next_actions']), 'editorial roadmap exposes prioritized next actions');
 hubEditorialAssert(in_array('cluster-health', $roadmap['deferred_diagnostics'], true), '0.9 cluster health stays explicitly deferred');
@@ -291,6 +292,7 @@ $markdown = HUB_editorialRoadmapMarkdown($roadmap);
 hubEditorialAssert(strpos($markdown, '# Editorial roadmap') !== false, 'roadmap Markdown has stable title');
 hubEditorialAssert(strpos($markdown, '## Existing pillars') !== false, 'roadmap Markdown exposes existing pillars');
 hubEditorialAssert(strpos($markdown, '## New pillar opportunities') !== false, 'roadmap Markdown exposes pillar opportunities');
+hubEditorialAssert(strpos($markdown, '## Potential cannibalization / close-content review') !== false, 'roadmap Markdown exposes close-content review section');
 hubEditorialAssert(strpos($markdown, '## Prioritized next actions') !== false, 'roadmap Markdown exposes prioritized actions');
 hubEditorialAssert(strpos($markdown, '## Deferred diagnostics') !== false, 'roadmap Markdown states deferred diagnostics');
 
@@ -316,5 +318,8 @@ $relationsAdminSource = file_get_contents(dirname(__DIR__) . '/admin/relations.p
 hubEditorialAssert(strpos($relationsAdminSource, 'Review signal:') !== false, 'temporal review signals are visible in relation suggestions');
 hubEditorialAssert(strpos($relationsAdminSource, 'dated marker:') !== false, 'relation suggestions explain dated marker evidence');
 hubEditorialAssert(strpos($relationsAdminSource, 'version marker:') !== false, 'relation suggestions explain version marker evidence');
+hubEditorialAssert(strpos($relationsAdminSource, 'Close-content review') !== false, 'relations admin exposes close-content review');
+hubEditorialAssert(strpos($relationsAdminSource, 'Human review only') !== false, 'close-content admin wording avoids automatic cannibalization verdict');
+hubEditorialAssert(strpos($relationsAdminSource, 'title-token-overlap') !== false, 'close-content admin reads lexical evidence');
 
 echo "Hub editorial summary contract tests passed." . PHP_EOL;
