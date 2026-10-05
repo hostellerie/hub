@@ -366,12 +366,43 @@ Completed 0.6.0 validation:
 - README documents the optional dependency and graceful-degradation behavior;
 - no extra generic abstraction was added without a demonstrated second consumer.
 
-## 0.7.0 — Specialized plugin rendering
+## 0.7.0 — Specialized plugin rendering — in progress
 
-- allow plugins to keep ownership of specialized rendering
-- Videos recommendation renderer as reference implementation
-- support plugin-rendered and Hub-rendered sections
-- reuse existing engines behind Blocks or Autotags rather than duplicate them
+Implemented first rendering slice:
+
+- providers keep ownership of specialized rendering; Hub discovers only declared `*.render` capabilities and matching `*_render` services;
+- Videos 0.21.0 is the reference implementation through `videos.recommendations.render` / `recommendations_render`;
+- the Videos renderer reuses its existing local cache, moderation and card/block presentation helpers instead of duplicating recommendation logic in Hub;
+- Hub forwards only approved relation identities belonging to that provider; a provider renderer cannot silently broaden a pillar into unrelated recommendations;
+- specialized provider output replaces the duplicate generic link list for that provider only when rendering succeeds and returns non-empty HTML;
+- unavailable, ambiguous, failing or empty specialized renderers automatically fall back to Hub's generic relation links;
+- Hub refuses to guess when one provider exposes several render actions;
+- provider-owned presentation dependencies remain provider-owned (Videos activates its existing `block.css` flag when it emits HTML);
+- service execution goes only through `PLG_invokeService()`; Hub never calls provider-private renderer functions directly.
+
+Reference flow:
+
+```text
+Hub pillar
+    ↓
+approved relations grouped by provider
+    ↓
+render capability/service discovery
+    ↓
+exactly one provider renderer?
+    ├── yes → PLG_invokeService(provider, *_render, approved items)
+    │          ↓
+    │        provider-owned HTML / CSS dependency
+    │
+    └── no / empty / error → Hub generic relation links
+```
+
+Remaining 0.7.0 work:
+
+- complete CI validation on Hub and Videos branches;
+- document the provider-render contract and approval-preserving boundary;
+- verify public output/fallback behavior with the Videos reference implementation;
+- keep Blocks/Autotags as provider implementation details rather than creating Hub-specific copies of their engines.
 
 ## 0.8.0 — Discovery, editorial inventory and suggestions — planned
 
