@@ -180,11 +180,14 @@ Hub currently exposes these read-only administrator services through Geeklog's n
 - `hub.affected.read` — resolve Hub contexts affected by one stable content identity;
 - `hub.context.read` — traverse the approved Hub graph around one identity with bounded, cycle-safe traversal;
 - `hub.related.read` — return immediate parent/child graph neighbors;
-- `hub.pillar.read` — return one Hub pillar and its approved relation identities.
+- `hub.pillar.read` — return one Hub pillar and its approved relation identities;
+- `hub.suggestions.read` — return explainable read-only editorial candidates, currently based on shared specific Geeklog topics for Static Page pillars and published articles.
 
 These surfaces are protected by `hub.admin`. Hub advertises only capabilities whose service surface is implemented.
 
 Structural `relation_role` is intentionally separate from future editorial-function metadata such as `guide`, `tutorial`, `reference` or `case-study`.
+
+The suggestion service never creates or changes a relationship. Each current candidate keeps stable `type + id`, a suggested structural role and explicit `shared-topic` evidence so the administrator can decide whether to approve it.
 
 ### Editorial / marketing mapping
 
