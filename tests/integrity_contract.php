@@ -55,6 +55,29 @@ function HUB_normalizeObjectId($id)
     return trim((string) $id);
 }
 
+function HUB_objectLanguageContext($type, $id, $uid = 0)
+{
+    if ((string) $type === 'events' && (string) $id === 'event-ok') {
+        return array(
+            'type' => 'events',
+            'id' => 'event-ok',
+            'site_language' => 'english',
+            'object_language' => 'th',
+            'object_language_known' => true,
+            'source' => 'provider-item-info-language',
+        );
+    }
+
+    return array(
+        'type' => (string) $type,
+        'id' => (string) $id,
+        'site_language' => 'english',
+        'object_language' => '',
+        'object_language_known' => false,
+        'source' => 'unavailable',
+    );
+}
+
 function HUB_siteUrlContext($url)
 {
     $url = (string) $url;
@@ -301,6 +324,8 @@ hubIntegrityAssert($pillar['cross_site_relations'] === 1, 'pillar integrity coun
 hubIntegrityAssert($pillar['current_site_relations'] === 2, 'pillar integrity counts current-site relation targets');
 hubIntegrityAssert($pillar['unknown_site_relations'] === 1, 'pillar integrity counts unresolved/unknown site targets');
 hubIntegrityAssert($pillar['relations'][3]['site_context']['cross_site'] === true, 'relation exposes cross-site URL context');
+hubIntegrityAssert($pillar['relations'][3]['language_context']['object_language'] === 'th', 'relation preserves explicit provider object language');
+hubIntegrityAssert($pillar['relations'][0]['language_context']['object_language_known'] === false, 'relation does not infer missing object language');
 hubIntegrityAssert($pillar['backlink']['hub_managed'] === 1, 'pillar counts Hub-managed backlink paths');
 hubIntegrityAssert($pillar['backlink']['integration_available'] === 2, 'pillar counts generic provider integration availability');
 hubIntegrityAssert($pillar['backlink']['unconfirmed'] === 1, 'pillar counts unconfirmed backlink integrations');
