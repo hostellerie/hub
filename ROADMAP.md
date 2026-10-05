@@ -536,8 +536,8 @@ Hub stores approved relationship
 - broken/missing object checks — first implementation reports unresolved pillar sources and unresolved approved relation identities through `HUB_integritySummary()`
 - sitemap/feed integration opportunities
 - affected-page diagnostics
-- relationship graph diagnostics — first pillar-level issue codes implemented for unresolved sources/targets, non-renderable targets, runtime-unverified reciprocal links and empty pillars
-- canonical URL consistency checks
+- relationship graph diagnostics — implemented first for unresolved sources/targets, non-renderable targets, runtime-unverified reciprocal links, empty pillars, self-relations, pillar cycles and informational multi-parent participation
+- canonical URL consistency checks — first provider-neutral collision check implemented by detecting distinct stable identities that resolve to the same normalized public URL
 - expose normalized diagnostics so Connector or administration tools can report them without reimplementing Hub logic — implemented first as read-only `hub.integrity.summary`
 
 ## 0.10.0 — Multisite and multilingual context
