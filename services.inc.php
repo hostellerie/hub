@@ -67,3 +67,46 @@ function service_affected_read_hub($args, &$output, &$svc_msg)
         'contexts' => $contexts,
     ), $output, $svc_msg);
 }
+
+
+/**
+ * hub.context.read
+ *
+ * Required arguments:
+ * - type: stable Geeklog/provider object type
+ * - id: stable object id
+ *
+ * Optional arguments:
+ * - depth: traversal depth, clamped to 0..16, defaults to 4
+ * - include_disabled: include disabled pillars/relations
+ */
+function service_context_read_hub($args, &$output, &$svc_msg)
+{
+    if (!HUB_SERVICE_authorized()) {
+        return HUB_SERVICE_denied($output, $svc_msg);
+    }
+
+    $args = is_array($args) ? $args : array();
+    $type = isset($args['type']) ? HUB_normalizeObjectType($args['type']) : '';
+    $id = isset($args['id']) ? HUB_normalizeObjectId($args['id']) : '';
+    $depth = isset($args['depth']) ? (int) $args['depth'] : 4;
+    $includeDisabled = !empty($args['include_disabled']);
+
+    if ($type === '' || $id === '') {
+        $output = array();
+        $svc_msg = array('Hub context service requires type and id.');
+
+        return defined('PLG_RET_ERROR') ? PLG_RET_ERROR : -1;
+    }
+
+    $context = HUB_graphContext($type, $id, $depth, $includeDisabled);
+
+    return HUB_SERVICE_ok(array(
+        'capability' => 'hub.context.read',
+        'object' => array(
+            'type' => $type,
+            'id' => $id,
+        ),
+        'context' => $context,
+    ), $output, $svc_msg);
+}
