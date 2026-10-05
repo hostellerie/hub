@@ -68,10 +68,51 @@ jobs:
           php tests/render_contract.php
           php tests/indexnow_contract.php
 
+  core-api:
+    name: Geeklog Core ${{ matrix.ref }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ref: v2.1.2
+            mode: legacy
+          - ref: v2.2.2
+            mode: modern
+
+    steps:
+      - name: Check out Hub
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: hub
+
+      - name: Check out Geeklog Core
+        uses: actions/checkout@v4
+        with:
+          repository: Geeklog-Core/geeklog
+          ref: ${{ matrix.ref }}
+          path: geeklog-core
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+          tools: none
+
+      - name: Validate shared Core API contract
+        shell: bash
+        run: |
+          php hub/tests/core_api_contract.php geeklog-core/system/lib-plugins.php "${{ matrix.mode }}"
+
+
   build:
     name: Package Hub
     needs:
       - compatibility
+      - core-api
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
