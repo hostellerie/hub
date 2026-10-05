@@ -57,6 +57,7 @@ function hubDecisionAssert($condition, $message)
 hubDecisionAssert(HUB_normalizeSuggestionKind('RELATION') === 'relation', 'relation kind normalizes');
 hubDecisionAssert(HUB_normalizeSuggestionKind('pillar') === 'pillar', 'pillar kind is accepted');
 hubDecisionAssert(HUB_normalizeSuggestionKind('close-content') === 'close-content', 'close-content suggestion kind is accepted');
+hubDecisionAssert(HUB_normalizeSuggestionKind('content-gap') === 'content-gap', 'content-gap suggestion kind is accepted');
 hubDecisionAssert(HUB_normalizeSuggestionKind('other') === '', 'unsupported suggestion kind is rejected');
 hubDecisionAssert(HUB_normalizeSuggestionDecision('dismissed') === 'dismissed', 'dismissed decision is accepted');
 hubDecisionAssert(HUB_normalizeSuggestionDecision('deferred') === 'deferred', 'deferred decision is accepted');
