@@ -13,7 +13,7 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 function HUB_normalizeSuggestionKind($kind)
 {
     $kind = strtolower(trim((string) $kind));
-    $allowed = array('relation', 'pillar', 'close-content');
+    $allowed = array('relation', 'pillar', 'close-content', 'content-gap');
 
     return in_array($kind, $allowed, true) ? $kind : '';
 }
