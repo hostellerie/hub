@@ -219,3 +219,14 @@ The `Build installable archive` GitHub Actions workflow creates the archive matc
 The read-only Editorial mapping administration page can build a deterministic 0.8 editorial roadmap from the approved Hub graph and explainable suggestion signals. It includes existing pillars, strongest relation candidates, new Static Page pillar opportunities, temporal review candidates and prioritized next actions.
 
 The roadmap can be downloaded as Markdown or JSON. Diagnostics that belong to 0.9.0, including reciprocal-link health, orphan detection, broken/unresolved relations, canonical consistency and cluster health, are listed as deferred instead of being inferred prematurely.
+
+
+## Suggestion decisions
+
+Editorial suggestions remain human-controlled. In Relations administration, a candidate can be approved, dismissed, or deferred for 30 days.
+
+- **Dismiss** hides that exact stable suggestion identity until an administrator restores it.
+- **Defer 30 days** hides it temporarily and automatically lets it return after the stored expiry.
+- **Restore** removes the persisted decision immediately.
+
+Hub stores these decisions separately from approved relationships in `hub_suggestion_decisions`; dismissed or deferred candidates never become graph edges unless an administrator explicitly approves them.
