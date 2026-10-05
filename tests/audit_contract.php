@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-capability-evidence.php', 'lib-content-contract.php', 'lib-metadata.php', 'lib-services.php', 'lib-render.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'lib-relations.php', 'install_updates.php', 'sql/mysql_install.php', 'plugin.json', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'admin/relations.php', 'ROADMAP.md');
+$required = array('config.php', 'autoinstall.php', 'functions.inc', 'lib-audit.php', 'lib-capabilities.php', 'lib-capability-evidence.php', 'lib-content-contract.php', 'lib-metadata.php', 'lib-services.php', 'lib-render.php', 'lib-role.php', 'lib-stats.php', 'lib-audit-cache.php', 'lib-distribution.php', 'lib-link-audit.php', 'lib-staticpages.php', 'lib-relations.php', 'install_updates.php', 'sql/mysql_install.php', 'plugin.json', 'public_html/hub.css', 'admin/index.php', 'admin/audit.php', 'admin/link-audit.php', 'admin/relations.php', 'admin/integrity.php', 'ROADMAP.md');
 foreach ($required as $file) {
     if (!file_exists($root . '/' . $file)) {
         fwrite(STDERR, "Missing: $file\n");
@@ -800,3 +800,16 @@ if (strpos($auditCacheSource, 'CACHE_check_instance') === false
 }
 
 echo "Hub packaging contract OK\n";
+
+
+$integrityAdminSource = file_get_contents($root . '/admin/integrity.php');
+$adminUiSource = file_get_contents($root . '/lib-admin-ui.php');
+if (strpos($integrityAdminSource, 'HUB_integritySummary(0)') === false
+    || strpos($integrityAdminSource, 'Backlink integration evidence') === false
+    || strpos($integrityAdminSource, 'integration-available') === false
+    || strpos($integrityAdminSource, 'runtime backlink output is not asserted') === false
+    || strpos($adminUiSource, "'integrity' => array('integrity.php', 'Integrity & cluster health')") === false
+) {
+    fwrite(STDERR, "Hub integrity administration contract missing\n");
+    exit(1);
+}
