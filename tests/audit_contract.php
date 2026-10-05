@@ -810,6 +810,8 @@ if (strpos($integrityAdminSource, 'HUB_integritySummary(0)') === false
     || strpos($integrityAdminSource, 'runtime backlink output is not asserted') === false
     || strpos($integrityAdminSource, 'Pillar health') === false
     || strpos($integrityAdminSource, 'Integrity issues') === false
+    || strpos($integrityAdminSource, 'Content not connected to the Hub graph') === false
+    || strpos($integrityAdminSource, 'does <strong>not</strong> mean SEO orphan') === false
     || strpos($adminUiSource, "'integrity' => array('integrity.php', 'Integrity & cluster health')") === false
 ) {
     fwrite(STDERR, "Hub integrity administration contract missing\n");
