@@ -10,11 +10,11 @@ $hubGraphPillars = array(
 
 $hubGraphRelations = array(
     1 => array(
-        array('item_type' => 'staticpages', 'item_id' => 'pillar-b', 'is_enabled' => 1),
+        array('item_type' => 'staticpages', 'item_id' => 'pillar-b', 'relation_role' => 'sub-pillar', 'is_enabled' => 1),
         array('item_type' => 'article', 'item_id' => 'story-a', 'is_enabled' => 1),
     ),
     2 => array(
-        array('item_type' => 'article', 'item_id' => 'leaf-1', 'is_enabled' => 1),
+        array('item_type' => 'article', 'item_id' => 'leaf-1', 'relation_role' => 'satellite', 'is_enabled' => 1),
         array('item_type' => 'staticpages', 'item_id' => 'hub-a', 'is_enabled' => 1),
     ),
     3 => array(
@@ -93,6 +93,11 @@ function hubGraphAssert($condition, $message)
 $neighbors = HUB_graphNeighbors('staticpages', 'pillar-b');
 hubGraphAssert(count($neighbors['parents']) === 2, 'sub-pillar can belong to multiple parent contexts');
 hubGraphAssert(count($neighbors['children']) === 2, 'pillar exposes all approved child relations');
+$edgeKinds = array();
+foreach ($neighbors['edges'] as $edge) {
+    $edgeKinds[] = $edge['kind'];
+}
+hubGraphAssert(in_array('satellite', $edgeKinds, true), 'graph preserves structural satellite role');
 
 $context = HUB_graphContext('staticpages', 'pillar-b', 4);
 hubGraphAssert($context['start']['type'] === 'staticpages', 'graph context preserves start type');
