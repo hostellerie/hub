@@ -266,7 +266,7 @@ Relationship-role evolution to prepare before richer grouped rendering:
 - use roles to group public sections without changing content ownership
 - never infer or overwrite an administrator-approved role silently
 
-## 0.5.0 — Lifecycle and dependency graph — next implementation milestone
+## 0.5.0 — Lifecycle and dependency graph — in progress
 
 Current code status before 0.5.0 work:
 
@@ -276,9 +276,21 @@ Current code status before 0.5.0 work:
 - `plugin_getcapabilities_hub()` deliberately advertises an empty capability list until those surfaces exist;
 - relation persistence currently stores stable identity, order and enabled state only; richer dependency/editorial graph semantics remain future work.
 
-Implementation target:
+Implemented first lifecycle slice:
 
-- consume `PLG_itemSaved()` / `PLG_itemDeleted()` notifications
+- consume `PLG_itemSaved()` / `PLG_itemDeleted()` notifications through compatible Hub listeners;
+- normalize lifecycle identities, including legacy dotted subtype notation and Core `story` → `article` identity;
+- resolve enabled Hub pillar contexts affected when a pillar source or related object changes;
+- invalidate only the affected relationship/pillar caches;
+- preserve Hub-owned relationship records when a provider object is deleted so integrity diagnostics can expose the unresolved identity;
+- declare the implemented lifecycle listener contract while keeping future `hub.*` capabilities unadvertised;
+- cover lifecycle identity, affected-context resolution, cache invalidation and delete-preservation behavior with contract tests.
+
+Remaining implementation target:
+
+- safely handle provider identity changes reported through `old_id` so Hub-owned stable references do not become stale;
+- detect Static Page contexts affected by topic assignment or topic metadata changes;
+- refresh any Hub-owned cached metadata introduced by later 0.5.x work
 - refresh cached metadata
 - detect all pillar pages affected by a changed item
 - detect Static Pages whose public rendering changes when topic assignments are added or removed
