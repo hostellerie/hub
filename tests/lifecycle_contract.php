@@ -29,6 +29,16 @@ $hubLifecycleFixture = array(
             ),
         ),
     ),
+    'topics' => array(
+        'seo' => array(
+            array(
+                'pillar_id' => 12,
+                'source_type' => 'staticpages',
+                'source_id' => 'seo-guide',
+                'reasons' => array('topic-assignment'),
+            ),
+        ),
+    ),
     'invalidated' => array(),
 );
 
@@ -59,6 +69,14 @@ function HUB_findPillarsForItem($type, $id, $includeDisabled = false)
     $key = (string) $type . ':' . (string) $id;
     return isset($hubLifecycleFixture['relations'][$key])
         ? $hubLifecycleFixture['relations'][$key]
+        : array();
+}
+
+function HUB_findPillarContextsForTopic($topicId, $includeDisabled = false)
+{
+    global $hubLifecycleFixture;
+    return isset($hubLifecycleFixture['topics'][(string) $topicId])
+        ? $hubLifecycleFixture['topics'][(string) $topicId]
         : array();
 }
 
@@ -129,6 +147,19 @@ $relationContexts = HUB_getAffectedContexts('article', 'story-1');
 hubLifecycleAssert(count($relationContexts) === 1, 'related item change resolves affected pillar');
 hubLifecycleAssert(in_array('related-item', $relationContexts[0]['reasons'], true), 'related-item reason is explicit');
 
+$topicContexts = HUB_getAffectedContexts('topic', 'seo');
+hubLifecycleAssert(count($topicContexts) === 1, 'topic metadata change resolves assigned Hub pillar');
+hubLifecycleAssert($topicContexts[0]['pillar_id'] === 12, 'topic change points to the assigned Static Page pillar');
+hubLifecycleAssert(in_array('topic-assignment', $topicContexts[0]['reasons'], true), 'topic assignment reason is explicit');
+
+$hubLifecycleFixture['invalidated'] = array();
+HUB_handleItemSaved('seo', 'topic');
+hubLifecycleAssert(count($hubLifecycleFixture['invalidated']) === 1, 'topic save invalidates assigned pillar context');
+
+$hubLifecycleFixture['invalidated'] = array();
+HUB_handleItemDeleted('seo', 'topic');
+hubLifecycleAssert(count($hubLifecycleFixture['invalidated']) === 1, 'topic delete invalidates assigned pillar context before Core removes assignments');
+
 $hubLifecycleFixture['invalidated'] = array();
 $savedContexts = HUB_handleItemSaved('story-1', 'article');
 hubLifecycleAssert(count($savedContexts) === 1, 'save handler returns affected contexts');
@@ -161,5 +192,9 @@ hubLifecycleAssert(strpos($relationsSource, "if (!empty(\$result['collisions']))
 hubLifecycleAssert(strpos($relationsSource, "kind' => 'pillar'") !== false, 'pillar identity collisions are classified');
 hubLifecycleAssert(strpos($relationsSource, "kind' => 'relation'") !== false, 'relation identity collisions are classified');
 hubLifecycleAssert(strpos($relationsSource, "UPDATE {\$_TABLES['hub_relations']} SET") !== false, 'Hub updates only its own relation persistence during identity migration');
+
+$staticPagesSource = file_get_contents(dirname(__DIR__) . '/lib-staticpages.php');
+hubLifecycleAssert(strpos($staticPagesSource, 'function HUB_findPillarContextsForTopic(') !== false, 'Hub resolves Static Page pillars assigned to a changed topic');
+hubLifecycleAssert(strpos($staticPagesSource, "ta.type = 'staticpages'") !== false, 'topic impact lookup is limited to Static Page assignments');
 
 echo "Hub lifecycle contract tests passed." . PHP_EOL;
