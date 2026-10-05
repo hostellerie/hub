@@ -584,9 +584,9 @@ This phase remains secondary to the single-site relationship graph and should re
 - stable use of shared Geeklog interoperability contracts — documented in `docs/plugin-author-guide.md` and kept provider-neutral
 - migration and upgrade path — documented in `docs/upgrade.md` and covered by `tests/upgrade_contract.php`; real database upgrade smoke test remains a release check
 - documentation for plugin authors — implemented in `docs/plugin-author-guide.md`
-- compatibility matrix for major Geeklog plugins
-- tested packaging for supported Geeklog/PHP matrix
-- documented service surface for other trusted Geeklog components
+- compatibility matrix for major Geeklog/plugin families — implemented in `docs/compatibility.md`; concrete release-version smoke tests remain part of final release validation
+- tested packaging for supported PHP matrix — CI runs the contract suite on PHP 5.6, 8.1 and 8.3 before packaging; full Geeklog 2.1.1/2.2.2 runtime smoke tests remain release checks
+- documented service surface for other trusted Geeklog components — implemented in `docs/services.md` and kept aligned with advertised `hub.*` capabilities
 
 ## Integration with Hello
 
