@@ -300,7 +300,7 @@ Remaining implementation target:
 - keep the dependency/editorial model graph-shaped rather than enforcing a single-parent tree: a content object may participate in several approved contexts — implemented by allowing one stable identity to resolve through multiple parent pillars
 - support multi-level editorial structures such as hub → pillar → sub-pillar → satellite and pillar → map → marker without changing source ownership — implemented structurally when a related object is itself registered as a pillar source
 - keep graph edges explicit and typed so a sub-pillar can itself be a pillar in another approved context
-- expose affected-page/context information through reusable Hub services for administration and future external consumers — implemented as read-only `hub.affected.read` and `hub.context.read`
+- expose affected-page/context information through reusable Hub services for administration and future external consumers — implemented as read-only `hub.affected.read`, `hub.context.read`, `hub.related.read` and `hub.pillar.read`
 
 Shared Hub capability targets from the Memorandum (advertise each capability only when its corresponding Hub-owned surface is implemented):
 
