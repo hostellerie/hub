@@ -1,8 +1,8 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.6.0` (next implementation milestone)
+**Current development milestone:** `0.7.0` (next implementation milestone)
 
-**Implemented baseline:** `0.5.0` lifecycle and dependency-graph scope is complete in the current codebase.
+**Implemented baseline:** `0.6.0` service-based IndexNow integration scope is complete in the current codebase.
 
 ## Vision
 
@@ -317,7 +317,7 @@ hub.affected.read
 
 Future targets remain unadvertised until their corresponding Hub-owned surfaces are implemented.
 
-## 0.6.0 — Services and IndexNow — in progress
+## 0.6.0 — Services and IndexNow — implemented
 
 Implemented first integration slice:
 
@@ -359,12 +359,12 @@ Hub resolves their anonymous public URLs
 IndexNow native submit_urls service
 ```
 
-Remaining 0.6.0 work:
+Completed 0.6.0 validation:
 
-- complete CI/contract coverage for the Hub ↔ IndexNow service boundary — implemented for submission delegation, missing-service degradation and normalized status reads;
-- expose IndexNow availability/status in Hub only if IndexNow provides a read-only normalized status service — implemented through `indexnow.status.read`, shown as informational state in Hub administration;
-- document the service dependency and graceful-degradation behavior;
-- review whether any additional generic service convention is justified by a real second consumer before adding abstractions.
+- CI/contract coverage verifies submission delegation, missing-service degradation and normalized status reads;
+- IndexNow availability/status is consumed through `indexnow.status.read` and shown as informational state in Hub administration;
+- README documents the optional dependency and graceful-degradation behavior;
+- no extra generic abstraction was added without a demonstrated second consumer.
 
 ## 0.7.0 — Specialized plugin rendering
 
