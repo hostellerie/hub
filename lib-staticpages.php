@@ -185,3 +185,56 @@ function HUB_renderStaticPageTopics($pageId)
 
     return '<div class="hub-staticpage-topics"><div class="related-topics">Topics: ' . implode(' ', $links) . '</div></div>';
 }
+
+
+/**
+ * Return enabled Hub Static Page pillar contexts assigned to a Geeklog topic.
+ *
+ * @param string $topicId
+ * @param bool $includeDisabled
+ * @return array
+ */
+function HUB_findPillarContextsForTopic($topicId, $includeDisabled = false)
+{
+    global $_TABLES;
+
+    $topicId = trim((string) $topicId);
+    if ($topicId === '' || empty($_TABLES['topic_assignments']) || empty($_TABLES['hub_pillars'])) {
+        return array();
+    }
+
+    $topicSql = DB_escapeString($topicId);
+    $sql = "SELECT DISTINCT p.id, p.source_type, p.source_id, p.is_enabled "
+         . "FROM {$_TABLES['hub_pillars']} AS p "
+         . "INNER JOIN {$_TABLES['topic_assignments']} AS ta "
+         . "ON ta.type = 'staticpages' AND ta.id = p.source_id "
+         . "WHERE p.source_type = 'staticpages' "
+         . "AND ta.tid = '" . $topicSql . "'";
+
+    if (!$includeDisabled) {
+        $sql .= " AND p.is_enabled = 1";
+    }
+
+    $sql .= " ORDER BY p.id ASC";
+
+    $rows = array();
+    $result = DB_query($sql, 1);
+    if ($result === false) {
+        return $rows;
+    }
+
+    while ($row = DB_fetchArray($result)) {
+        if (!is_array($row) || empty($row['id'])) {
+            continue;
+        }
+
+        $rows[] = array(
+            'pillar_id' => (int) $row['id'],
+            'source_type' => (string) $row['source_type'],
+            'source_id' => (string) $row['source_id'],
+            'reasons' => array('topic-assignment'),
+        );
+    }
+
+    return $rows;
+}
