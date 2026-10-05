@@ -240,3 +240,30 @@ function service_editorial_summary_hub($args, &$output, &$svc_msg)
 
     return HUB_SERVICE_ok($payload, $output, $svc_msg);
 }
+
+
+/**
+ * hub.suggestions.read
+ *
+ * Return explainable, read-only editorial relation candidates.
+ * Current evidence source: shared specific Geeklog topics for Static Page
+ * pillars and published articles.
+ */
+function service_suggestions_read_hub($args, &$output, &$svc_msg)
+{
+    if (!HUB_SERVICE_authorized()) {
+        return HUB_SERVICE_denied($output, $svc_msg);
+    }
+
+    $args = is_array($args) ? $args : array();
+    $pillarId = isset($args['pillar_id']) ? (int) $args['pillar_id'] : 0;
+    $limit = isset($args['limit']) ? (int) $args['limit'] : 20;
+    $limit = max(1, min(100, $limit));
+
+    $suggestions = HUB_editorialSuggestions($pillarId, $limit);
+
+    return HUB_SERVICE_ok(array(
+        'capability' => 'hub.suggestions.read',
+        'suggestions' => $suggestions,
+    ), $output, $svc_msg);
+}
