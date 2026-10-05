@@ -52,6 +52,20 @@ $content .= '<h2>Cross-site relation context</h2>'
     . '</ul>'
     . '<p><small>Cross-site is contextual information, not an error by itself.</small></p>';
 
+$equivalents = isset($summary['equivalents']) && is_array($summary['equivalents'])
+    ? $summary['equivalents']
+    : array();
+
+$content .= '<h2>Equivalent-content context</h2>'
+    . '<ul>'
+    . '<li>Approved equivalent relations: ' . (isset($equivalents['total']) ? (int) $equivalents['total'] : 0) . '</li>'
+    . '<li>Cross-language: ' . (isset($equivalents['cross_language']) ? (int) $equivalents['cross_language'] : 0) . '</li>'
+    . '<li>Same-language review: ' . (isset($equivalents['same_language_review']) ? (int) $equivalents['same_language_review'] : 0) . '</li>'
+    . '<li>Language unverified: ' . (isset($equivalents['language_unverified']) ? (int) $equivalents['language_unverified'] : 0) . '</li>'
+    . '<li>Cross-site: ' . (isset($equivalents['cross_site']) ? (int) $equivalents['cross_site'] : 0) . '</li>'
+    . '</ul>'
+    . '<p><small>Equivalence is administrator-approved. Hub describes language/site evidence but does not infer equivalence or generate hreflang.</small></p>';
+
 $content .= '<h2>Pillar health</h2>'
     . '<ul>'
     . '<li>Healthy: ' . (isset($health['healthy']) ? (int) $health['healthy'] : 0) . '</li>'
@@ -190,6 +204,9 @@ if (empty($pillars)) {
             $languageContext = isset($relation['language_context']) && is_array($relation['language_context'])
                 ? $relation['language_context']
                 : array();
+            $equivalenceContext = isset($relation['equivalence_context']) && is_array($relation['equivalence_context'])
+                ? $relation['equivalence_context']
+                : array();
             $siteLabel = !empty($relationSite['cross_site'])
                 ? 'cross-site'
                 : (!empty($relationSite['current_site']) ? 'current-site' : 'unknown');
@@ -217,6 +234,13 @@ if (empty($pillars)) {
                         . (!empty($languageContext['site_language'])
                             ? '<br><small>site: ' . HUB_integrityAdminEscape($languageContext['site_language']) . '</small>'
                             : ''))
+                . (!empty($equivalenceContext)
+                    ? '<br><small>equivalent: '
+                        . HUB_integrityAdminEscape(isset($equivalenceContext['language_status']) ? $equivalenceContext['language_status'] : 'language-unverified')
+                        . ' / '
+                        . HUB_integrityAdminEscape(isset($equivalenceContext['site_status']) ? $equivalenceContext['site_status'] : 'unknown')
+                        . '</small>'
+                    : '')
                 . '</td>'
                 . '<td><code>' . HUB_integrityAdminEscape(
                     isset($evidence['verification']) ? $evidence['verification'] : 'unconfirmed'
