@@ -78,6 +78,39 @@ function HUB_editorialInventory($includeDisabled = false)
     );
 }
 
+function HUB_editorialSuggestions($pillarId = 0, $limit = 20)
+{
+    return array(
+        'schema' => 1,
+        'generated_from' => array('shared-topic'),
+        'pillars' => array(
+            array(
+                'pillar_id' => 7,
+                'source_type' => 'staticpages',
+                'source_id' => 'guide',
+                'candidates' => array(
+                    array(
+                        'type' => 'article',
+                        'id' => 'story-2',
+                        'title' => 'Candidate story',
+                        'suggested_role' => 'satellite',
+                        'score' => 2,
+                        'evidence' => array(
+                            array(
+                                'signal' => 'shared-topic',
+                                'topics' => array(
+                                    array('id' => 'seo', 'label' => 'SEO'),
+                                    array('id' => 'content', 'label' => 'Content'),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    );
+}
+
 function HUB_getAffectedContexts($type, $id, $includeDisabled = false)
 {
     return array(
@@ -227,6 +260,14 @@ hubServiceAssert(isset($output['inventory']), 'editorial summary optionally retu
 hubServiceAssert($output['inventory']['pillars'][0]['items'][0]['relation_role'] === 'satellite', 'inventory keeps structural roles');
 hubServiceAssert($output['inventory']['pillars'][0]['items'][0]['parent_count'] === 1, 'inventory keeps parent participation');
 
+$output = null;
+$messages = null;
+$status = service_suggestions_read_hub(array('pillar_id' => 7, 'limit' => 5), $output, $messages);
+hubServiceAssert($status === PLG_RET_OK, 'suggestions read returns OK');
+hubServiceAssert($output['capability'] === 'hub.suggestions.read', 'suggestions service identifies its capability');
+hubServiceAssert($output['suggestions']['generated_from'] === array('shared-topic'), 'suggestions service keeps evidence source explicit');
+hubServiceAssert($output['suggestions']['pillars'][0]['candidates'][0]['id'] === 'story-2', 'suggestions service returns stable candidate identity');
+
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
 hubServiceAssert(strpos($functionsSource, 'function plugin_wsEnabled_hub()') !== false, 'Hub enables the native service dispatcher');
 hubServiceAssert(strpos($functionsSource, "'hub.affected.read'") !== false, 'implemented affected service is advertised as a capability');
@@ -234,5 +275,6 @@ hubServiceAssert(strpos($functionsSource, "'hub.context.read'") !== false, 'impl
 hubServiceAssert(strpos($functionsSource, "'hub.related.read'") !== false, 'implemented related service is advertised as a capability');
 hubServiceAssert(strpos($functionsSource, "'hub.pillar.read'") !== false, 'implemented pillar service is advertised as a capability');
 hubServiceAssert(strpos($functionsSource, "'hub.editorial.summary'") !== false, 'implemented editorial summary is advertised as a capability');
+hubServiceAssert(strpos($functionsSource, "'hub.suggestions.read'") !== false, 'implemented suggestions service is advertised as a capability');
 
 echo "Hub service contract tests passed." . PHP_EOL;
