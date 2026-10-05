@@ -60,6 +60,36 @@ function HUB_getRelations($pillarId, $includeDisabled = true)
         : array();
 }
 
+function HUB_staticPageTopicContext($pageId)
+{
+    if ((string) $pageId !== 'hub-a') {
+        return array('specific_topics' => array());
+    }
+
+    return array(
+        'specific_topics' => array(
+            array('tid' => 'seo', 'topic' => 'SEO'),
+            array('tid' => 'content', 'topic' => 'Content'),
+        ),
+    );
+}
+
+function HUB_linkAuditArticlesByTopics(array $topicIds)
+{
+    return array(
+        array(
+            'sid' => 'story-x',
+            'title' => 'Already approved story',
+            'hub_topics' => array('seo' => 'SEO'),
+        ),
+        array(
+            'sid' => 'story-new',
+            'title' => 'Candidate story',
+            'hub_topics' => array('seo' => 'SEO', 'content' => 'Content'),
+        ),
+    );
+}
+
 require_once dirname(__DIR__) . '/lib-editorial.php';
 
 function hubEditorialAssert($condition, $message)
@@ -101,12 +131,23 @@ hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['nested_pillar_i
 hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['parent_count'] === 2, 'inventory exposes multi-parent participation');
 hubEditorialAssert(isset($inventoryByIdentity['article:story-x']), 'inventory remains provider-neutral by stable type + id');
 
+$suggestions = HUB_editorialSuggestions(1, 10);
+hubEditorialAssert($suggestions['schema'] === 1, 'suggestion schema is explicit');
+hubEditorialAssert($suggestions['generated_from'] === array('shared-topic'), 'suggestion source is explicit and explainable');
+hubEditorialAssert(count($suggestions['pillars']) === 1, 'suggestions can be scoped to one pillar');
+hubEditorialAssert(count($suggestions['pillars'][0]['candidates']) === 1, 'already approved identities are excluded from candidates');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['id'] === 'story-new', 'unapproved matching article is suggested');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['suggested_role'] === 'satellite', 'candidate role remains a suggestion only');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['score'] === 2, 'candidate score is deterministic from matched topics');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][0]['signal'] === 'shared-topic', 'candidate retains evidence signal');
+hubEditorialAssert(count($suggestions['pillars'][0]['candidates'][0]['evidence'][0]['topics']) === 2, 'candidate retains matched topic evidence');
+
 $source = file_get_contents(dirname(__DIR__) . '/lib-editorial.php');
 hubEditorialAssert(strpos($source, 'HUB_resolveObject(') === false, 'structural summary does not mix provider metadata resolution');
 hubEditorialAssert(strpos($source, 'HUB_linkAudit') === false, 'structural summary does not mix SEO/link diagnostics');
 hubEditorialAssert(strpos($source, 'HUB_resolveObject(') === false, 'editorial models do not mix provider metadata resolution');
 hubEditorialAssert(strpos($source, 'HUB_linkAudit') === false, 'editorial models do not mix SEO/link diagnostics');
-hubEditorialAssert(strpos($source, 'suggest') === false, 'editorial models do not mix inferred suggestions');
+hubEditorialAssert(strpos($source, 'HUB_saveRelation(') === false, 'suggestion model never auto-approves relationships');
 
 $adminSource = file_get_contents(dirname(__DIR__) . '/admin/editorial.php');
 hubEditorialAssert(strpos($adminSource, 'Approved relation inventory') !== false, 'editorial admin exposes approved structural inventory');
