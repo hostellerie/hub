@@ -64,13 +64,18 @@ function plugin_getcapabilities_hub()
     return array(
         'schema' => 1,
         'roles' => array('relationship', 'orchestrator', 'service'),
-        'capabilities' => array(),
+        'capabilities' => array('hub.affected.read'),
         'lifecycle' => array(
             'emits' => array(),
             'listens' => array('item.saved', 'item.deleted'),
             'sub_type' => true
         )
     );
+}
+
+function plugin_wsEnabled_hub()
+{
+    return true;
 }
 
 function plugin_getadminoption_hub()
