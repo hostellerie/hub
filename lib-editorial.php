@@ -954,6 +954,7 @@ function HUB_editorialRoadmap($candidateLimit = 10)
 
     $existingPillars = array();
     $temporalReview = array();
+    $closeContentReview = array();
     $actions = array();
 
     $inventoryPillars = isset($inventory['pillars']) && is_array($inventory['pillars'])
@@ -972,6 +973,9 @@ function HUB_editorialRoadmap($candidateLimit = 10)
         $candidates = isset($candidateRow['candidates']) && is_array($candidateRow['candidates'])
             ? $candidateRow['candidates']
             : array();
+        $closeContent = isset($candidateRow['close_content']) && is_array($candidateRow['close_content'])
+            ? $candidateRow['close_content']
+            : array();
 
         $existingPillars[] = array(
             'pillar_id' => $pillarId,
@@ -981,7 +985,29 @@ function HUB_editorialRoadmap($candidateLimit = 10)
                 ? count($pillar['items'])
                 : 0,
             'strongest_candidates' => array_slice($candidates, 0, 5),
+            'close_content_review' => array_slice($closeContent, 0, 5),
         );
+
+        foreach ($closeContent as $pair) {
+            if (!is_array($pair)) {
+                continue;
+            }
+
+            $closeContentReview[] = $pair;
+            $actions[] = array(
+                'kind' => 'review-close-content',
+                'pillar_id' => $pillarId,
+                'type' => 'article-pair',
+                'id' => isset($pair['pair_id']) ? (string) $pair['pair_id'] : '',
+                'title' => (
+                    isset($pair['left']['title']) ? (string) $pair['left']['title'] : ''
+                ) . ' ↔ ' . (
+                    isset($pair['right']['title']) ? (string) $pair['right']['title'] : ''
+                ),
+                'priority' => isset($pair['score']) ? (int) $pair['score'] : 0,
+                'reason' => 'Close-content review: shared topic + title-token overlap',
+            );
+        }
 
         foreach ($candidates as $candidate) {
             if (!is_array($candidate)) {
@@ -1077,9 +1103,11 @@ function HUB_editorialRoadmap($candidateLimit = 10)
             'new_pillar_opportunities' => count($pillarCandidates),
             'relation_candidates' => count($actions) - count($pillarCandidates),
             'temporal_review_candidates' => count($temporalReview),
+            'close_content_review_pairs' => count($closeContentReview),
         ),
         'existing_pillars' => $existingPillars,
         'new_pillar_opportunities' => $pillarCandidates,
+        'close_content_review' => $closeContentReview,
         'temporal_review_candidates' => $temporalReview,
         'prioritized_next_actions' => $actions,
         'deferred_diagnostics' => array(
@@ -1115,6 +1143,7 @@ function HUB_editorialRoadmapMarkdown($roadmap)
         '- New pillar opportunities: ' . (isset($summary['new_pillar_opportunities']) ? (int) $summary['new_pillar_opportunities'] : 0),
         '- Relation candidates: ' . (isset($summary['relation_candidates']) ? (int) $summary['relation_candidates'] : 0),
         '- Temporal review candidates: ' . (isset($summary['temporal_review_candidates']) ? (int) $summary['temporal_review_candidates'] : 0),
+        '- Close-content review pairs: ' . (isset($summary['close_content_review_pairs']) ? (int) $summary['close_content_review_pairs'] : 0),
         '',
         '## Existing pillars',
         '',
@@ -1167,6 +1196,27 @@ function HUB_editorialRoadmapMarkdown($roadmap)
             $lines[] = '- ' . $identity . ' — '
                 . (isset($candidate['title']) ? $candidate['title'] : '')
                 . ' (score ' . (isset($candidate['score']) ? (int) $candidate['score'] : 0) . ')';
+        }
+    }
+
+    $lines[] = '';
+    $lines[] = '## Potential cannibalization / close-content review';
+    $lines[] = '';
+    $closePairs = isset($roadmap['close_content_review']) && is_array($roadmap['close_content_review'])
+        ? $roadmap['close_content_review']
+        : array();
+    if (empty($closePairs)) {
+        $lines[] = '_None detected._';
+    } else {
+        foreach ($closePairs as $pair) {
+            $left = isset($pair['left']) && is_array($pair['left']) ? $pair['left'] : array();
+            $right = isset($pair['right']) && is_array($pair['right']) ? $pair['right'] : array();
+            $leftIdentity = (isset($left['type']) ? $left['type'] : '')
+                . ':' . (isset($left['id']) ? $left['id'] : '');
+            $rightIdentity = (isset($right['type']) ? $right['type'] : '')
+                . ':' . (isset($right['id']) ? $right['id'] : '');
+            $lines[] = '- ' . $leftIdentity . ' ↔ ' . $rightIdentity
+                . ' (title similarity ' . (isset($pair['score']) ? (int) $pair['score'] : 0) . '%)';
         }
     }
 
