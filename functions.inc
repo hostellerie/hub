@@ -21,6 +21,7 @@ require_once $hub_path . 'lib-link-audit.php';
 require_once $hub_path . 'lib-relations.php';
 require_once $hub_path . 'lib-graph.php';
 require_once $hub_path . 'lib-lifecycle.php';
+require_once $hub_path . 'lib-indexnow.php';
 require_once $hub_path . 'lib-staticpages.php';
 
 /**
