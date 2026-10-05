@@ -115,6 +115,19 @@ function HUB_resolveObject($type, $id, $uid = 0)
     );
 }
 
+function HUB_renderItemPillarBacklinks($itemType, $itemId)
+{
+    if ((string) $itemType === 'article' && (string) $itemId === 'story-ok') {
+        return '<aside><a href="/guide">Guide</a></aside>';
+    }
+
+    if ((string) $itemType === 'videos' && (string) $itemId === 'video-ok') {
+        return '<aside><a href="/guide">Guide</a></aside>';
+    }
+
+    return '';
+}
+
 function HUB_backlinkIntegrationStatus($itemType)
 {
     $itemType = HUB_normalizeObjectType($itemType);
@@ -164,6 +177,22 @@ hubIntegrityAssert($videoEvidence['verification'] === 'integration-available', '
 $eventEvidence = HUB_integrityBacklinkEvidence('events');
 hubIntegrityAssert($eventEvidence['verification'] === 'unconfirmed', 'unsupported provider backlink remains unconfirmed');
 
+$articleReciprocal = HUB_integrityReciprocalEvidence(
+    $hubIntegrityPillars[0],
+    $hubIntegrityRelations[1][0],
+    0
+);
+hubIntegrityAssert($articleReciprocal['status'] === 'hub-rendered', 'article reciprocal evidence is verified through Hub-owned placement');
+hubIntegrityAssert($articleReciprocal['runtime_verified'] === true, 'article reciprocal backlink is runtime-verifiable by Hub');
+
+$videoReciprocal = HUB_integrityReciprocalEvidence(
+    $hubIntegrityPillars[0],
+    $hubIntegrityRelations[1][1],
+    0
+);
+hubIntegrityAssert($videoReciprocal['status'] === 'fragment-available-runtime-unverified', 'generic provider fragment does not imply runtime placement');
+hubIntegrityAssert($videoReciprocal['runtime_verified'] === false, 'generic provider reciprocal placement stays unverified');
+
 $pillar = HUB_integrityPillar($hubIntegrityPillars[0], 0);
 hubIntegrityAssert($pillar['relation_count'] === 4, 'pillar integrity counts approved relations');
 hubIntegrityAssert($pillar['resolved_relations'] === 3, 'pillar integrity counts resolved relations');
@@ -173,6 +202,9 @@ hubIntegrityAssert($pillar['non_renderable_relations'] === 1, 'pillar integrity 
 hubIntegrityAssert($pillar['backlink']['hub_managed'] === 1, 'pillar counts Hub-managed backlink paths');
 hubIntegrityAssert($pillar['backlink']['integration_available'] === 2, 'pillar counts generic provider integration availability');
 hubIntegrityAssert($pillar['backlink']['unconfirmed'] === 1, 'pillar counts unconfirmed backlink integrations');
+hubIntegrityAssert($pillar['reciprocal']['hub_rendered'] === 1, 'pillar counts verified Hub-rendered reciprocal links');
+hubIntegrityAssert($pillar['reciprocal']['fragment_available_runtime_unverified'] === 1, 'pillar counts generic fragments separately from runtime proof');
+hubIntegrityAssert($pillar['relations'][0]['reciprocal_evidence']['status'] === 'hub-rendered', 'article relation exposes verified reciprocal evidence');
 hubIntegrityAssert($pillar['relations'][0]['editorial_role'] === 'tutorial', 'integrity keeps optional editorial role');
 hubIntegrityAssert($pillar['relations'][1]['backlink_evidence']['verification'] === 'integration-available', 'generic provider is not reported as runtime backlink');
 
@@ -185,6 +217,8 @@ hubIntegrityAssert($summary['unresolved_relations'] === 1, 'integrity summary ag
 hubIntegrityAssert($summary['providers']['maps']['unresolved'] === 1, 'integrity summary aggregates provider unresolved state');
 hubIntegrityAssert($summary['providers']['videos']['resolved'] === 1, 'integrity summary aggregates provider resolved state');
 hubIntegrityAssert($summary['backlink']['integration_available'] === 2, 'integrity summary aggregates integration evidence');
+hubIntegrityAssert($summary['reciprocal']['hub_rendered'] === 1, 'integrity summary aggregates verified reciprocal links');
+hubIntegrityAssert($summary['reciprocal']['fragment_available_runtime_unverified'] === 1, 'integrity summary preserves unverified generic fragment distinction');
 
 $source = file_get_contents(dirname(__DIR__) . '/lib-integrity.php');
 hubIntegrityAssert(strpos($source, "verification' => 'integration-available'") === false, 'integrity code does not hardcode a runtime backlink claim in output');
