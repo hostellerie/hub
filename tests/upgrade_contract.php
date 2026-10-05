@@ -17,11 +17,11 @@ function hubUpgradeAssert($condition, $message)
 hubUpgradeAssert(strpos($config, "'pi_version'    => '1.0.0'") !== false, '1.0 code version is explicit');
 
 hubUpgradeAssert(
-    strpos($functions, "version_compare((string) $installedVersion, '0.3.0', '<')") !== false,
+    strpos($functions, "version_compare((string) \$installedVersion, '0.3.0', '<')") !== false,
     'upgrade path retains pre-0.3 migration gate'
 );
 hubUpgradeAssert(
-    strpos($functions, "version_compare((string) $installedVersion, '0.5.0', '<')") !== false,
+    strpos($functions, "version_compare((string) \$installedVersion, '0.5.0', '<')") !== false,
     'upgrade path retains pre-0.5 migration gate'
 );
 hubUpgradeAssert(
@@ -61,7 +61,7 @@ hubUpgradeAssert(
 );
 
 hubUpgradeAssert(
-    strpos($functions, "UPDATE {$_TABLES['plugins']} SET pi_version") !== false,
+    strpos($functions, "UPDATE {\$_TABLES['plugins']} SET pi_version") !== false,
     'successful upgrade records current plugin version'
 );
 hubUpgradeAssert(
