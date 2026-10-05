@@ -188,7 +188,7 @@ Structural `relation_role` is intentionally separate from future editorial-funct
 
 ### IndexNow integration (0.6.0 development)
 
-When IndexNow exposes the `indexnow.urls.submit` capability, Hub submits only additional public context pages affected by a Hub relationship, lifecycle or topic change. The directly changed object remains IndexNow's own lifecycle responsibility. Hub calls the native Geeklog `PLG_invokeService()` dispatcher and never reads the IndexNow key, calls its transport helpers, deduplicates URL batches or stores submission history. Older or absent IndexNow versions are a graceful no-op.
+When IndexNow exposes the `indexnow.urls.submit` capability, Hub submits only additional public context pages affected by a Hub relationship, lifecycle or topic change. The directly changed object remains IndexNow's own lifecycle responsibility. Hub calls the native Geeklog `PLG_invokeService()` dispatcher and never reads the IndexNow key, calls its transport helpers, deduplicates URL batches or stores submission history. Older or absent IndexNow versions are a graceful no-op. When IndexNow also exposes `indexnow.status.read`, Hub administration shows only normalized readiness information (transport mode, key readiness, history availability and latest submission status); Hub never receives the key value or local key-file path.
 
 ## Development archive
 
