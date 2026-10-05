@@ -17,7 +17,7 @@ Hub stores:
 
 - the pillar source as `source_type + source_id`;
 - related items as `item_type + item_id`;
-- a Hub-owned structural `relation_role` (`related`, `sub-pillar`, `satellite`, `support`);
+- a Hub-owned structural `relation_role` (`related`, `sub-pillar`, `satellite`, `support`, `equivalent`);
 - manual order;
 - enabled/disabled state;
 - source titles resolved dynamically from the owning content provider.
@@ -130,7 +130,7 @@ This reconciliation is diagnostic only. A missing or ambiguous implementation su
 
 Runtime-detected callbacks are kept distinct from source evidence, provider declarations and inference. Hub never presents source scanning as proof that every mutation path emits a lifecycle notification. The full runtime `plugin_*_<plugin>()` surface remains available under the collapsed **Advanced API surface** section.
 
-See `ROADMAP.md` for the current 0.5.0 lifecycle/dependency-graph milestone and later discovery/editorial-mapping work.
+See `ROADMAP.md` for the current development milestone and the completed lifecycle, editorial, integrity and multisite-context layers.
 
 ## 0.1.0 audit details
 
