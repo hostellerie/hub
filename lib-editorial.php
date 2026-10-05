@@ -211,6 +211,9 @@ function HUB_editorialInventory($includeDisabled = false)
             'pillar_id' => $pillarId,
             'source_type' => $sourceType,
             'source_id' => $sourceId,
+            'editorial_role' => isset($pillar['editorial_role'])
+                ? HUB_normalizeEditorialRole($pillar['editorial_role'])
+                : '',
             'is_enabled' => !empty($pillar['is_enabled']),
             'items' => array(),
         );
@@ -236,6 +239,9 @@ function HUB_editorialInventory($includeDisabled = false)
                 'relation_role' => isset($relation['relation_role'])
                     ? HUB_normalizeRelationRole($relation['relation_role'])
                     : 'related',
+                'editorial_role' => isset($relation['editorial_role'])
+                    ? HUB_normalizeEditorialRole($relation['editorial_role'])
+                    : '',
                 'position' => isset($relation['position']) ? (int) $relation['position'] : 0,
                 'is_enabled' => !empty($relation['is_enabled']),
                 'is_nested_pillar' => isset($pillarIdentities[$key]),
