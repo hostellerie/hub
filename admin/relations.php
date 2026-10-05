@@ -205,8 +205,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pillarId = isset($_POST['pillar_id']) ? (int) $_POST['pillar_id'] : 0;
             $sourceId = isset($_POST['source_id']) ? (string) $_POST['source_id'] : '';
             $enabled = !empty($_POST['is_enabled']) ? 1 : 0;
+            $editorialRole = isset($_POST['editorial_role']) ? (string) $_POST['editorial_role'] : '';
 
-            $saved = HUB_savePillar($pillarId, 'staticpages', $sourceId, $enabled);
+            $saved = HUB_savePillar($pillarId, 'staticpages', $sourceId, $enabled, 0, $editorialRole);
             $message = $saved
                 ? '<div class="hub-rel-message">Pillar saved.</div>'
                 : '<div class="hub-rel-message hub-rel-error">Unable to save pillar. The Static Page may already be registered.</div>';
@@ -235,8 +236,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $position = isset($_POST['position']) ? (int) $_POST['position'] : 0;
             $enabled = !empty($_POST['is_enabled']) ? 1 : 0;
             $relationRole = isset($_POST['relation_role']) ? (string) $_POST['relation_role'] : 'related';
+            $editorialRole = isset($_POST['editorial_role']) ? (string) $_POST['editorial_role'] : '';
 
-            $saved = HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position, $enabled, 0, $relationRole);
+            $saved = HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position, $enabled, 0, $relationRole, $editorialRole);
             $message = $saved
                 ? '<div class="hub-rel-message">Relation saved.</div>'
                 : '<div class="hub-rel-message hub-rel-error">Unable to save relation. Check the pillar and unique type + id.</div>';
@@ -281,6 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $staticPages = HUB_relAdminStaticPages();
 $objectTypes = HUB_relationObjectTypes();
 $relationRoles = HUB_relationRoles();
+$editorialRoles = HUB_editorialRoles();
 $pillars = HUB_getPillars(true);
 $showSuggestions = isset($_GET['suggest']) && $_GET['suggest'] === '1';
 $pillarSuggestions = $showSuggestions
