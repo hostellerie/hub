@@ -128,9 +128,16 @@ function plugin_upgrade_hub()
         $installedVersion = '0.1.0';
     }
 
+    require_once $_CONF['path'] . 'plugins/hub/install_updates.php';
+
     if (version_compare((string) $installedVersion, '0.3.0', '<')) {
-        require_once $_CONF['path'] . 'plugins/hub/install_updates.php';
         if (!HUB_updateSchema_0_3_0()) {
+            return false;
+        }
+    }
+
+    if (version_compare((string) $installedVersion, '0.5.0', '<')) {
+        if (!HUB_updateSchema_0_5_0()) {
             return false;
         }
     }
