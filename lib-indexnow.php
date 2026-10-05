@@ -101,6 +101,12 @@ function HUB_notifyIndexNowAffectedContexts($contexts, $changedType, $changedId,
         return $result;
     }
 
+    if (function_exists('HUB_serviceHasAction')
+        && !HUB_serviceHasAction('indexnow', 'submit_urls')
+    ) {
+        return $result;
+    }
+
     $payload = HUB_indexNowAffectedPayload($contexts, $changedType, $changedId, $event);
     if (empty($payload['urls'])) {
         return $result;
