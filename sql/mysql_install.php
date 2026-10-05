@@ -4,7 +4,6 @@ $_SQL[] = "CREATE TABLE {$_TABLES['hub_pillars']} (
   id int(11) unsigned NOT NULL AUTO_INCREMENT,
   source_type varchar(64) NOT NULL,
   source_id varchar(128) NOT NULL,
-  title_override varchar(255) NOT NULL DEFAULT '',
   is_enabled tinyint(1) unsigned NOT NULL DEFAULT 1,
   created int(11) unsigned NOT NULL DEFAULT 0,
   modified int(11) unsigned NOT NULL DEFAULT 0,
