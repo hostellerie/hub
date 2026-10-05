@@ -29,3 +29,21 @@ $_SQL[] = "CREATE TABLE {$_TABLES['hub_relations']} (
   KEY pillar_order (pillar_id, is_enabled, position, id),
   KEY item_identity (item_type, item_id)
 ) ENGINE=MyISAM";
+
+
+$_SQL[] = "CREATE TABLE {$_TABLES['hub_suggestion_decisions']} (
+  id int(11) unsigned NOT NULL AUTO_INCREMENT,
+  suggestion_kind varchar(32) NOT NULL,
+  pillar_id int(11) unsigned NOT NULL DEFAULT 0,
+  item_type varchar(64) NOT NULL,
+  item_id varchar(128) NOT NULL,
+  decision varchar(16) NOT NULL,
+  defer_until int(11) unsigned NOT NULL DEFAULT 0,
+  created int(11) unsigned NOT NULL DEFAULT 0,
+  modified int(11) unsigned NOT NULL DEFAULT 0,
+  owner_id mediumint(8) unsigned NOT NULL DEFAULT 2,
+  PRIMARY KEY (id),
+  UNIQUE KEY suggestion_identity (suggestion_kind, pillar_id, item_type, item_id),
+  KEY active_decision (decision, defer_until),
+  KEY item_identity (item_type, item_id)
+) ENGINE=MyISAM";
