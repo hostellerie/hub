@@ -56,6 +56,9 @@ function service_affected_read_hub($args, &$output, &$svc_msg)
     }
 
     $contexts = HUB_getAffectedContexts($type, $id, $includeDisabled);
+    $diagnostics = function_exists('HUB_integrityAffectedPages')
+        ? HUB_integrityAffectedPages($type, $id, $includeDisabled)
+        : array();
 
     return HUB_SERVICE_ok(array(
         'capability' => 'hub.affected.read',
@@ -65,6 +68,7 @@ function service_affected_read_hub($args, &$output, &$svc_msg)
         ),
         'count' => count($contexts),
         'contexts' => $contexts,
+        'diagnostics' => $diagnostics,
     ), $output, $svc_msg);
 }
 
