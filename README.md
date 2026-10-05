@@ -289,3 +289,20 @@ The diagnostic:
 The existing `hub.affected.read` service now keeps its dependency-context output and adds public-page diagnostics. For each affected Hub pillar it reports the current source identity, dependency reason, whether the public page resolves, its current title/URL, and any resolution diagnostic.
 
 The dependency calculation is not duplicated: `HUB_getAffectedContexts()` remains the authoritative source for which Hub contexts are affected. The 0.9 integrity layer only enriches those contexts for reporting.
+
+
+### Sitemap and feed interoperability
+
+Hub 0.9.0 reports provider-owned distribution capabilities for content types participating in the enabled Hub graph.
+
+For XML Sitemap, Hub recognizes the shared Geeklog paths documented by the Memorandum:
+
+- native `plugin_collectSitemapItems_PLUGIN()` when present;
+- otherwise the shared `content.collection` / Item Info collection fallback when available.
+
+For feeds/syndication, Hub recognizes:
+
+- native `plugin_getfeednames_PLUGIN()` + `plugin_getfeedcontent_PLUGIN()`;
+- the shared `content.syndication` capability declaration.
+
+These diagnostics are opportunities, not failures. A provider may legitimately be unsuitable for feeds. Hub never becomes the XML Sitemap or feed generator and does not duplicate provider-owned distribution logic.
