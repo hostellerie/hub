@@ -801,7 +801,7 @@ function HUB_findPillarsForItem($itemType, $itemId, $includeDisabled = false)
         return array();
     }
 
-    $sql = "SELECT p.* FROM {$_TABLES['hub_relations']} AS r "
+    $sql = "SELECT p.*, r.id AS relation_id, r.relation_role AS relation_role FROM {$_TABLES['hub_relations']} AS r "
          . "INNER JOIN {$_TABLES['hub_pillars']} AS p ON p.id = r.pillar_id "
          . "WHERE r.item_type = '" . DB_escapeString($itemType) . "' "
          . "AND r.item_id = '" . DB_escapeString($itemId) . "'";
