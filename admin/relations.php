@@ -287,6 +287,16 @@ $pillarSuggestions = $showSuggestions
     ? HUB_relAdminSuggestedPillars($staticPages, $pillars, 8)
     : array();
 
+$suggestionDecisions = function_exists('HUB_getSuggestionDecisions')
+    ? HUB_getSuggestionDecisions()
+    : array();
+$activeSuggestionDecisions = array();
+foreach ($suggestionDecisions as $decisionRow) {
+    if (is_array($decisionRow) && !empty($decisionRow['is_active'])) {
+        $activeSuggestionDecisions[] = $decisionRow;
+    }
+}
+
 $content = '<style>'
     . '.hub-rel-nav{margin:0 0 1rem}.hub-rel-nav a{margin-right:1rem}'
     . '.hub-rel-message{padding:.7rem 1rem;margin:0 0 1rem;background:#edf7ed;border-left:4px solid #2e7d32}'
@@ -330,6 +340,44 @@ if ($showSuggestions) {
 } else {
     $content .= '<p><a class="uk-button" href="relations.php?suggest=1">Find suggestions</a> '
         . '<span class="hub-rel-muted">Uses specific Geeklog topics as an explainable editorial signal; nothing is added automatically.</span></p>';
+}
+
+if ($showSuggestions && !empty($activeSuggestionDecisions)) {
+    $content .= '<div class="hub-rel-card"><h2>Hidden suggestion decisions</h2>'
+        . '<p class="hub-rel-muted">Dismissed suggestions remain hidden until restored. Deferred suggestions automatically return after their defer date.</p>'
+        . '<table class="hub-rel-table"><thead><tr><th>Decision</th><th>Suggestion</th><th>Until</th><th>Action</th></tr></thead><tbody>';
+
+    foreach ($activeSuggestionDecisions as $decisionRow) {
+        $decision = isset($decisionRow['decision']) ? (string) $decisionRow['decision'] : '';
+        $kind = isset($decisionRow['suggestion_kind']) ? (string) $decisionRow['suggestion_kind'] : '';
+        $pillarId = isset($decisionRow['pillar_id']) ? (int) $decisionRow['pillar_id'] : 0;
+        $itemType = isset($decisionRow['item_type']) ? (string) $decisionRow['item_type'] : '';
+        $itemId = isset($decisionRow['item_id']) ? (string) $decisionRow['item_id'] : '';
+        $deferUntil = isset($decisionRow['defer_until']) ? (int) $decisionRow['defer_until'] : 0;
+        $until = $decision === 'deferred' && $deferUntil > 0
+            ? date('Y-m-d', $deferUntil)
+            : '—';
+
+        $identity = $kind . ' · ' . $itemType . ':' . $itemId;
+        if ($kind === 'relation' && $pillarId > 0) {
+            $identity .= ' · pillar #' . $pillarId;
+        }
+
+        $content .= '<tr><td>' . HUB_relAdminEscape($decision) . '</td>'
+            . '<td><code>' . HUB_relAdminEscape($identity) . '</code></td>'
+            . '<td>' . HUB_relAdminEscape($until) . '</td>'
+            . '<td><form method="post" action="relations.php?suggest=1">'
+            . HUB_relAdminTokenField()
+            . '<input type="hidden" name="hub_action" value="suggestion_decision">'
+            . '<input type="hidden" name="suggestion_kind" value="' . HUB_relAdminEscape($kind) . '">'
+            . '<input type="hidden" name="pillar_id" value="' . $pillarId . '">'
+            . '<input type="hidden" name="item_type" value="' . HUB_relAdminEscape($itemType) . '">'
+            . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($itemId) . '">'
+            . '<input type="hidden" name="decision_action" value="restore">'
+            . '<button type="submit" class="uk-button">Restore</button></form></td></tr>';
+    }
+
+    $content .= '</tbody></table></div>';
 }
 
 if ($showSuggestions) {
