@@ -311,6 +311,225 @@ function HUB_editorialTopicContext($pageId)
 }
 
 /**
+ * Tokenize a title for deterministic lexical-proximity checks.
+ *
+ * Tokens shorter than four characters are ignored to reduce generic noise.
+ * No language-specific stopword list is used so the rule stays portable and
+ * explainable across multilingual sites.
+ *
+ * @param string $title
+ * @return array
+ */
+function HUB_editorialTitleTokens($title)
+{
+    $title = html_entity_decode(strip_tags((string) $title), ENT_QUOTES, 'UTF-8');
+    $title = function_exists('mb_strtolower')
+        ? mb_strtolower($title, 'UTF-8')
+        : strtolower($title);
+
+    $parts = preg_split('/[^\p{L}\p{N}]+/u', $title, -1, PREG_SPLIT_NO_EMPTY);
+    if (!is_array($parts)) {
+        return array();
+    }
+
+    $tokens = array();
+    foreach ($parts as $part) {
+        $part = trim((string) $part);
+        if ($part === '') {
+            continue;
+        }
+
+        $length = function_exists('mb_strlen')
+            ? mb_strlen($part, 'UTF-8')
+            : strlen($part);
+        if ($length < 4) {
+            continue;
+        }
+
+        $tokens[$part] = true;
+    }
+
+    $tokens = array_keys($tokens);
+    sort($tokens, SORT_STRING);
+
+    return $tokens;
+}
+
+/**
+ * Calculate deterministic Jaccard title-token similarity.
+ *
+ * @param string $leftTitle
+ * @param string $rightTitle
+ * @return array
+ */
+function HUB_editorialTitleSimilarity($leftTitle, $rightTitle)
+{
+    $left = HUB_editorialTitleTokens($leftTitle);
+    $right = HUB_editorialTitleTokens($rightTitle);
+
+    if (empty($left) || empty($right)) {
+        return array(
+            'similarity' => 0.0,
+            'common_tokens' => array(),
+            'left_tokens' => $left,
+            'right_tokens' => $right,
+        );
+    }
+
+    $common = array_values(array_intersect($left, $right));
+    $union = array_values(array_unique(array_merge($left, $right)));
+    sort($common, SORT_STRING);
+    sort($union, SORT_STRING);
+
+    $similarity = empty($union) ? 0.0 : count($common) / count($union);
+
+    return array(
+        'similarity' => $similarity,
+        'common_tokens' => $common,
+        'left_tokens' => $left,
+        'right_tokens' => $right,
+    );
+}
+
+/**
+ * Detect explainable close-content article pairs inside one Static Page pillar
+ * topic context.
+ *
+ * Eligibility requires at least one shared specific topic, at least two common
+ * title tokens and Jaccard title similarity >= 0.50. The result recommends
+ * human review only and never implies automatic cannibalization.
+ *
+ * @param array $pillar
+ * @param int $limit
+ * @return array
+ */
+function HUB_editorialCloseContentCandidates($pillar, $limit = 20)
+{
+    if (!is_array($pillar)
+        || !isset($pillar['source_type'], $pillar['source_id'])
+        || (string) $pillar['source_type'] !== 'staticpages'
+        || !function_exists('HUB_linkAuditArticlesByTopics')
+    ) {
+        return array();
+    }
+
+    $topicContext = HUB_editorialTopicContext($pillar['source_id']);
+    if (empty($topicContext['ids'])) {
+        return array();
+    }
+
+    $articles = HUB_linkAuditArticlesByTopics($topicContext['ids']);
+    if (count($articles) < 2) {
+        return array();
+    }
+
+    $pairs = array();
+    $pillarId = isset($pillar['id']) ? (int) $pillar['id'] : 0;
+    $count = count($articles);
+
+    for ($i = 0; $i < $count - 1; $i++) {
+        $left = $articles[$i];
+        $leftId = isset($left['sid']) ? HUB_normalizeObjectId($left['sid']) : '';
+        if ($leftId === '') {
+            continue;
+        }
+
+        for ($j = $i + 1; $j < $count; $j++) {
+            $right = $articles[$j];
+            $rightId = isset($right['sid']) ? HUB_normalizeObjectId($right['sid']) : '';
+            if ($rightId === '' || $leftId === $rightId) {
+                continue;
+            }
+
+            $leftTopics = !empty($left['hub_topics']) && is_array($left['hub_topics'])
+                ? array_keys($left['hub_topics'])
+                : array();
+            $rightTopics = !empty($right['hub_topics']) && is_array($right['hub_topics'])
+                ? array_keys($right['hub_topics'])
+                : array();
+            $sharedTopicIds = array_values(array_intersect($leftTopics, $rightTopics));
+            if (empty($sharedTopicIds)) {
+                continue;
+            }
+            sort($sharedTopicIds, SORT_STRING);
+
+            $similarity = HUB_editorialTitleSimilarity(
+                isset($left['title']) ? $left['title'] : '',
+                isset($right['title']) ? $right['title'] : ''
+            );
+
+            if (count($similarity['common_tokens']) < 2 || $similarity['similarity'] < 0.50) {
+                continue;
+            }
+
+            $pairId = function_exists('HUB_suggestionPairId')
+                ? HUB_suggestionPairId('article', $leftId, 'article', $rightId)
+                : sha1(min($leftId, $rightId) . "\n" . max($leftId, $rightId));
+
+            if ($pairId === '') {
+                continue;
+            }
+
+            if (function_exists('HUB_isSuggestionHidden')
+                && HUB_isSuggestionHidden('close-content', $pillarId, 'article-pair', $pairId)
+            ) {
+                continue;
+            }
+
+            $sharedTopics = array();
+            foreach ($sharedTopicIds as $tid) {
+                $label = isset($left['hub_topics'][$tid])
+                    ? (string) $left['hub_topics'][$tid]
+                    : (isset($right['hub_topics'][$tid]) ? (string) $right['hub_topics'][$tid] : $tid);
+                $sharedTopics[] = array('id' => (string) $tid, 'label' => $label);
+            }
+
+            $score = (int) round($similarity['similarity'] * 100);
+
+            $pairs[] = array(
+                'pair_id' => $pairId,
+                'pillar_id' => $pillarId,
+                'left' => array(
+                    'type' => 'article',
+                    'id' => $leftId,
+                    'title' => isset($left['title']) ? (string) $left['title'] : $leftId,
+                ),
+                'right' => array(
+                    'type' => 'article',
+                    'id' => $rightId,
+                    'title' => isset($right['title']) ? (string) $right['title'] : $rightId,
+                ),
+                'score' => $score,
+                'review_recommended' => true,
+                'evidence' => array(
+                    array(
+                        'signal' => 'shared-topic',
+                        'topics' => $sharedTopics,
+                    ),
+                    array(
+                        'signal' => 'title-token-overlap',
+                        'similarity' => round($similarity['similarity'], 4),
+                        'common_tokens' => $similarity['common_tokens'],
+                        'left_token_count' => count($similarity['left_tokens']),
+                        'right_token_count' => count($similarity['right_tokens']),
+                    ),
+                ),
+            );
+        }
+    }
+
+    usort($pairs, function ($left, $right) {
+        if ((int) $left['score'] !== (int) $right['score']) {
+            return (int) $left['score'] > (int) $right['score'] ? -1 : 1;
+        }
+
+        return strcmp((string) $left['pair_id'], (string) $right['pair_id']);
+    });
+
+    return array_slice($pairs, 0, max(1, (int) $limit));
+}
+
+/**
  * Suggest unapproved article relations for one Static Page pillar.
  *
  * Candidates come only from deterministic shared-topic evidence and never
@@ -575,8 +794,9 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
 
         $relations = HUB_getRelations($currentPillarId, false);
         $candidates = HUB_editorialArticleCandidates($pillar, $relations, $limitPerPillar);
+        $closeContent = HUB_editorialCloseContentCandidates($pillar, $limitPerPillar);
 
-        if (empty($candidates)) {
+        if (empty($candidates) && empty($closeContent)) {
             continue;
         }
 
@@ -585,6 +805,7 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
             'source_type' => (string) $pillar['source_type'],
             'source_id' => (string) $pillar['source_id'],
             'candidates' => $candidates,
+            'close_content' => $closeContent,
         );
     }
 
@@ -600,7 +821,7 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
         'schema' => 1,
         'generated_from' => array('shared-topic'),
         'ranking_signals' => array('shared-topic-count', 'engagement', 'publication-date'),
-        'review_signals' => array('older-year-marker', 'version-marker'),
+        'review_signals' => array('older-year-marker', 'version-marker', 'title-token-overlap'),
         'pillar_candidates' => $pillarId > 0
             ? array()
             : HUB_editorialPillarCandidates($limitPerPillar),
