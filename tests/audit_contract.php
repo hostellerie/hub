@@ -55,16 +55,17 @@ if (strpos($relationsApiSource, 'function HUB_savePillar($pillarId, $sourceType,
 
 $relationsAdminSource = file_get_contents($root . '/admin/relations.php');
 
-if (strpos($configSource, "'pi_version'    => '0.4.0'") === false
+if (strpos($configSource, "'pi_version'    => '0.5.0'") === false
     || strpos($autoinstallSource, "'hub_pillars'") === false
     || strpos($autoinstallSource, "'hub_relations'") === false
     || strpos($functionsSource, 'HUB_updateSchema_0_3_0') === false
+    || strpos($functionsSource, 'HUB_updateSchema_0_5_0') === false
     || strpos($functionsSource, "'hub_pillars', 'hub_relations'") === false
     || strpos($sqlSource, "CREATE TABLE {\$_TABLES['hub_pillars']}") === false
     || strpos($sqlSource, "CREATE TABLE {\$_TABLES['hub_relations']}") === false
     || strpos($upgradeSource, 'CREATE TABLE IF NOT EXISTS') === false
 ) {
-    fwrite(STDERR, "Hub 0.4.0 storage contract missing\n");
+    fwrite(STDERR, "Hub 0.5.0 storage contract missing\n");
     exit(1);
 }
 
