@@ -27,6 +27,13 @@ function HUB_SERVICE_ok($value, &$output, &$svc_msg)
     return defined('PLG_RET_OK') ? PLG_RET_OK : 0;
 }
 
+function HUB_SERVICE_siteContext()
+{
+    return function_exists('HUB_siteContext')
+        ? HUB_siteContext()
+        : array();
+}
+
 /**
  * hub.affected.read
  *
@@ -69,6 +76,7 @@ function service_affected_read_hub($args, &$output, &$svc_msg)
         'count' => count($contexts),
         'contexts' => $contexts,
         'diagnostics' => $diagnostics,
+        'site_context' => HUB_SERVICE_siteContext(),
     ), $output, $svc_msg);
 }
 
@@ -112,6 +120,7 @@ function service_context_read_hub($args, &$output, &$svc_msg)
             'id' => $id,
         ),
         'context' => $context,
+        'site_context' => HUB_SERVICE_siteContext(),
     ), $output, $svc_msg);
 }
 
@@ -147,6 +156,7 @@ function service_related_read_hub($args, &$output, &$svc_msg)
         'parents' => $neighbors['parents'],
         'children' => $neighbors['children'],
         'edges' => $neighbors['edges'],
+        'site_context' => HUB_SERVICE_siteContext(),
     ), $output, $svc_msg);
 }
 
@@ -217,6 +227,7 @@ function service_pillar_read_hub($args, &$output, &$svc_msg)
             'is_enabled' => !empty($pillar['is_enabled']),
         ),
         'relations' => $items,
+        'site_context' => HUB_SERVICE_siteContext(),
     ), $output, $svc_msg);
 }
 
@@ -299,5 +310,6 @@ function service_integrity_summary_hub($args, &$output, &$svc_msg)
     return HUB_SERVICE_ok(array(
         'capability' => 'hub.integrity.summary',
         'summary' => $summary,
+        'site_context' => HUB_SERVICE_siteContext(),
     ), $output, $svc_msg);
 }
