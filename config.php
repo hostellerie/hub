@@ -15,6 +15,9 @@ if (!isset($_TABLES['hub_pillars'])) {
 if (!isset($_TABLES['hub_relations'])) {
     $_TABLES['hub_relations'] = $_DB_table_prefix . 'hub_relations';
 }
+if (!isset($_TABLES['hub_suggestion_decisions'])) {
+    $_TABLES['hub_suggestion_decisions'] = $_DB_table_prefix . 'hub_suggestion_decisions';
+}
 
 $_HUB_PLUGIN = array(
     'pi_name'       => 'hub',
