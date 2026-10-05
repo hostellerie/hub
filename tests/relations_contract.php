@@ -155,7 +155,7 @@ $upgradeSource = file_get_contents(dirname(__DIR__) . '/install_updates.php');
 if (strpos($relationsSource, 'function HUB_relationRoles()') === false
     || strpos($relationsSource, 'function HUB_normalizeRelationRole($role)') === false
     || strpos($relationsSource, "relation_role = '") === false
-    || strpos($relationsSource, 'relation_role, position') === false
+    || strpos($relationsSource, 'relation_role, editorial_role, position') === false
 ) {
     fwrite(STDERR, "Hub structural relation role contract missing\n");
     exit(1);
