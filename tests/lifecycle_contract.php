@@ -68,6 +68,41 @@ function HUB_invalidateRelationshipCaches($pillarId, $type = '', $id = '')
     $hubLifecycleFixture['invalidated'][] = array((int) $pillarId, (string) $type, (string) $id);
 }
 
+function HUB_migrateObjectIdentity($type, $oldId, $newId)
+{
+    global $hubLifecycleFixture;
+
+    $oldKey = (string) $type . ':' . (string) $oldId;
+    $newKey = (string) $type . ':' . (string) $newId;
+    $changed = false;
+
+    if (isset($hubLifecycleFixture['pillars'][$oldKey])
+        && !isset($hubLifecycleFixture['pillars'][$newKey])
+    ) {
+        $pillar = $hubLifecycleFixture['pillars'][$oldKey];
+        unset($hubLifecycleFixture['pillars'][$oldKey]);
+        $pillar['source_id'] = (string) $newId;
+        $hubLifecycleFixture['pillars'][$newKey] = $pillar;
+        $changed = true;
+    }
+
+    if (isset($hubLifecycleFixture['relations'][$oldKey])
+        && !isset($hubLifecycleFixture['relations'][$newKey])
+    ) {
+        $hubLifecycleFixture['relations'][$newKey] = $hubLifecycleFixture['relations'][$oldKey];
+        unset($hubLifecycleFixture['relations'][$oldKey]);
+        $changed = true;
+    }
+
+    return array(
+        'changed' => $changed,
+        'pillar_updated' => false,
+        'relations_updated' => $changed ? 1 : 0,
+        'collisions' => array(),
+        'error' => '',
+    );
+}
+
 require_once dirname(__DIR__) . '/lib-lifecycle.php';
 
 function hubLifecycleAssert($condition, $message)
@@ -101,8 +136,11 @@ hubLifecycleAssert(count($hubLifecycleFixture['invalidated']) === 1, 'save handl
 
 $hubLifecycleFixture['invalidated'] = array();
 $renamedContexts = HUB_handleItemSaved('story-new', 'article', 'old-story');
-hubLifecycleAssert(count($renamedContexts) === 1, 'old identity context is retained for invalidation on rename');
-hubLifecycleAssert(count($hubLifecycleFixture['invalidated']) >= 1, 'rename invalidates old affected context');
+hubLifecycleAssert(count($renamedContexts) === 1, 'renamed identity resolves the migrated affected context');
+hubLifecycleAssert($renamedContexts[0]['pillar_id'] === 11, 'renamed identity now points to the original pillar context');
+hubLifecycleAssert(isset($hubLifecycleFixture['relations']['article:story-new']), 'Hub relation follows the provider identity change');
+hubLifecycleAssert(!isset($hubLifecycleFixture['relations']['article:old-story']), 'old Hub relation identity is no longer retained after a clean migration');
+hubLifecycleAssert(count($hubLifecycleFixture['invalidated']) >= 2, 'rename invalidates old and new affected contexts');
 
 $beforeRelations = $hubLifecycleFixture['relations'];
 $hubLifecycleFixture['invalidated'] = array();
@@ -116,5 +154,12 @@ hubLifecycleAssert(strpos($functionsSource, 'function plugin_itemsaved_hub($id, 
 hubLifecycleAssert(strpos($functionsSource, 'function plugin_itemdeleted_hub($id, $type, $sub_type = \'\')') !== false, 'delete listener supports optional subtype');
 hubLifecycleAssert(strpos($functionsSource, "'listens' => array('item.saved', 'item.deleted')") !== false, 'Hub declares implemented lifecycle listeners');
 hubLifecycleAssert(strpos($functionsSource, "'capabilities' => array()") !== false, 'future hub.* capabilities remain unadvertised');
+
+$relationsSource = file_get_contents(dirname(__DIR__) . '/lib-relations.php');
+hubLifecycleAssert(strpos($relationsSource, 'function HUB_migrateObjectIdentity(') !== false, 'Hub exposes a generic owned-identity migration helper');
+hubLifecycleAssert(strpos($relationsSource, "if (!empty(\$result['collisions']))") !== false, 'identity migration aborts before writes when collisions are detected');
+hubLifecycleAssert(strpos($relationsSource, "kind' => 'pillar'") !== false, 'pillar identity collisions are classified');
+hubLifecycleAssert(strpos($relationsSource, "kind' => 'relation'") !== false, 'relation identity collisions are classified');
+hubLifecycleAssert(strpos($relationsSource, "UPDATE {\$_TABLES['hub_relations']} SET") !== false, 'Hub updates only its own relation persistence during identity migration');
 
 echo "Hub lifecycle contract tests passed." . PHP_EOL;
