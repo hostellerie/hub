@@ -326,3 +326,12 @@ Hub 0.10.0 enriches resolved relationship targets with site context derived from
 - `unknown` — unresolved or otherwise non-classifiable target.
 
 Cross-site is context, not an integrity failure by itself. Hub does not rewrite the relation identity, move data between site databases, or infer a language from the target host.
+
+
+### Object language context
+
+Hub 0.10.0 keeps site language and object language separate.
+
+For one provider-owned object, `HUB_objectLanguageContext()` accepts an object language only when the owning provider explicitly returns a non-empty `language` value through Item Info. When the provider does not expose that metadata, Hub reports the object language as unknown while still exposing the active Geeklog site language as context.
+
+Hub does not infer an object's language from its domain, URL, slug, stable ID, or the active site's configured language. No object-language value is persisted by Hub.
