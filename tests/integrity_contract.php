@@ -300,6 +300,22 @@ function hubIntegrityAssert($condition, $message)
     }
 }
 
+$sameLanguageEquivalence = HUB_integrityEquivalenceContext(
+    array('object_language_known' => true, 'object_language' => 'en'),
+    array('object_language_known' => true, 'object_language' => 'en'),
+    array('current_site' => true, 'cross_site' => false)
+);
+hubIntegrityAssert($sameLanguageEquivalence['language_status'] === 'same-language-review', 'same-language equivalence requires review');
+hubIntegrityAssert($sameLanguageEquivalence['site_status'] === 'current-site', 'same-site equivalent context is preserved');
+
+$unknownLanguageEquivalence = HUB_integrityEquivalenceContext(
+    array('object_language_known' => true, 'object_language' => 'en'),
+    array('object_language_known' => false, 'object_language' => ''),
+    array('current_site' => false, 'cross_site' => true)
+);
+hubIntegrityAssert($unknownLanguageEquivalence['language_status'] === 'language-unverified', 'missing provider language keeps equivalent relation unverified');
+hubIntegrityAssert($unknownLanguageEquivalence['site_status'] === 'cross-site', 'cross-site evidence is independent from language evidence');
+
 $articleEvidence = HUB_integrityBacklinkEvidence('article');
 hubIntegrityAssert($articleEvidence['verification'] === 'hub-managed', 'article backlink evidence is Hub-managed');
 
@@ -359,6 +375,7 @@ foreach ($pillar['health']['issues'] as $issue) {
 }
 hubIntegrityAssert(in_array('relation-target-unresolved', $issueCodes, true), 'broken pillar explains unresolved target issue');
 hubIntegrityAssert(in_array('reciprocal-link-runtime-unverified', $issueCodes, true), 'pillar explains runtime-unverified reciprocal links');
+hubIntegrityAssert(strpos($source = file_get_contents(dirname(__DIR__) . '/lib-integrity.php'), "'code' => 'equivalence-review'") !== false, 'equivalence review issue code is available');
 
 $unconnected = HUB_integrityUnconnectedContent(100);
 hubIntegrityAssert($unconnected['status'] === 'hub-unconnected', 'unconnected diagnostic uses explicit non-orphan status');
