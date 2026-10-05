@@ -447,6 +447,10 @@ function HUB_integrityGraphDiagnostics()
                     'identity' => $sourceKey,
                     'relation_id' => isset($relation['id']) ? (int) $relation['id'] : 0,
                 );
+
+                // Self-relations have their own diagnostic category and must
+                // not also be counted as one-node cycles.
+                continue;
             }
 
             if (isset($pillarByIdentity[$targetKey])) {
