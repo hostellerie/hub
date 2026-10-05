@@ -520,6 +520,20 @@ function HUB_integrityPillar($pillar, $uid = 0)
         }
     }
 
+    $equivalenceReviewCount = (int) $result['equivalents']['same_language_review']
+        + (int) $result['equivalents']['language_unverified'];
+
+    if ($equivalenceReviewCount > 0) {
+        $issues[] = array(
+            'code' => 'equivalence-review',
+            'severity' => 'attention',
+            'count' => $equivalenceReviewCount,
+        );
+        if ($status === 'healthy') {
+            $status = 'attention';
+        }
+    }
+
     $result['health'] = array(
         'status' => $status,
         'source_resolved' => !empty($result['source']['resolved']),
