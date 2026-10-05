@@ -39,6 +39,38 @@ function HUB_getPillar($pillarId)
     return DB_fetchArray($result);
 }
 
+/**
+ * Structural roles owned by Hub relationship edges.
+ *
+ * These describe graph position only. Editorial function (guide, tutorial,
+ * reference, etc.) is intentionally a separate future concern.
+ *
+ * @return array
+ */
+function HUB_relationRoles()
+{
+    return array(
+        'related' => 'Related',
+        'sub-pillar' => 'Sub-pillar',
+        'satellite' => 'Satellite',
+        'support' => 'Support',
+    );
+}
+
+/**
+ * Normalize one Hub structural relationship role.
+ *
+ * @param string $role
+ * @return string
+ */
+function HUB_normalizeRelationRole($role)
+{
+    $role = strtolower(trim((string) $role));
+    $roles = HUB_relationRoles();
+
+    return isset($roles[$role]) ? $role : 'related';
+}
+
 function HUB_findPillar($sourceType, $sourceId)
 {
     global $_TABLES;
@@ -207,7 +239,7 @@ function HUB_invalidateRelationshipCaches($pillarId, $itemType = '', $itemId = '
     }
 }
 
-function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position = 0, $isEnabled = 1, $ownerId = 0)
+function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position = 0, $isEnabled = 1, $ownerId = 0, $relationRole = 'related')
 {
     global $_TABLES, $_USER;
 
@@ -217,6 +249,7 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
     $itemId = HUB_normalizeObjectId($itemId);
     $position = max(0, min(65535, (int) $position));
     $isEnabled = $isEnabled ? 1 : 0;
+    $relationRole = HUB_normalizeRelationRole($relationRole);
 
     $oldRelation = null;
     if ($relationId > 0) {
@@ -244,6 +277,7 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
     $now = time();
     $typeSql = DB_escapeString($itemType);
     $idSql = DB_escapeString($itemId);
+    $roleSql = DB_escapeString($relationRole);
 
     if ($relationId > 0) {
         DB_query(
@@ -251,6 +285,7 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
             . "pillar_id = " . $pillarId . ", "
             . "item_type = '" . $typeSql . "', "
             . "item_id = '" . $idSql . "', "
+            . "relation_role = '" . $roleSql . "', "
             . "position = " . $position . ", "
             . "is_enabled = " . $isEnabled . ", "
             . "modified = " . $now . " "
@@ -276,8 +311,8 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
 
     DB_query(
         "INSERT INTO {$_TABLES['hub_relations']} "
-        . "(pillar_id, item_type, item_id, position, is_enabled, created, modified, owner_id) VALUES ("
-        . $pillarId . ", '" . $typeSql . "', '" . $idSql . "', " . $position . ", "
+        . "(pillar_id, item_type, item_id, relation_role, position, is_enabled, created, modified, owner_id) VALUES ("
+        . $pillarId . ", '" . $typeSql . "', '" . $idSql . "', '" . $roleSql . "', " . $position . ", "
         . $isEnabled . ", " . $now . ", " . $now . ", " . (int) $ownerId . ")",
         1
     );
