@@ -443,6 +443,13 @@ function HUB_editorialArticleCandidates($pillar, $relations, $limit = 20)
             continue;
         }
 
+        $pillarId = isset($pillar['id']) ? (int) $pillar['id'] : 0;
+        if (function_exists('HUB_isSuggestionHidden')
+            && HUB_isSuggestionHidden('relation', $pillarId, 'article', $sid)
+        ) {
+            continue;
+        }
+
         $matchedTopics = array();
         if (!empty($article['hub_topics']) && is_array($article['hub_topics'])) {
             foreach ($article['hub_topics'] as $tid => $label) {
@@ -634,6 +641,12 @@ function HUB_editorialPillarCandidates($limit = 10)
     foreach (HUB_linkAuditStaticPages() as $page) {
         $pageId = isset($page['sp_id']) ? HUB_normalizeObjectId($page['sp_id']) : '';
         if ($pageId === '' || isset($existing[$pageId])) {
+            continue;
+        }
+
+        if (function_exists('HUB_isSuggestionHidden')
+            && HUB_isSuggestionHidden('pillar', 0, 'staticpages', $pageId)
+        ) {
             continue;
         }
 
