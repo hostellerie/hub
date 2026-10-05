@@ -289,8 +289,8 @@ function service_integrity_summary_hub($args, &$output, &$svc_msg)
     }
 
     $args = is_array($args) ? $args : array();
-    $uid = isset($args['uid']) ? max(0, (int) $args['uid']) : 0;
-    $summary = HUB_integritySummary($uid);
+    // Integrity/SEO health is evaluated against anonymous public visibility.
+    $summary = HUB_integritySummary(0);
 
     return HUB_SERVICE_ok(array(
         'capability' => 'hub.integrity.summary',
