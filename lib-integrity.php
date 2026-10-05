@@ -840,6 +840,137 @@ function HUB_integrityUnconnectedContent($limitPerProvider = 100)
 }
 
 /**
+ * Report sitemap/feed interoperability paths for providers participating in
+ * the enabled Hub graph.
+ *
+ * Hub does not generate sitemap or feed output here. It only reports whether
+ * the owning provider exposes the shared Geeklog distribution contracts
+ * documented by the Memorandum.
+ *
+ * @return array
+ */
+function HUB_integrityDistributionOpportunities()
+{
+    $types = array();
+
+    foreach (HUB_getPillars(false) as $pillar) {
+        if (!is_array($pillar) || empty($pillar['id'])) {
+            continue;
+        }
+
+        $sourceType = isset($pillar['source_type'])
+            ? HUB_normalizeObjectType($pillar['source_type'])
+            : '';
+        if ($sourceType !== '') {
+            $types[$sourceType] = true;
+        }
+
+        foreach (HUB_getRelations((int) $pillar['id'], false) as $relation) {
+            if (!is_array($relation)) {
+                continue;
+            }
+
+            $type = isset($relation['item_type'])
+                ? HUB_normalizeObjectType($relation['item_type'])
+                : '';
+            if ($type !== '') {
+                $types[$type] = true;
+            }
+        }
+    }
+
+    ksort($types, SORT_STRING);
+    $providers = array();
+
+    foreach (array_keys($types) as $type) {
+        if ($type === 'article') {
+            $providers[$type] = array(
+                'sitemap' => array(
+                    'status' => 'core-owned',
+                    'native_collector' => false,
+                    'collection_fallback' => false,
+                ),
+                'syndication' => array(
+                    'status' => 'core-owned',
+                    'declared' => false,
+                    'callbacks' => false,
+                ),
+                'opportunities' => array(),
+            );
+            continue;
+        }
+
+        $collector = 'plugin_collectSitemapItems_' . $type;
+        $nativeSitemap = function_exists($collector);
+        $collectionFallback = function_exists('HUB_relationCollectionSupported')
+            && HUB_relationCollectionSupported($type);
+
+        $feedNames = 'plugin_getfeednames_' . $type;
+        $feedContent = 'plugin_getfeedcontent_' . $type;
+        $feedCallbacks = function_exists($feedNames) && function_exists($feedContent);
+
+        $declaredSyndication = false;
+        if (function_exists('HUB_capabilityDeclaration')) {
+            $declaration = HUB_capabilityDeclaration($type);
+            if (!empty($declaration['valid'])
+                && !empty($declaration['capabilities'])
+                && is_array($declaration['capabilities'])
+            ) {
+                $declaredSyndication = in_array(
+                    'content.syndication',
+                    $declaration['capabilities'],
+                    true
+                );
+            }
+        }
+
+        if ($nativeSitemap) {
+            $sitemapStatus = 'native-collector';
+        } elseif ($collectionFallback) {
+            $sitemapStatus = 'collection-fallback';
+        } else {
+            $sitemapStatus = 'not-detected';
+        }
+
+        if ($feedCallbacks) {
+            $syndicationStatus = 'native-callbacks';
+        } elseif ($declaredSyndication) {
+            $syndicationStatus = 'declared-unverified';
+        } else {
+            $syndicationStatus = 'not-declared';
+        }
+
+        $opportunities = array();
+        if ($sitemapStatus === 'not-detected') {
+            $opportunities[] = 'review-sitemap-participation';
+        }
+        if ($syndicationStatus === 'not-declared') {
+            $opportunities[] = 'review-syndication-if-content-is-feed-worthy';
+        }
+
+        $providers[$type] = array(
+            'sitemap' => array(
+                'status' => $sitemapStatus,
+                'native_collector' => $nativeSitemap,
+                'collection_fallback' => $collectionFallback,
+            ),
+            'syndication' => array(
+                'status' => $syndicationStatus,
+                'declared' => $declaredSyndication,
+                'callbacks' => $feedCallbacks,
+            ),
+            'opportunities' => $opportunities,
+        );
+    }
+
+    return array(
+        'scope' => 'provider-distribution-contracts',
+        'providers' => $providers,
+        'note' => 'Opportunities are interoperability reviews, not SEO failures. Hub does not own sitemap or feed generation.',
+    );
+}
+
+/**
  * Build normalized integrity summary for all enabled Hub pillars.
  *
  * @param int $uid
@@ -877,6 +1008,7 @@ function HUB_integritySummary($uid = 0)
         'graph' => array(),
         'canonical_collisions' => array(),
         'unconnected_content' => array(),
+        'distribution' => array(),
         'pillar_items' => array(),
     );
 
@@ -937,6 +1069,7 @@ function HUB_integritySummary($uid = 0)
     $summary['graph'] = HUB_integrityGraphDiagnostics();
     $summary['canonical_collisions'] = HUB_integrityCanonicalCollisions($uid);
     $summary['unconnected_content'] = HUB_integrityUnconnectedContent(100);
+    $summary['distribution'] = HUB_integrityDistributionOpportunities();
 
     ksort($summary['providers'], SORT_STRING);
     usort($summary['pillar_items'], function ($left, $right) {
