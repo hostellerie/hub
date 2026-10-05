@@ -35,6 +35,30 @@ $inventory = function_exists('HUB_editorialInventory')
 $inventoryPillars = isset($inventory['pillars']) && is_array($inventory['pillars'])
     ? $inventory['pillars'] : array();
 
+$roadmap = function_exists('HUB_editorialRoadmap')
+    ? HUB_editorialRoadmap(10)
+    : array();
+
+$export = isset($_GET['export']) ? strtolower(trim((string) $_GET['export'])) : '';
+if ($export === 'md' && function_exists('HUB_editorialRoadmapMarkdown')) {
+    if (!headers_sent()) {
+        header('Content-Type: text/markdown; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="hub-editorial-roadmap.md"');
+        header('X-Content-Type-Options: nosniff');
+    }
+    echo HUB_editorialRoadmapMarkdown($roadmap);
+    exit;
+}
+if ($export === 'json') {
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="hub-editorial-roadmap.json"');
+        header('X-Content-Type-Options: nosniff');
+    }
+    echo json_encode($roadmap, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 $content = HUB_adminNavigation('editorial');
 $content .= '<h1>Editorial mapping</h1>';
 $content .= '<p>This is a read-only structural view of Hub&#039;s approved editorial graph. '
@@ -165,6 +189,39 @@ if (empty($inventoryPillars)) {
 
         $content .= '</tbody></table></details>';
     }
+}
+
+$content .= '<h2>Editorial roadmap preview</h2>';
+$content .= '<p><a class="uk-button" href="editorial.php?export=md">Download Markdown</a> '
+    . '<a class="uk-button" href="editorial.php?export=json">Download JSON</a></p>';
+
+$roadmapSummary = isset($roadmap['executive_summary']) && is_array($roadmap['executive_summary'])
+    ? $roadmap['executive_summary']
+    : array();
+$content .= '<ul>'
+    . '<li>New pillar opportunities: ' . (isset($roadmapSummary['new_pillar_opportunities']) ? (int) $roadmapSummary['new_pillar_opportunities'] : 0) . '</li>'
+    . '<li>Relation candidates: ' . (isset($roadmapSummary['relation_candidates']) ? (int) $roadmapSummary['relation_candidates'] : 0) . '</li>'
+    . '<li>Temporal review candidates: ' . (isset($roadmapSummary['temporal_review_candidates']) ? (int) $roadmapSummary['temporal_review_candidates'] : 0) . '</li>'
+    . '</ul>';
+
+$nextActions = isset($roadmap['prioritized_next_actions']) && is_array($roadmap['prioritized_next_actions'])
+    ? $roadmap['prioritized_next_actions']
+    : array();
+$content .= '<h3>Prioritized next actions</h3>';
+if (empty($nextActions)) {
+    $content .= '<p>No editorial action is currently suggested.</p>';
+} else {
+    $content .= '<ol>';
+    foreach (array_slice($nextActions, 0, 10) as $action) {
+        $identity = (isset($action['type']) ? $action['type'] : '')
+            . ':'
+            . (isset($action['id']) ? $action['id'] : '');
+        $content .= '<li><strong>'
+            . HUB_editorialAdminEscape(isset($action['reason']) ? $action['reason'] : '')
+            . '</strong> — <code>' . HUB_editorialAdminEscape($identity) . '</code>'
+            . ' (priority ' . (isset($action['priority']) ? (int) $action['priority'] : 0) . ')</li>';
+    }
+    $content .= '</ol>';
 }
 
 $content .= '<h2>Scope boundary</h2>';
