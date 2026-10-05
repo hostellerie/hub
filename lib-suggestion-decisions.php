@@ -13,9 +13,33 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 function HUB_normalizeSuggestionKind($kind)
 {
     $kind = strtolower(trim((string) $kind));
-    $allowed = array('relation', 'pillar');
+    $allowed = array('relation', 'pillar', 'close-content');
 
     return in_array($kind, $allowed, true) ? $kind : '';
+}
+
+/**
+ * Build a stable compact identity for an unordered content pair.
+ *
+ * @param string $leftType
+ * @param string $leftId
+ * @param string $rightType
+ * @param string $rightId
+ * @return string
+ */
+function HUB_suggestionPairId($leftType, $leftId, $rightType, $rightId)
+{
+    $left = HUB_normalizeObjectType($leftType) . ':' . HUB_normalizeObjectId($leftId);
+    $right = HUB_normalizeObjectType($rightType) . ':' . HUB_normalizeObjectId($rightId);
+
+    if ($left === ':' || $right === ':') {
+        return '';
+    }
+
+    $pair = array($left, $right);
+    sort($pair, SORT_STRING);
+
+    return sha1($pair[0] . "\n" . $pair[1]);
 }
 
 /**
