@@ -8,6 +8,8 @@ $hubEditorialPillars = array(
     array('id' => 3, 'source_type' => 'staticpages', 'source_id' => 'hub-c', 'is_enabled' => 1),
 );
 
+$hubHiddenSuggestions = array();
+
 $hubEditorialRelations = array(
     1 => array(
         array('item_type' => 'staticpages', 'item_id' => 'pillar-b', 'relation_role' => 'sub-pillar', 'is_enabled' => 1),
@@ -96,6 +98,13 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
             'date' => '2024-06-15 09:30:00',
         ),
     );
+}
+
+function HUB_isSuggestionHidden($kind, $pillarId, $itemType, $itemId)
+{
+    global $hubHiddenSuggestions;
+    $key = (string) $kind . ':' . (int) $pillarId . ':' . (string) $itemType . ':' . (string) $itemId;
+    return !empty($hubHiddenSuggestions[$key]);
 }
 
 function HUB_linkAuditStaticPages()
@@ -199,6 +208,16 @@ hubEditorialAssert($allSuggestions['pillar_candidates'][0]['id'] === 'new-pillar
 hubEditorialAssert($allSuggestions['pillar_candidates'][0]['score'] === 2, 'pillar candidate score is deterministic from matching published articles');
 hubEditorialAssert($allSuggestions['pillar_candidates'][0]['evidence'][0]['signal'] === 'shared-topic', 'pillar candidate retains shared-topic evidence');
 hubEditorialAssert($allSuggestions['pillar_candidates'][0]['evidence'][0]['matching_article_count'] === 2, 'pillar candidate exposes matching article count');
+
+$hubHiddenSuggestions['relation:1:article:story-new'] = true;
+$hiddenRelationSuggestions = HUB_editorialSuggestions(1, 10);
+hubEditorialAssert(empty($hiddenRelationSuggestions['pillars']), 'active relation decision suppresses candidate');
+unset($hubHiddenSuggestions['relation:1:article:story-new']);
+
+$hubHiddenSuggestions['pillar:0:staticpages:new-pillar'] = true;
+$hiddenPillarSuggestions = HUB_editorialSuggestions(0, 10);
+hubEditorialAssert(empty($hiddenPillarSuggestions['pillar_candidates']), 'active pillar decision suppresses pillar candidate');
+unset($hubHiddenSuggestions['pillar:0:staticpages:new-pillar']);
 
 $roadmap = HUB_editorialRoadmap(10);
 hubEditorialAssert($roadmap['schema'] === 1, 'editorial roadmap schema is explicit');
