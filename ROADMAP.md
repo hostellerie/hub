@@ -296,11 +296,11 @@ Remaining implementation target:
 - detect Static Pages whose public rendering changes when topic assignments are added or removed
 - detect Static Pages affected when an assigned topic is renamed, removed or otherwise changes its public label/URL
 - invalidate relevant Hub caches
-- maintain a dependency graph based on stable content identity
-- keep the dependency/editorial model graph-shaped rather than enforcing a single-parent tree: a content object may participate in several approved contexts
-- support multi-level editorial structures such as hub → pillar → sub-pillar → satellite and pillar → map → marker without changing source ownership
+- maintain a dependency graph based on stable content identity — implemented with cycle-safe bidirectional traversal over approved Hub relations
+- keep the dependency/editorial model graph-shaped rather than enforcing a single-parent tree: a content object may participate in several approved contexts — implemented by allowing one stable identity to resolve through multiple parent pillars
+- support multi-level editorial structures such as hub → pillar → sub-pillar → satellite and pillar → map → marker without changing source ownership — implemented structurally when a related object is itself registered as a pillar source
 - keep graph edges explicit and typed so a sub-pillar can itself be a pillar in another approved context
-- expose affected-page/context information through a reusable Hub service for administration and future external consumers — implemented as read-only `hub.affected.read`
+- expose affected-page/context information through reusable Hub services for administration and future external consumers — implemented as read-only `hub.affected.read` and `hub.context.read`
 
 Shared Hub capability targets from the Memorandum (advertise each capability only when its corresponding Hub-owned surface is implemented):
 
