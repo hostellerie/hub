@@ -300,6 +300,50 @@ if (empty($unconnectedProviders)) {
     }
 }
 
+$distribution = isset($summary['distribution']) && is_array($summary['distribution'])
+    ? $summary['distribution']
+    : array();
+$distributionProviders = isset($distribution['providers']) && is_array($distribution['providers'])
+    ? $distribution['providers']
+    : array();
+
+$content .= '<h2>Sitemap &amp; feed interoperability</h2>'
+    . '<p>This reports provider-owned distribution contracts only. Hub does not generate XML Sitemap or feed output.</p>';
+
+if (empty($distributionProviders)) {
+    $content .= '<p>No provider distribution context is currently available.</p>';
+} else {
+    $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
+        . '<th>Provider</th><th>Sitemap</th><th>Syndication</th><th>Review opportunities</th>'
+        . '</tr></thead><tbody>';
+
+    foreach ($distributionProviders as $provider => $providerData) {
+        $sitemap = isset($providerData['sitemap']) && is_array($providerData['sitemap'])
+            ? $providerData['sitemap']
+            : array();
+        $syndication = isset($providerData['syndication']) && is_array($providerData['syndication'])
+            ? $providerData['syndication']
+            : array();
+        $opportunities = isset($providerData['opportunities']) && is_array($providerData['opportunities'])
+            ? $providerData['opportunities']
+            : array();
+
+        $content .= '<tr><td><code>' . HUB_integrityAdminEscape($provider) . '</code></td>'
+            . '<td><code>' . HUB_integrityAdminEscape(
+                isset($sitemap['status']) ? $sitemap['status'] : 'not-detected'
+            ) . '</code></td>'
+            . '<td><code>' . HUB_integrityAdminEscape(
+                isset($syndication['status']) ? $syndication['status'] : 'not-declared'
+            ) . '</code></td>'
+            . '<td>' . (empty($opportunities)
+                ? '—'
+                : HUB_integrityAdminEscape(implode(', ', $opportunities)))
+            . '</td></tr>';
+    }
+
+    $content .= '</tbody></table>';
+}
+
 $content .= '<h2>Scope boundary</h2>'
     . '<p>This 0.9.0 diagnostic does not claim actual reciprocal-link presence for generic providers, '
     . 'global SEO orphan status, sitemap/feed coverage or opaque cluster-health scoring. '
