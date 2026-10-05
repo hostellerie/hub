@@ -185,7 +185,7 @@ Hub currently exposes these read-only administrator services through Geeklog's n
 
 These surfaces are protected by `hub.admin`. Hub advertises only capabilities whose service surface is implemented.
 
-Structural `relation_role` is intentionally separate from future editorial-function metadata such as `guide`, `tutorial`, `reference` or `case-study`.
+Structural `relation_role` is intentionally separate from optional `editorial_role`. Graph position remains `related`, `sub-pillar`, `satellite` or `support`, while editorial function can independently be `guide`, `tutorial`, `reference`, `case-study`, `download`, `video`, `discussion`, `resource`, `news` or `archive`. Editorial roles default to empty, are administrator-approved, and are never inferred automatically.
 
 The suggestion service never creates or changes a relationship. Each current candidate keeps stable `type + id`, a suggested structural role and explicit `shared-topic` evidence so the administrator can decide whether to approve it.
 
