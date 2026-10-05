@@ -43,6 +43,6 @@ hubSiteAssert($external['cross_site'] === true, 'different host is classified cr
 
 $source = file_get_contents(dirname(__DIR__) . '/lib-site-context.php');
 hubSiteAssert(strpos($source, 'HTTP_HOST') !== false, 'site context documents HTTP_HOST boundary');
-hubSiteAssert(strpos($source, "$_SERVER['HTTP_HOST']") === false, 'site context never reads HTTP_HOST');
+hubSiteAssert(strpos($source, '\$_SERVER[\'HTTP_HOST\']') === false, 'site context never reads HTTP_HOST');
 
 echo "Hub site context contract tests passed." . PHP_EOL;
