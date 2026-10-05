@@ -131,7 +131,7 @@ function HUB_graphIdentityKey($type, $id)
 function HUB_normalizeRelationRole($role)
 {
     $role = strtolower(trim((string) $role));
-    return in_array($role, array('related', 'sub-pillar', 'satellite', 'support'), true)
+    return in_array($role, array('related', 'sub-pillar', 'satellite', 'support', 'equivalent'), true)
         ? $role : 'related';
 }
 
