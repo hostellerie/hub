@@ -1,8 +1,8 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.8.0` (next implementation milestone)
+**Current development milestone:** `0.9.0` (in development)
 
-**Implemented baseline:** `0.7.0` provider-owned specialized rendering scope is complete in the current codebase.
+**Implemented baseline:** `0.8.0` discovery, editorial inventory, explainable suggestions, decisions and roadmap scope is complete in the current codebase.
 
 ## Vision
 
@@ -405,7 +405,7 @@ Completed 0.7.0 validation:
 - contract tests verify specialized output, ambiguity handling and generic fallback behavior;
 - Blocks/Autotags remain provider implementation details and Hub contains no copy of the Videos recommendation engine.
 
-## 0.8.0 — Discovery, editorial inventory and suggestions — in progress
+## 0.8.0 — Discovery, editorial inventory and suggestions — implemented
 
 ### Marketing/editorial mapping
 
@@ -436,8 +436,7 @@ The normalized editorial summary is therefore the first reusable "marketing mapp
 - treat articles, Static Pages, Maps objects (including maps and markers when exposed as resolvable content), Documents items, Videos items and Forum topics as first-class pillar satellites when their providers expose the shared Geeklog contracts
 - allow future content providers to participate without adding hard-coded Hub-only satellite types
 - expose a pillar → approved items structural inventory in administration and optionally through `hub.editorial.summary?include_inventory`; missing links and candidate content remain subsequent 0.8/0.9 layers
-- flag satellites that belong to a pillar but do not contain a contextual link back to it
-- flag pillars that do not point to their strongest or most useful approved satellites
+- reciprocal-link health and pillar/satellite outgoing-link coverage are intentionally handled in 0.9.0, not duplicated in the 0.8 editorial-suggestion layer
 - detect thematically close content that is not yet connected to the relevant pillar or cluster — first deterministic article-pair review implemented within Static Page pillar topic contexts using shared topics plus title-token Jaccard similarity
 - distinguish explicit Hub relations from inferred thematic proximity — implemented for shared-topic candidates by excluding already approved `type + id` identities
 - show why a candidate was detected: shared topics, keywords, related-items provider, existing links, engagement, or other transparent evidence — implemented first for `shared-topic`, with matched topic IDs/labels retained in candidate evidence
@@ -525,7 +524,7 @@ human/editorial decision
 Hub stores approved relationship
 ```
 
-## 0.9.0 — SEO, cluster health and integrity — planned
+## 0.9.0 — SEO, cluster health and integrity — in progress
 
 - extend the 0.1.1 link audit to saved Hub relationships and plugin-owned content across all supported providers
 - report cluster health per pillar across articles, Static Pages, Maps objects, Documents, Videos, Forum topics and future provider-owned content
