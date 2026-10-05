@@ -76,17 +76,17 @@ function HUB_normalizeEditorialRole($role)
         ? $role : '';
 }
 
-function plugin_collectSitemapItems_documents()
+function plugin_collectSitemapItems_maps()
 {
     return array();
 }
 
-function plugin_getfeednames_documents()
+function plugin_getfeednames_events()
 {
-    return array('documents');
+    return array('events');
 }
 
-function plugin_getfeedcontent_documents()
+function plugin_getfeedcontent_events()
 {
     return array();
 }
@@ -299,8 +299,8 @@ hubIntegrityAssert($distribution['scope'] === 'provider-distribution-contracts',
 hubIntegrityAssert($distribution['providers']['article']['sitemap']['status'] === 'core-owned', 'distribution diagnostics keep article ownership in Core');
 hubIntegrityAssert($distribution['providers']['article']['syndication']['status'] === 'core-owned', 'article syndication is not reassigned to Hub');
 hubIntegrityAssert($distribution['providers']['videos']['sitemap']['status'] === 'collection-fallback', 'collection-capable provider exposes sitemap fallback opportunity');
-hubIntegrityAssert($distribution['providers']['documents']['sitemap']['status'] === 'native-collector', 'native sitemap collector is preferred');
-hubIntegrityAssert($distribution['providers']['documents']['syndication']['status'] === 'native-callbacks', 'native feed callbacks are detected');
+hubIntegrityAssert($distribution['providers']['maps']['sitemap']['status'] === 'native-collector', 'native sitemap collector is preferred');
+hubIntegrityAssert($distribution['providers']['events']['syndication']['status'] === 'native-callbacks', 'native feed callbacks are detected');
 hubIntegrityAssert(in_array('review-syndication-if-content-is-feed-worthy', $distribution['providers']['videos']['opportunities'], true), 'feed review remains optional and content-dependent');
 hubIntegrityAssert(strpos($distribution['note'], 'not SEO failures') !== false, 'distribution opportunities are not reported as SEO failures');
 
