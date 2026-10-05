@@ -691,3 +691,300 @@ function HUB_editorialPillarCandidates($limit = 10)
 
     return array_slice($candidates, 0, max(1, (int) $limit));
 }
+
+
+/**
+ * Build a deterministic editorial roadmap from Hub-owned structure and
+ * explainable 0.8 suggestion signals.
+ *
+ * SEO/link-health diagnostics deliberately remain outside this model.
+ *
+ * @param int $candidateLimit
+ * @return array
+ */
+function HUB_editorialRoadmap($candidateLimit = 10)
+{
+    $candidateLimit = max(1, min(100, (int) $candidateLimit));
+    $summary = HUB_editorialSummary(false);
+    $inventory = HUB_editorialInventory(false);
+    $suggestions = HUB_editorialSuggestions(0, $candidateLimit);
+
+    $suggestionsByPillar = array();
+    if (!empty($suggestions['pillars']) && is_array($suggestions['pillars'])) {
+        foreach ($suggestions['pillars'] as $row) {
+            if (is_array($row) && !empty($row['pillar_id'])) {
+                $suggestionsByPillar[(int) $row['pillar_id']] = $row;
+            }
+        }
+    }
+
+    $existingPillars = array();
+    $temporalReview = array();
+    $actions = array();
+
+    $inventoryPillars = isset($inventory['pillars']) && is_array($inventory['pillars'])
+        ? $inventory['pillars']
+        : array();
+
+    foreach ($inventoryPillars as $pillar) {
+        if (!is_array($pillar) || empty($pillar['pillar_id'])) {
+            continue;
+        }
+
+        $pillarId = (int) $pillar['pillar_id'];
+        $candidateRow = isset($suggestionsByPillar[$pillarId])
+            ? $suggestionsByPillar[$pillarId]
+            : array('candidates' => array());
+        $candidates = isset($candidateRow['candidates']) && is_array($candidateRow['candidates'])
+            ? $candidateRow['candidates']
+            : array();
+
+        $existingPillars[] = array(
+            'pillar_id' => $pillarId,
+            'source_type' => isset($pillar['source_type']) ? (string) $pillar['source_type'] : '',
+            'source_id' => isset($pillar['source_id']) ? (string) $pillar['source_id'] : '',
+            'approved_items' => isset($pillar['items']) && is_array($pillar['items'])
+                ? count($pillar['items'])
+                : 0,
+            'strongest_candidates' => array_slice($candidates, 0, 5),
+        );
+
+        foreach ($candidates as $candidate) {
+            if (!is_array($candidate)) {
+                continue;
+            }
+
+            $reviewEvidence = array();
+            if (!empty($candidate['evidence']) && is_array($candidate['evidence'])) {
+                foreach ($candidate['evidence'] as $evidence) {
+                    if (is_array($evidence)
+                        && isset($evidence['signal'])
+                        && $evidence['signal'] === 'temporal-marker'
+                        && !empty($evidence['review_recommended'])
+                    ) {
+                        $reviewEvidence = $evidence;
+                        break;
+                    }
+                }
+            }
+
+            if (!empty($reviewEvidence)) {
+                $temporalReview[] = array(
+                    'pillar_id' => $pillarId,
+                    'type' => isset($candidate['type']) ? (string) $candidate['type'] : '',
+                    'id' => isset($candidate['id']) ? (string) $candidate['id'] : '',
+                    'title' => isset($candidate['title']) ? (string) $candidate['title'] : '',
+                    'review_reasons' => isset($reviewEvidence['review_reasons'])
+                        ? $reviewEvidence['review_reasons']
+                        : array(),
+                    'older_year_markers' => isset($reviewEvidence['older_year_markers'])
+                        ? $reviewEvidence['older_year_markers']
+                        : array(),
+                    'version_markers' => isset($reviewEvidence['version_markers'])
+                        ? $reviewEvidence['version_markers']
+                        : array(),
+                );
+            }
+
+            $actions[] = array(
+                'kind' => 'review-relation-candidate',
+                'pillar_id' => $pillarId,
+                'type' => isset($candidate['type']) ? (string) $candidate['type'] : '',
+                'id' => isset($candidate['id']) ? (string) $candidate['id'] : '',
+                'title' => isset($candidate['title']) ? (string) $candidate['title'] : '',
+                'priority' => isset($candidate['score']) ? (int) $candidate['score'] : 0,
+                'reason' => 'Shared-topic editorial candidate',
+            );
+        }
+    }
+
+    $pillarCandidates = isset($suggestions['pillar_candidates']) && is_array($suggestions['pillar_candidates'])
+        ? $suggestions['pillar_candidates']
+        : array();
+
+    foreach ($pillarCandidates as $candidate) {
+        if (!is_array($candidate)) {
+            continue;
+        }
+
+        $actions[] = array(
+            'kind' => 'review-pillar-candidate',
+            'pillar_id' => 0,
+            'type' => isset($candidate['type']) ? (string) $candidate['type'] : '',
+            'id' => isset($candidate['id']) ? (string) $candidate['id'] : '',
+            'title' => isset($candidate['title']) ? (string) $candidate['title'] : '',
+            'priority' => isset($candidate['score']) ? (int) $candidate['score'] : 0,
+            'reason' => 'Static Page with shared-topic article coverage',
+        );
+    }
+
+    usort($actions, function ($left, $right) {
+        if ((int) $left['priority'] !== (int) $right['priority']) {
+            return (int) $left['priority'] > (int) $right['priority'] ? -1 : 1;
+        }
+
+        $kindCompare = strcmp((string) $left['kind'], (string) $right['kind']);
+        if ($kindCompare !== 0) {
+            return $kindCompare;
+        }
+
+        return strcmp(
+            (string) $left['type'] . ':' . (string) $left['id'],
+            (string) $right['type'] . ':' . (string) $right['id']
+        );
+    });
+
+    return array(
+        'schema' => 1,
+        'scope' => 'editorial-0.8',
+        'executive_summary' => array(
+            'pillars' => isset($summary['pillars']) ? (int) $summary['pillars'] : 0,
+            'approved_relations' => isset($summary['relations']) ? (int) $summary['relations'] : 0,
+            'new_pillar_opportunities' => count($pillarCandidates),
+            'relation_candidates' => count($actions) - count($pillarCandidates),
+            'temporal_review_candidates' => count($temporalReview),
+        ),
+        'existing_pillars' => $existingPillars,
+        'new_pillar_opportunities' => $pillarCandidates,
+        'temporal_review_candidates' => $temporalReview,
+        'prioritized_next_actions' => $actions,
+        'deferred_diagnostics' => array(
+            'missing-reciprocal-links',
+            'orphan-content',
+            'broken-or-unresolved-relations',
+            'canonical-consistency',
+            'cluster-health',
+        ),
+    );
+}
+
+/**
+ * Render the 0.8 editorial roadmap as portable Markdown.
+ *
+ * @param array $roadmap
+ * @return string
+ */
+function HUB_editorialRoadmapMarkdown($roadmap)
+{
+    $roadmap = is_array($roadmap) ? $roadmap : array();
+    $summary = isset($roadmap['executive_summary']) && is_array($roadmap['executive_summary'])
+        ? $roadmap['executive_summary']
+        : array();
+
+    $lines = array(
+        '# Editorial roadmap',
+        '',
+        '## Executive summary',
+        '',
+        '- Pillars: ' . (isset($summary['pillars']) ? (int) $summary['pillars'] : 0),
+        '- Approved relations: ' . (isset($summary['approved_relations']) ? (int) $summary['approved_relations'] : 0),
+        '- New pillar opportunities: ' . (isset($summary['new_pillar_opportunities']) ? (int) $summary['new_pillar_opportunities'] : 0),
+        '- Relation candidates: ' . (isset($summary['relation_candidates']) ? (int) $summary['relation_candidates'] : 0),
+        '- Temporal review candidates: ' . (isset($summary['temporal_review_candidates']) ? (int) $summary['temporal_review_candidates'] : 0),
+        '',
+        '## Existing pillars',
+        '',
+    );
+
+    $pillars = isset($roadmap['existing_pillars']) && is_array($roadmap['existing_pillars'])
+        ? $roadmap['existing_pillars']
+        : array();
+
+    if (empty($pillars)) {
+        $lines[] = '_No enabled pillar._';
+    } else {
+        foreach ($pillars as $pillar) {
+            $identity = (isset($pillar['source_type']) ? $pillar['source_type'] : '')
+                . ':' . (isset($pillar['source_id']) ? $pillar['source_id'] : '');
+            $lines[] = '### ' . $identity;
+            $lines[] = '';
+            $lines[] = '- Approved items: ' . (isset($pillar['approved_items']) ? (int) $pillar['approved_items'] : 0);
+
+            $candidates = isset($pillar['strongest_candidates']) && is_array($pillar['strongest_candidates'])
+                ? $pillar['strongest_candidates']
+                : array();
+            if (!empty($candidates)) {
+                $lines[] = '- Strongest candidates:';
+                foreach ($candidates as $candidate) {
+                    $candidateIdentity = (isset($candidate['type']) ? $candidate['type'] : '')
+                        . ':' . (isset($candidate['id']) ? $candidate['id'] : '');
+                    $title = isset($candidate['title']) && (string) $candidate['title'] !== ''
+                        ? ' — ' . $candidate['title']
+                        : '';
+                    $lines[] = '  - ' . $candidateIdentity . $title
+                        . ' (score ' . (isset($candidate['score']) ? (int) $candidate['score'] : 0) . ')';
+                }
+            }
+            $lines[] = '';
+        }
+    }
+
+    $lines[] = '## New pillar opportunities';
+    $lines[] = '';
+    $pillarCandidates = isset($roadmap['new_pillar_opportunities']) && is_array($roadmap['new_pillar_opportunities'])
+        ? $roadmap['new_pillar_opportunities']
+        : array();
+    if (empty($pillarCandidates)) {
+        $lines[] = '_None detected._';
+    } else {
+        foreach ($pillarCandidates as $candidate) {
+            $identity = (isset($candidate['type']) ? $candidate['type'] : '')
+                . ':' . (isset($candidate['id']) ? $candidate['id'] : '');
+            $lines[] = '- ' . $identity . ' — '
+                . (isset($candidate['title']) ? $candidate['title'] : '')
+                . ' (score ' . (isset($candidate['score']) ? (int) $candidate['score'] : 0) . ')';
+        }
+    }
+
+    $lines[] = '';
+    $lines[] = '## Temporal review candidates';
+    $lines[] = '';
+    $temporal = isset($roadmap['temporal_review_candidates']) && is_array($roadmap['temporal_review_candidates'])
+        ? $roadmap['temporal_review_candidates']
+        : array();
+    if (empty($temporal)) {
+        $lines[] = '_None detected._';
+    } else {
+        foreach ($temporal as $item) {
+            $identity = (isset($item['type']) ? $item['type'] : '')
+                . ':' . (isset($item['id']) ? $item['id'] : '');
+            $reasons = isset($item['review_reasons']) && is_array($item['review_reasons'])
+                ? implode(', ', $item['review_reasons'])
+                : '';
+            $lines[] = '- ' . $identity . ' — '
+                . (isset($item['title']) ? $item['title'] : '')
+                . ($reasons !== '' ? ' (' . $reasons . ')' : '');
+        }
+    }
+
+    $lines[] = '';
+    $lines[] = '## Prioritized next actions';
+    $lines[] = '';
+    $actions = isset($roadmap['prioritized_next_actions']) && is_array($roadmap['prioritized_next_actions'])
+        ? $roadmap['prioritized_next_actions']
+        : array();
+    if (empty($actions)) {
+        $lines[] = '_No editorial action suggested._';
+    } else {
+        foreach ($actions as $action) {
+            $identity = (isset($action['type']) ? $action['type'] : '')
+                . ':' . (isset($action['id']) ? $action['id'] : '');
+            $lines[] = '- [' . (isset($action['priority']) ? (int) $action['priority'] : 0) . '] '
+                . (isset($action['reason']) ? $action['reason'] : '')
+                . ' — ' . $identity;
+        }
+    }
+
+    $lines[] = '';
+    $lines[] = '## Deferred diagnostics';
+    $lines[] = '';
+    $lines[] = 'The following belong to Hub 0.9.0 and are not inferred by this 0.8 roadmap:';
+    $deferred = isset($roadmap['deferred_diagnostics']) && is_array($roadmap['deferred_diagnostics'])
+        ? $roadmap['deferred_diagnostics']
+        : array();
+    foreach ($deferred as $item) {
+        $lines[] = '- ' . $item;
+    }
+
+    return implode("\\n", $lines) . "\\n";
+}
