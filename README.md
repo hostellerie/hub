@@ -38,7 +38,7 @@ For Core articles, Hub also renders one reciprocal backlink to each enabled pill
 
 Hub's generic `plugin_itemdisplay_hub()` backlink path is prepared for Forum, Documents, Videos, Maps, MediaGallery and Polls. When one of those providers calls `PLG_itemDisplay($id, $type)` on its full public item view, Hub can render the reciprocal pillar backlink without any provider-specific dependency. Articles and Static Pages keep their dedicated Hub integration paths to avoid duplicate output.
 
-The **Find suggestions** mode adds a deliberately small 0.3.0 editorial aid. Hub can suggest Static Pages as pillar candidates when they have specific Geeklog topics with matching published articles, and can suggest article relations for an existing Static Page pillar when those articles share one or more specific topics. Each suggestion explains the topic signal and requires an explicit **Add** action. This does not replace the broader cross-plugin discovery and ranking work planned for 0.8.0.
+The original **Find suggestions** mode introduced the first topic-based editorial aid. Hub 0.8.0 has since generalized this into deterministic editorial inventory, explainable relation/pillar suggestions, close-content review, content-gap opportunities, persisted editorial decisions and roadmap exports.
 
 All Hub administration pages share the same navigation between the Hub home, pillars/relations, interoperability audit and article link audit.
 
@@ -50,7 +50,7 @@ Hub also exposes `plugin_itemdisplay_hub()`. When a core or plugin content rende
 
 Core articles are handled without a Core patch: Geeklog already calls `PLG_templateSetVars()` for full story templates and exposes `story_id` / `story_display_type`. Hub uses that generic hook only on full article pages and appends the **Part of / Dans ce dossier** backlink to the prepared story body variables used by Geeklog themes. This avoids relying on late footer variables whose rendering differs across Geeklog 2.1.1 themes, while keeping the backlink server-rendered and crawlable. Forum, Documents, Videos and Maps currently do not expose an equivalent generic public placement hook in the reviewed source, so Hub does not inject backlinks into them through JavaScript or private-table logic.
 
-The SEO value comes from the resulting HTML links, not from the database relationship alone: approved relationships become an explicit internal-link graph between a central pillar and complementary content. A future optional relationship-role field may classify links as guide, tutorial, video, download, discussion, case study or reference so public navigation can be grouped semantically without changing the stable `type + id` identity.
+The SEO value comes from the resulting HTML links, not from the database relationship alone: approved relationships become an explicit internal-link graph between a central pillar and complementary content. Hub now keeps graph structure and editorial function separate: `relation_role` describes structural position (`related`, `sub-pillar`, `satellite`, `support`), while optional `editorial_role` describes functions such as guide, tutorial, video, download, discussion, case study or reference without changing the stable `type + id` identity.
 
 ## Article link audit (introduced in 0.1.1)
 
@@ -211,7 +211,7 @@ When IndexNow exposes the `indexnow.urls.submit` capability, Hub submits only ad
 
 ## Development archive
 
-The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.8.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.9.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
 
 
 ## Editorial roadmap exports
