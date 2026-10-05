@@ -808,6 +808,8 @@ if (strpos($integrityAdminSource, 'HUB_integritySummary(0)') === false
     || strpos($integrityAdminSource, 'Backlink integration evidence') === false
     || strpos($integrityAdminSource, 'integration-available') === false
     || strpos($integrityAdminSource, 'runtime backlink output is not asserted') === false
+    || strpos($integrityAdminSource, 'Pillar health') === false
+    || strpos($integrityAdminSource, 'Integrity issues') === false
     || strpos($adminUiSource, "'integrity' => array('integrity.php', 'Integrity & cluster health')") === false
 ) {
     fwrite(STDERR, "Hub integrity administration contract missing\n");
