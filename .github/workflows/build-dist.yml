@@ -102,6 +102,7 @@ jobs:
             hub/services.inc.php \
             hub/install_updates.php \
             hub/admin/relations.php \
+            hub/admin/integrity.php \
             hub/sql/mysql_install.php \
             hub/public_html/hub.css
           do
