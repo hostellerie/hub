@@ -335,3 +335,17 @@ Hub 0.10.0 keeps site language and object language separate.
 For one provider-owned object, `HUB_objectLanguageContext()` accepts an object language only when the owning provider explicitly returns a non-empty `language` value through Item Info. When the provider does not expose that metadata, Hub reports the object language as unknown while still exposing the active Geeklog site language as context.
 
 Hub does not infer an object's language from its domain, URL, slug, stable ID, or the active site's configured language. No object-language value is persisted by Hub.
+
+
+### Equivalent-content relations
+
+Hub 0.10.0 adds the structural relation role `equivalent` for administrator-approved equivalent content. Hub never infers this relationship automatically.
+
+For an approved equivalent relation, integrity diagnostics report two independent dimensions:
+
+- language evidence: `cross-language`, `same-language-review`, or `language-unverified`;
+- site evidence: `cross-site`, `current-site`, or `unknown`.
+
+The language status uses only provider-owned object language metadata when available. The site status uses resolved public URLs against the active Geeklog site context.
+
+These diagnostics do not generate `hreflang`, choose a canonical translation, or manage translation workflows. Those responsibilities remain with the owning SEO/content layer.
