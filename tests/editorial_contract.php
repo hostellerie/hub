@@ -87,7 +87,9 @@ function HUB_linkAuditArticlesByTopics(array $topicIds)
         ),
         array(
             'sid' => 'story-new',
-            'title' => 'Candidate story',
+            'title' => 'Candidate story 2024 for version 26.8',
+            'introtext' => 'Migration notes for v1.5.0.',
+            'bodytext' => '',
             'hub_topics' => array('seo' => 'SEO', 'content' => 'Content'),
             'hits' => 250,
             'comments' => 9,
@@ -160,8 +162,35 @@ hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['ranking']['comme
 hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['ranking']['published_year'] === 2024, 'candidate exposes publication year');
 hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][1]['signal'] === 'engagement', 'candidate keeps engagement as transparent evidence');
 hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][2]['signal'] === 'publication-date', 'candidate keeps publication date as transparent evidence');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][3]['signal'] === 'temporal-marker', 'candidate carries temporal-marker evidence');
+hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][3]['review_recommended'] === true, 'candidate temporal markers recommend human review');
 hubEditorialAssert(in_array('engagement', $suggestions['ranking_signals'], true), 'suggestion payload declares engagement ranking signal');
 hubEditorialAssert(in_array('publication-date', $suggestions['ranking_signals'], true), 'suggestion payload declares publication-date ranking signal');
+hubEditorialAssert(in_array('older-year-marker', $suggestions['review_signals'], true), 'suggestion payload declares older year review signal');
+hubEditorialAssert(in_array('version-marker', $suggestions['review_signals'], true), 'suggestion payload declares version review signal');
+
+$temporal = HUB_editorialTemporalSignals(array(
+    'title' => 'LibreOffice 2024 and 26.8',
+    'introtext' => 'Upgrade notes for v1.5.0',
+    'bodytext' => '',
+    'date' => '2023-05-01 10:00:00',
+), 2026);
+hubEditorialAssert($temporal['publication_age_years'] === 3, 'temporal signal exposes publication age');
+hubEditorialAssert($temporal['explicit_years'] === array(2024), 'temporal signal extracts explicit year markers');
+hubEditorialAssert(in_array('26.8', $temporal['version_markers'], true), 'temporal signal extracts two-part version markers');
+hubEditorialAssert(in_array('v1.5.0', $temporal['version_markers'], true), 'temporal signal extracts prefixed semantic versions');
+hubEditorialAssert($temporal['review_recommended'] === true, 'older year/version markers recommend editorial review');
+hubEditorialAssert(in_array('older-year-marker', $temporal['review_reasons'], true), 'older year reason is explicit');
+hubEditorialAssert(in_array('version-marker', $temporal['review_reasons'], true), 'version reason is explicit');
+
+$temporalNeutral = HUB_editorialTemporalSignals(array(
+    'title' => 'Evergreen guide',
+    'introtext' => 'General principles without dated markers',
+    'bodytext' => '',
+    'date' => '2025-01-01 00:00:00',
+), 2026);
+hubEditorialAssert($temporalNeutral['review_recommended'] === false, 'publication age alone does not mark evergreen content for review');
+hubEditorialAssert(empty($temporalNeutral['review_reasons']), 'neutral content has no temporal review reason');
 
 $allSuggestions = HUB_editorialSuggestions(0, 10);
 hubEditorialAssert(isset($allSuggestions['pillar_candidates']), 'global suggestions expose pillar candidates');
