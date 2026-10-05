@@ -344,14 +344,33 @@ if ($showSuggestions) {
                 . HUB_relAdminEscape($suggestion['title']) . '</strong><br><code>'
                 . HUB_relAdminEscape($suggestion['id']) . '</code></div><div class="hub-rel-reason">'
                 . HUB_relAdminEscape(implode(', ', $suggestion['topics'])) . '<br>'
-                . HUB_relAdminEscape($reason) . '</div><form method="post" action="relations.php">'
+                . HUB_relAdminEscape($reason) . '</div><div class="hub-rel-actions">'
+                . '<form method="post" action="relations.php">'
                 . HUB_relAdminTokenField()
                 . '<input type="hidden" name="hub_action" value="save_pillar">'
                 . '<input type="hidden" name="pillar_id" value="0">'
                 . '<input type="hidden" name="source_id" value="' . HUB_relAdminEscape($suggestion['id']) . '">'
-
                 . '<input type="hidden" name="is_enabled" value="1">'
-                . '<button type="submit" class="uk-button">Add as pillar</button></form></div>';
+                . '<button type="submit" class="uk-button">Add as pillar</button></form>'
+                . '<form method="post" action="relations.php?suggest=1">'
+                . HUB_relAdminTokenField()
+                . '<input type="hidden" name="hub_action" value="suggestion_decision">'
+                . '<input type="hidden" name="suggestion_kind" value="pillar">'
+                . '<input type="hidden" name="pillar_id" value="0">'
+                . '<input type="hidden" name="item_type" value="staticpages">'
+                . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($suggestion['id']) . '">'
+                . '<input type="hidden" name="decision_action" value="defer">'
+                . '<button type="submit" class="uk-button">Defer 30 days</button></form>'
+                . '<form method="post" action="relations.php?suggest=1">'
+                . HUB_relAdminTokenField()
+                . '<input type="hidden" name="hub_action" value="suggestion_decision">'
+                . '<input type="hidden" name="suggestion_kind" value="pillar">'
+                . '<input type="hidden" name="pillar_id" value="0">'
+                . '<input type="hidden" name="item_type" value="staticpages">'
+                . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($suggestion['id']) . '">'
+                . '<input type="hidden" name="decision_action" value="dismiss">'
+                . '<button type="submit" class="uk-button">Dismiss</button></form>'
+                . '</div></div>';
         }
     }
     $content .= '</div>';
@@ -540,7 +559,7 @@ if (empty($pillars)) {
                         . HUB_relAdminEscape(implode(', ', $topics))
                         . '<br>' . HUB_relAdminEscape($rankingNote)
                         . $reviewNote
-                        . '</div><form method="post" action="relations.php">'
+                        . '</div><div class="hub-rel-actions"><form method="post" action="relations.php">'
                         . HUB_relAdminTokenField()
                         . '<input type="hidden" name="hub_action" value="save_relation">'
                         . '<input type="hidden" name="relation_id" value="0">'
@@ -550,7 +569,26 @@ if (empty($pillars)) {
                         . '<input type="hidden" name="position" value="' . (int) $suggestionPosition . '">'
                         . '<input type="hidden" name="relation_role" value="satellite">'
                         . '<input type="hidden" name="is_enabled" value="1">'
-                        . '<button type="submit" class="uk-button">Add relation</button></form></div>';
+                        . '<button type="submit" class="uk-button">Add relation</button></form>'
+                        . '<form method="post" action="relations.php?suggest=1">'
+                        . HUB_relAdminTokenField()
+                        . '<input type="hidden" name="hub_action" value="suggestion_decision">'
+                        . '<input type="hidden" name="suggestion_kind" value="relation">'
+                        . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
+                        . '<input type="hidden" name="item_type" value="article">'
+                        . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($sid) . '">'
+                        . '<input type="hidden" name="decision_action" value="defer">'
+                        . '<button type="submit" class="uk-button">Defer 30 days</button></form>'
+                        . '<form method="post" action="relations.php?suggest=1">'
+                        . HUB_relAdminTokenField()
+                        . '<input type="hidden" name="hub_action" value="suggestion_decision">'
+                        . '<input type="hidden" name="suggestion_kind" value="relation">'
+                        . '<input type="hidden" name="pillar_id" value="' . (int) $pillar['id'] . '">'
+                        . '<input type="hidden" name="item_type" value="article">'
+                        . '<input type="hidden" name="item_id" value="' . HUB_relAdminEscape($sid) . '">'
+                        . '<input type="hidden" name="decision_action" value="dismiss">'
+                        . '<button type="submit" class="uk-button">Dismiss</button></form>'
+                        . '</div></div>';
                     $suggestionPosition += 10;
                 }
             }
