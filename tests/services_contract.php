@@ -83,6 +83,23 @@ function HUB_editorialSuggestions($pillarId = 0, $limit = 20)
     return array(
         'schema' => 1,
         'generated_from' => array('shared-topic'),
+        'pillar_candidates' => $pillarId > 0 ? array() : array(
+            array(
+                'type' => 'staticpages',
+                'id' => 'new-pillar',
+                'title' => 'New pillar candidate',
+                'score' => 2,
+                'evidence' => array(
+                    array(
+                        'signal' => 'shared-topic',
+                        'topics' => array(
+                            array('id' => 'seo', 'label' => 'SEO'),
+                        ),
+                        'matching_article_count' => 2,
+                    ),
+                ),
+            ),
+        ),
         'pillars' => array(
             array(
                 'pillar_id' => 7,
@@ -267,6 +284,14 @@ hubServiceAssert($status === PLG_RET_OK, 'suggestions read returns OK');
 hubServiceAssert($output['capability'] === 'hub.suggestions.read', 'suggestions service identifies its capability');
 hubServiceAssert($output['suggestions']['generated_from'] === array('shared-topic'), 'suggestions service keeps evidence source explicit');
 hubServiceAssert($output['suggestions']['pillars'][0]['candidates'][0]['id'] === 'story-2', 'suggestions service returns stable candidate identity');
+hubServiceAssert(empty($output['suggestions']['pillar_candidates']), 'pillar-scoped suggestions omit global pillar candidates');
+
+$output = null;
+$messages = null;
+$status = service_suggestions_read_hub(array('limit' => 5), $output, $messages);
+hubServiceAssert($status === PLG_RET_OK, 'global suggestions read returns OK');
+hubServiceAssert(count($output['suggestions']['pillar_candidates']) === 1, 'global suggestions expose pillar candidates');
+hubServiceAssert($output['suggestions']['pillar_candidates'][0]['id'] === 'new-pillar', 'pillar candidate keeps stable Static Page identity');
 
 $functionsSource = file_get_contents(dirname(__DIR__) . '/functions.inc');
 hubServiceAssert(strpos($functionsSource, 'function plugin_wsEnabled_hub()') !== false, 'Hub enables the native service dispatcher');
