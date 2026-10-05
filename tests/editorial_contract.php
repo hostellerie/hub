@@ -200,6 +200,23 @@ hubEditorialAssert($allSuggestions['pillar_candidates'][0]['score'] === 2, 'pill
 hubEditorialAssert($allSuggestions['pillar_candidates'][0]['evidence'][0]['signal'] === 'shared-topic', 'pillar candidate retains shared-topic evidence');
 hubEditorialAssert($allSuggestions['pillar_candidates'][0]['evidence'][0]['matching_article_count'] === 2, 'pillar candidate exposes matching article count');
 
+$roadmap = HUB_editorialRoadmap(10);
+hubEditorialAssert($roadmap['schema'] === 1, 'editorial roadmap schema is explicit');
+hubEditorialAssert($roadmap['scope'] === 'editorial-0.8', 'editorial roadmap declares its 0.8 scope');
+hubEditorialAssert($roadmap['executive_summary']['pillars'] === 3, 'editorial roadmap reuses structural summary');
+hubEditorialAssert($roadmap['executive_summary']['new_pillar_opportunities'] === 1, 'editorial roadmap exposes new pillar opportunities');
+hubEditorialAssert(!empty($roadmap['existing_pillars']), 'editorial roadmap exposes existing pillars');
+hubEditorialAssert(!empty($roadmap['prioritized_next_actions']), 'editorial roadmap exposes prioritized next actions');
+hubEditorialAssert(in_array('cluster-health', $roadmap['deferred_diagnostics'], true), '0.9 cluster health stays explicitly deferred');
+hubEditorialAssert(in_array('canonical-consistency', $roadmap['deferred_diagnostics'], true), '0.9 canonical diagnostics stay explicitly deferred');
+
+$markdown = HUB_editorialRoadmapMarkdown($roadmap);
+hubEditorialAssert(strpos($markdown, '# Editorial roadmap') !== false, 'roadmap Markdown has stable title');
+hubEditorialAssert(strpos($markdown, '## Existing pillars') !== false, 'roadmap Markdown exposes existing pillars');
+hubEditorialAssert(strpos($markdown, '## New pillar opportunities') !== false, 'roadmap Markdown exposes pillar opportunities');
+hubEditorialAssert(strpos($markdown, '## Prioritized next actions') !== false, 'roadmap Markdown exposes prioritized actions');
+hubEditorialAssert(strpos($markdown, '## Deferred diagnostics') !== false, 'roadmap Markdown states deferred diagnostics');
+
 $source = file_get_contents(dirname(__DIR__) . '/lib-editorial.php');
 $summaryStart = strpos($source, 'function HUB_editorialSummary(');
 $summaryEnd = strpos($source, 'function HUB_editorialInventory(', $summaryStart);
@@ -215,6 +232,9 @@ $adminSource = file_get_contents(dirname(__DIR__) . '/admin/editorial.php');
 hubEditorialAssert(strpos($adminSource, 'Approved relation inventory') !== false, 'editorial admin exposes approved structural inventory');
 hubEditorialAssert(strpos($adminSource, 'HUB_editorialInventory(false)') !== false, 'editorial admin reads the shared inventory model');
 hubEditorialAssert(strpos($adminSource, 'HUB_saveRelation(') === false, 'editorial mapping view remains read-only');
+hubEditorialAssert(strpos($adminSource, 'editorial.php?export=md') !== false, 'editorial admin exposes Markdown roadmap export');
+hubEditorialAssert(strpos($adminSource, 'editorial.php?export=json') !== false, 'editorial admin exposes JSON roadmap export');
+hubEditorialAssert(strpos($adminSource, 'Editorial roadmap preview') !== false, 'editorial admin exposes roadmap preview');
 $relationsAdminSource = file_get_contents(dirname(__DIR__) . '/admin/relations.php');
 hubEditorialAssert(strpos($relationsAdminSource, 'Review signal:') !== false, 'temporal review signals are visible in relation suggestions');
 hubEditorialAssert(strpos($relationsAdminSource, 'dated marker:') !== false, 'relation suggestions explain dated marker evidence');
