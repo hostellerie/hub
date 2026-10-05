@@ -1094,9 +1094,8 @@ function HUB_renderItemPillarBacklinks($itemType, $itemId)
             continue;
         }
 
-        // Public backlink anchors should describe the actual target page.
-        // Keep title_override for Hub administration/pillar presentation, but
-        // do not let it silently replace the resolved source title in links.
+        // Public backlink anchors describe the actual provider-owned target.
+        // Hub resolves the current title dynamically and stores no title copy.
         $title = (string) $resolved['title'];
         if ($title === '') {
             $title = (string) $pillar['source_id'];
