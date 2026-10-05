@@ -207,6 +207,14 @@ hubIntegrityAssert($pillar['reciprocal']['fragment_available_runtime_unverified'
 hubIntegrityAssert($pillar['relations'][0]['reciprocal_evidence']['status'] === 'hub-rendered', 'article relation exposes verified reciprocal evidence');
 hubIntegrityAssert($pillar['relations'][0]['editorial_role'] === 'tutorial', 'integrity keeps optional editorial role');
 hubIntegrityAssert($pillar['relations'][1]['backlink_evidence']['verification'] === 'integration-available', 'generic provider is not reported as runtime backlink');
+hubIntegrityAssert($pillar['health']['status'] === 'broken', 'pillar health is broken when an approved target is unresolved');
+hubIntegrityAssert(!empty($pillar['health']['issues']), 'pillar health keeps explicit issue reasons');
+$issueCodes = array();
+foreach ($pillar['health']['issues'] as $issue) {
+    $issueCodes[] = $issue['code'];
+}
+hubIntegrityAssert(in_array('relation-target-unresolved', $issueCodes, true), 'broken pillar explains unresolved target issue');
+hubIntegrityAssert(in_array('reciprocal-link-runtime-unverified', $issueCodes, true), 'pillar explains runtime-unverified reciprocal links');
 
 $summary = HUB_integritySummary(0);
 hubIntegrityAssert($summary['schema'] === 1, 'integrity summary schema is explicit');
@@ -217,6 +225,7 @@ hubIntegrityAssert($summary['unresolved_relations'] === 1, 'integrity summary ag
 hubIntegrityAssert($summary['providers']['maps']['unresolved'] === 1, 'integrity summary aggregates provider unresolved state');
 hubIntegrityAssert($summary['providers']['videos']['resolved'] === 1, 'integrity summary aggregates provider resolved state');
 hubIntegrityAssert($summary['backlink']['integration_available'] === 2, 'integrity summary aggregates integration evidence');
+hubIntegrityAssert($summary['health']['broken'] === 1, 'integrity summary aggregates broken pillar status');
 hubIntegrityAssert($summary['reciprocal']['hub_rendered'] === 1, 'integrity summary aggregates verified reciprocal links');
 hubIntegrityAssert($summary['reciprocal']['fragment_available_runtime_unverified'] === 1, 'integrity summary preserves unverified generic fragment distinction');
 
