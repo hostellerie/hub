@@ -259,7 +259,7 @@ Implemented foundation:
 
 **0.4.0 functional scope is complete.** Additional provider-specific public placement belongs to shared provider interoperability work, not to a Hub-only fallback.
 
-Relationship-role evolution to prepare before richer grouped rendering:
+Relationship-role evolution before richer grouped rendering:
 
 - keep the stable relationship identity as `type + id`
 - optionally add editorial role metadata such as `guide`, `tutorial`, `video`, `download`, `discussion`, `case-study` or `reference`
@@ -299,7 +299,7 @@ Remaining implementation target:
 - maintain a dependency graph based on stable content identity — implemented with cycle-safe bidirectional traversal over approved Hub relations
 - keep the dependency/editorial model graph-shaped rather than enforcing a single-parent tree: a content object may participate in several approved contexts — implemented by allowing one stable identity to resolve through multiple parent pillars
 - support multi-level editorial structures such as hub → pillar → sub-pillar → satellite and pillar → map → marker without changing source ownership — implemented structurally when a related object is itself registered as a pillar source
-- keep graph edges explicit and typed so a sub-pillar can itself be a pillar in another approved context
+- keep graph edges explicit and typed so a sub-pillar can itself be a pillar in another approved context — implemented with Hub-owned `relation_role` values `related`, `sub-pillar`, `satellite` and `support`; editorial-function metadata remains a separate future concern
 - expose affected-page/context information through reusable Hub services for administration and future external consumers — implemented as read-only `hub.affected.read`, `hub.context.read`, `hub.related.read` and `hub.pillar.read`
 
 Shared Hub capability targets from the Memorandum (advertise each capability only when its corresponding Hub-owned surface is implemented):
