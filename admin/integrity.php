@@ -169,7 +169,7 @@ if (empty($pillars)) {
         }
 
         $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
-            . '<th>Identity</th><th>Structural</th><th>Editorial</th><th>Target</th><th>Site</th><th>Integration</th><th>Reciprocal</th>'
+            . '<th>Identity</th><th>Structural</th><th>Editorial</th><th>Target</th><th>Site</th><th>Language</th><th>Integration</th><th>Reciprocal</th>'
             . '</tr></thead><tbody>';
 
         foreach ($relations as $relation) {
@@ -186,6 +186,9 @@ if (empty($pillars)) {
                 : array();
             $relationSite = isset($relation['site_context']) && is_array($relation['site_context'])
                 ? $relation['site_context']
+                : array();
+            $languageContext = isset($relation['language_context']) && is_array($relation['language_context'])
+                ? $relation['language_context']
                 : array();
             $siteLabel = !empty($relationSite['cross_site'])
                 ? 'cross-site'
@@ -207,6 +210,14 @@ if (empty($pillars)) {
                 . (!empty($relationSite['host'])
                     ? '<br><small>' . HUB_integrityAdminEscape($relationSite['host']) . '</small>'
                     : '') . '</td>'
+                . '<td>'
+                . (!empty($languageContext['object_language_known'])
+                    ? '<code>' . HUB_integrityAdminEscape($languageContext['object_language']) . '</code><br><small>provider</small>'
+                    : '<code>unknown</code>'
+                        . (!empty($languageContext['site_language'])
+                            ? '<br><small>site: ' . HUB_integrityAdminEscape($languageContext['site_language']) . '</small>'
+                            : ''))
+                . '</td>'
                 . '<td><code>' . HUB_integrityAdminEscape(
                     isset($evidence['verification']) ? $evidence['verification'] : 'unconfirmed'
                 ) . '</code><br><small>'
