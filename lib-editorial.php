@@ -321,6 +321,88 @@ function HUB_editorialTopicContext($pageId)
  * @param int $limit
  * @return array
  */
+/**
+ * Extract objective temporal/version markers from article metadata/content.
+ *
+ * The result is advisory only. It never declares content stale or obsolete.
+ *
+ * @param array $article
+ * @param int|null $referenceYear
+ * @return array
+ */
+function HUB_editorialTemporalSignals($article, $referenceYear = null)
+{
+    $referenceYear = $referenceYear === null ? (int) date('Y') : (int) $referenceYear;
+    if ($referenceYear < 1970) {
+        $referenceYear = (int) date('Y');
+    }
+
+    $title = isset($article['title']) ? (string) $article['title'] : '';
+    $intro = isset($article['introtext']) ? strip_tags((string) $article['introtext']) : '';
+    $body = isset($article['bodytext']) ? strip_tags((string) $article['bodytext']) : '';
+    $text = trim($title . " " . $intro . " " . $body);
+
+    $years = array();
+    if ($text !== '' && preg_match_all('/\\b(?:19[5-9]\\d|20\\d{2})\\b/', $text, $matches)) {
+        foreach ($matches[0] as $year) {
+            $year = (int) $year;
+            if ($year > 0) {
+                $years[$year] = true;
+            }
+        }
+    }
+    $years = array_keys($years);
+    sort($years, SORT_NUMERIC);
+
+    $versions = array();
+    if ($text !== '' && preg_match_all('/\\bv?\\d{1,3}\\.\\d{1,3}(?:\\.\\d{1,3})?\\b/i', $text, $matches)) {
+        foreach ($matches[0] as $version) {
+            $normalized = strtolower((string) $version);
+            $versions[$normalized] = (string) $version;
+        }
+    }
+    $versions = array_values($versions);
+    natcasesort($versions);
+    $versions = array_values($versions);
+
+    $publishedAt = isset($article['date']) ? trim((string) $article['date']) : '';
+    $publishedYear = 0;
+    if ($publishedAt !== '' && preg_match('/^(\\d{4})-/', $publishedAt, $matches)) {
+        $publishedYear = (int) $matches[1];
+    }
+
+    $ageYears = ($publishedYear > 0 && $referenceYear >= $publishedYear)
+        ? $referenceYear - $publishedYear
+        : null;
+
+    $olderYearMarkers = array();
+    foreach ($years as $year) {
+        if ($year < $referenceYear) {
+            $olderYearMarkers[] = $year;
+        }
+    }
+
+    $reviewReasons = array();
+    if (!empty($olderYearMarkers)) {
+        $reviewReasons[] = 'older-year-marker';
+    }
+    if (!empty($versions)) {
+        $reviewReasons[] = 'version-marker';
+    }
+
+    return array(
+        'reference_year' => $referenceYear,
+        'published_at' => $publishedAt,
+        'published_year' => $publishedYear,
+        'publication_age_years' => $ageYears,
+        'explicit_years' => $years,
+        'older_year_markers' => $olderYearMarkers,
+        'version_markers' => $versions,
+        'review_recommended' => !empty($reviewReasons),
+        'review_reasons' => $reviewReasons,
+    );
+}
+
 function HUB_editorialArticleCandidates($pillar, $relations, $limit = 20)
 {
     if (!is_array($pillar)
@@ -377,11 +459,9 @@ function HUB_editorialArticleCandidates($pillar, $relations, $limit = 20)
 
         $hits = isset($article['hits']) ? max(0, (int) $article['hits']) : 0;
         $comments = isset($article['comments']) ? max(0, (int) $article['comments']) : 0;
-        $publishedAt = isset($article['date']) ? trim((string) $article['date']) : '';
-        $publishedYear = 0;
-        if ($publishedAt !== '' && preg_match('/^(\\d{4})-/', $publishedAt, $matches)) {
-            $publishedYear = (int) $matches[1];
-        }
+        $temporal = HUB_editorialTemporalSignals($article);
+        $publishedAt = (string) $temporal['published_at'];
+        $publishedYear = (int) $temporal['published_year'];
 
         $evidence = array(
             array(
@@ -400,6 +480,18 @@ function HUB_editorialArticleCandidates($pillar, $relations, $limit = 20)
                 'signal' => 'publication-date',
                 'published_at' => $publishedAt,
                 'published_year' => $publishedYear,
+                'publication_age_years' => $temporal['publication_age_years'],
+            );
+        }
+
+        if (!empty($temporal['explicit_years']) || !empty($temporal['version_markers'])) {
+            $evidence[] = array(
+                'signal' => 'temporal-marker',
+                'explicit_years' => $temporal['explicit_years'],
+                'older_year_markers' => $temporal['older_year_markers'],
+                'version_markers' => $temporal['version_markers'],
+                'review_recommended' => $temporal['review_recommended'],
+                'review_reasons' => $temporal['review_reasons'],
             );
         }
 
@@ -417,6 +509,8 @@ function HUB_editorialArticleCandidates($pillar, $relations, $limit = 20)
                 'comments' => $comments,
                 'published_at' => $publishedAt,
                 'published_year' => $publishedYear,
+                'publication_age_years' => $temporal['publication_age_years'],
+                'review_recommended' => $temporal['review_recommended'],
             ),
             'evidence' => $evidence,
         );
@@ -499,6 +593,7 @@ function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
         'schema' => 1,
         'generated_from' => array('shared-topic'),
         'ranking_signals' => array('shared-topic-count', 'engagement', 'publication-date'),
+        'review_signals' => array('older-year-marker', 'version-marker'),
         'pillar_candidates' => $pillarId > 0
             ? array()
             : HUB_editorialPillarCandidates($limitPerPillar),
