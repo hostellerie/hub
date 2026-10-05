@@ -97,3 +97,66 @@ function HUB_siteUrlContext($url)
 
     return $result;
 }
+
+
+/**
+ * Return language context for one provider-owned object.
+ *
+ * Object language is accepted only when the owning provider explicitly
+ * returns a non-empty `language` value through Item Info. Hub never infers an
+ * object's language from hostname, URL, stable id or the active site language.
+ *
+ * @param string $type
+ * @param string $id
+ * @param int $uid
+ * @return array
+ */
+function HUB_objectLanguageContext($type, $id, $uid = 0)
+{
+    $type = function_exists('HUB_normalizeObjectType')
+        ? HUB_normalizeObjectType($type)
+        : strtolower(trim((string) $type));
+    $id = function_exists('HUB_normalizeObjectId')
+        ? HUB_normalizeObjectId($id)
+        : trim((string) $id);
+
+    $site = HUB_siteContext();
+
+    $result = array(
+        'type' => $type,
+        'id' => $id,
+        'site_language' => isset($site['language']) ? (string) $site['language'] : '',
+        'object_language' => '',
+        'object_language_known' => false,
+        'source' => 'unavailable',
+    );
+
+    if ($type === '' || $id === '' || !function_exists('PLG_getItemInfo')) {
+        return $result;
+    }
+
+    try {
+        $value = PLG_getItemInfo($type, $id, 'language', max(0, (int) $uid));
+    } catch (Exception $e) {
+        $value = '';
+    }
+
+    $language = '';
+    if (is_string($value) || is_numeric($value)) {
+        $language = trim((string) $value);
+    } elseif (is_array($value)) {
+        if (isset($value['language'])) {
+            $language = trim((string) $value['language']);
+        } elseif (isset($value[0]) && !is_array($value[0])) {
+            $language = trim((string) $value[0]);
+        }
+    }
+
+    if ($language !== '') {
+        $result['object_language'] = $language;
+        $result['object_language_known'] = true;
+        $result['source'] = 'provider-item-info-language';
+    }
+
+    return $result;
+}
