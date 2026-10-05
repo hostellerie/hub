@@ -528,17 +528,17 @@ Hub stores approved relationship
 
 - extend the 0.1.1 link audit to saved Hub relationships and plugin-owned content across all supported providers
 - report cluster health per pillar across articles, Static Pages, Maps objects, Documents, Videos, Forum topics and future provider-owned content
-- report cluster health per pillar: satellites, reciprocal links, unresolved objects and unlinked candidates
+- report cluster health per pillar: satellites, reciprocal links, unresolved objects and unlinked candidates — first normalized integrity slice implemented for pillar source resolution, relation resolution/renderability, provider participation and backlink-integration evidence
 - identify satellites without a backlink to their pillar
 - identify pillars that omit important approved satellites from their outgoing links
 - identify related content clusters with weak or missing internal-link connections
 - orphaned-item checks
-- broken/missing object checks
+- broken/missing object checks — first implementation reports unresolved pillar sources and unresolved approved relation identities through `HUB_integritySummary()`
 - sitemap/feed integration opportunities
 - affected-page diagnostics
 - relationship graph diagnostics
 - canonical URL consistency checks
-- expose normalized diagnostics so Connector or administration tools can report them without reimplementing Hub logic
+- expose normalized diagnostics so Connector or administration tools can report them without reimplementing Hub logic — implemented first as read-only `hub.integrity.summary`
 
 ## 0.10.0 — Multisite and multilingual context
 
