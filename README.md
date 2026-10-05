@@ -2,7 +2,7 @@
 
 Hub is an interoperability and content-relationship plugin for Geeklog.
 
-Version **0.4.0** builds public bidirectional navigation on top of the finalized 0.3.0 pillar and relationship model.
+Version **0.5.0 (development)** extends the 0.4.0 public bidirectional navigation with content lifecycle handling, affected-context detection, graph traversal, read-only Hub services and explicit structural relation roles.
 
 ## Requirements
 
@@ -17,6 +17,7 @@ Hub stores:
 
 - the pillar source as `source_type + source_id`;
 - related items as `item_type + item_id`;
+- a Hub-owned structural `relation_role` (`related`, `sub-pillar`, `satellite`, `support`);
 - manual order;
 - enabled/disabled state;
 - source titles resolved dynamically from the owning content provider.
@@ -129,7 +130,7 @@ This reconciliation is diagnostic only. A missing or ambiguous implementation su
 
 Runtime-detected callbacks are kept distinct from source evidence, provider declarations and inference. Hub never presents source scanning as proof that every mutation path emits a lifecycle notification. The full runtime `plugin_*_<plugin>()` surface remains available under the collapsed **Advanced API surface** section.
 
-See `ROADMAP.md` for the current 0.4.0 bidirectional-navigation milestone and later lifecycle/discovery work.
+See `ROADMAP.md` for the current 0.5.0 lifecycle/dependency-graph milestone and later discovery/editorial-mapping work.
 
 ## 0.1.0 audit details
 
@@ -172,6 +173,19 @@ The audit also reports native Geeklog distribution contracts without changing Hu
 
 These capabilities are informational interoperability signals. Hub does not read another plugin's tables to infer them.
 
+## 0.5.0 development services
+
+Hub currently exposes these read-only administrator services through Geeklog's native service dispatcher:
+
+- `hub.affected.read` — resolve Hub contexts affected by one stable content identity;
+- `hub.context.read` — traverse the approved Hub graph around one identity with bounded, cycle-safe traversal;
+- `hub.related.read` — return immediate parent/child graph neighbors;
+- `hub.pillar.read` — return one Hub pillar and its approved relation identities.
+
+These surfaces are protected by `hub.admin`. Hub advertises only capabilities whose service surface is implemented.
+
+Structural `relation_role` is intentionally separate from future editorial-function metadata such as `guide`, `tutorial`, `reference` or `case-study`.
+
 ## Development archive
 
-The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.4.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
+The `Build installable archive` GitHub Actions workflow creates the archive matching the current plugin version (for example `dist/hub-0.5.0.zip`) and preserves previously generated version archives. The ZIP contains one top-level `hub/` directory and can be uploaded through Geeklog's plugin installer.
