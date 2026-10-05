@@ -269,3 +269,193 @@ function HUB_editorialInventory($includeDisabled = false)
 
     return $inventory;
 }
+
+
+/**
+ * Normalize the specific Geeklog topic context for one Static Page pillar.
+ *
+ * @param string $pageId
+ * @return array
+ */
+function HUB_editorialTopicContext($pageId)
+{
+    $context = function_exists('HUB_staticPageTopicContext')
+        ? HUB_staticPageTopicContext($pageId)
+        : array('specific_topics' => array());
+
+    $topics = isset($context['specific_topics']) && is_array($context['specific_topics'])
+        ? $context['specific_topics']
+        : array();
+
+    $ids = array();
+    $labels = array();
+
+    foreach ($topics as $topic) {
+        $tid = isset($topic['tid']) ? (string) $topic['tid'] : '';
+        if ($tid === '') {
+            continue;
+        }
+
+        $ids[$tid] = true;
+        $labels[$tid] = isset($topic['topic']) && (string) $topic['topic'] !== ''
+            ? (string) $topic['topic']
+            : $tid;
+    }
+
+    ksort($labels, SORT_STRING);
+
+    return array(
+        'ids' => array_keys($ids),
+        'labels' => $labels,
+    );
+}
+
+/**
+ * Suggest unapproved article relations for one Static Page pillar.
+ *
+ * Candidates come only from deterministic shared-topic evidence and never
+ * modify Hub relationships automatically.
+ *
+ * @param array $pillar
+ * @param array $relations
+ * @param int $limit
+ * @return array
+ */
+function HUB_editorialArticleCandidates($pillar, $relations, $limit = 20)
+{
+    if (!is_array($pillar)
+        || !isset($pillar['source_type'], $pillar['source_id'])
+        || (string) $pillar['source_type'] !== 'staticpages'
+        || !function_exists('HUB_linkAuditArticlesByTopics')
+    ) {
+        return array();
+    }
+
+    $topicContext = HUB_editorialTopicContext($pillar['source_id']);
+    if (empty($topicContext['ids'])) {
+        return array();
+    }
+
+    $existing = array();
+    foreach ($relations as $relation) {
+        if (is_array($relation)
+            && isset($relation['item_type'], $relation['item_id'])
+        ) {
+            $key = HUB_graphIdentityKey($relation['item_type'], $relation['item_id']);
+            if ($key !== '') {
+                $existing[$key] = true;
+            }
+        }
+    }
+
+    $candidates = array();
+
+    foreach (HUB_linkAuditArticlesByTopics($topicContext['ids']) as $article) {
+        $sid = isset($article['sid']) ? HUB_normalizeObjectId($article['sid']) : '';
+        if ($sid === '') {
+            continue;
+        }
+
+        $key = HUB_graphIdentityKey('article', $sid);
+        if ($key === '' || isset($existing[$key])) {
+            continue;
+        }
+
+        $matchedTopics = array();
+        if (!empty($article['hub_topics']) && is_array($article['hub_topics'])) {
+            foreach ($article['hub_topics'] as $tid => $label) {
+                $matchedTopics[] = array(
+                    'id' => (string) $tid,
+                    'label' => (string) $label,
+                );
+            }
+        }
+
+        usort($matchedTopics, function ($left, $right) {
+            return strcmp((string) $left['id'], (string) $right['id']);
+        });
+
+        $candidates[] = array(
+            'type' => 'article',
+            'id' => $sid,
+            'title' => isset($article['title']) && (string) $article['title'] !== ''
+                ? (string) $article['title']
+                : $sid,
+            'suggested_role' => 'satellite',
+            'score' => count($matchedTopics),
+            'evidence' => array(
+                array(
+                    'signal' => 'shared-topic',
+                    'topics' => $matchedTopics,
+                ),
+            ),
+        );
+    }
+
+    usort($candidates, function ($left, $right) {
+        if ((int) $left['score'] !== (int) $right['score']) {
+            return (int) $left['score'] > (int) $right['score'] ? -1 : 1;
+        }
+
+        $titleCompare = strcasecmp((string) $left['title'], (string) $right['title']);
+        if ($titleCompare !== 0) {
+            return $titleCompare;
+        }
+
+        return strcmp((string) $left['id'], (string) $right['id']);
+    });
+
+    return array_slice($candidates, 0, max(1, (int) $limit));
+}
+
+/**
+ * Return deterministic relation suggestions for approved Hub pillars.
+ *
+ * @param int $pillarId 0 for all enabled pillars
+ * @param int $limitPerPillar
+ * @return array
+ */
+function HUB_editorialSuggestions($pillarId = 0, $limitPerPillar = 20)
+{
+    $pillarId = (int) $pillarId;
+    $rows = array();
+
+    foreach (HUB_getPillars(false) as $pillar) {
+        if (!is_array($pillar) || empty($pillar['id'])) {
+            continue;
+        }
+
+        $currentPillarId = (int) $pillar['id'];
+        if ($pillarId > 0 && $currentPillarId !== $pillarId) {
+            continue;
+        }
+
+        $relations = HUB_getRelations($currentPillarId, false);
+        $candidates = HUB_editorialArticleCandidates($pillar, $relations, $limitPerPillar);
+
+        if (empty($candidates)) {
+            continue;
+        }
+
+        $rows[] = array(
+            'pillar_id' => $currentPillarId,
+            'source_type' => (string) $pillar['source_type'],
+            'source_id' => (string) $pillar['source_id'],
+            'candidates' => $candidates,
+        );
+    }
+
+    usort($rows, function ($left, $right) {
+        if ((int) $left['pillar_id'] === (int) $right['pillar_id']) {
+            return 0;
+        }
+
+        return (int) $left['pillar_id'] < (int) $right['pillar_id'] ? -1 : 1;
+    });
+
+    return array(
+        'schema' => 1,
+        'generated_from' => array('shared-topic'),
+        'pillars' => $rows,
+    );
+}
