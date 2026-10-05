@@ -45,6 +45,7 @@ jobs:
           php tests/graph_contract.php
           php tests/editorial_contract.php
           php tests/integrity_contract.php
+          php tests/site_context_contract.php
           php tests/suggestion_decisions_contract.php
           php tests/services_contract.php
           php tests/render_contract.php
