@@ -273,3 +273,27 @@ function service_suggestions_read_hub($args, &$output, &$svc_msg)
         'suggestions' => $suggestions,
     ), $output, $svc_msg);
 }
+
+
+/**
+ * hub.integrity.summary
+ *
+ * Return normalized 0.9 relationship integrity diagnostics. The service
+ * distinguishes resolved/renderable identities from backlink integration
+ * evidence and does not claim runtime backlinks that Hub cannot verify.
+ */
+function service_integrity_summary_hub($args, &$output, &$svc_msg)
+{
+    if (!HUB_SERVICE_authorized()) {
+        return HUB_SERVICE_denied($output, $svc_msg);
+    }
+
+    $args = is_array($args) ? $args : array();
+    $uid = isset($args['uid']) ? max(0, (int) $args['uid']) : 0;
+    $summary = HUB_integritySummary($uid);
+
+    return HUB_SERVICE_ok(array(
+        'capability' => 'hub.integrity.summary',
+        'summary' => $summary,
+    ), $output, $svc_msg);
+}
