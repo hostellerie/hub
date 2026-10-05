@@ -430,7 +430,7 @@ The normalized editorial summary is therefore the first reusable "marketing mapp
 
 
 - extend the 0.1.1 topic audit beyond core articles
-- use topics, keywords and `PLG_getRelatedItems()`
+- use topics, keywords and `PLG_getRelatedItems()` — shared specific topics are implemented as the first deterministic evidence source; keywords and provider-related signals remain future evidence layers
 - build a continuously refreshed editorial inventory from the real Hub relationship graph — implemented as deterministic `HUB_editorialInventory()` over approved Hub identities
 - keep that inventory provider-agnostic: satellites are stable `type + id` objects, not only Core articles or Static Pages — implemented
 - treat articles, Static Pages, Maps objects (including maps and markers when exposed as resolvable content), Documents items, Videos items and Forum topics as first-class pillar satellites when their providers expose the shared Geeklog contracts
@@ -439,12 +439,12 @@ The normalized editorial summary is therefore the first reusable "marketing mapp
 - flag satellites that belong to a pillar but do not contain a contextual link back to it
 - flag pillars that do not point to their strongest or most useful approved satellites
 - detect thematically close content that is not yet connected to the relevant pillar or cluster
-- distinguish explicit Hub relations from inferred thematic proximity
-- show why a candidate was detected: shared topics, keywords, related-items provider, existing links, engagement, or other transparent evidence
+- distinguish explicit Hub relations from inferred thematic proximity — implemented for shared-topic candidates by excluding already approved `type + id` identities
+- show why a candidate was detected: shared topics, keywords, related-items provider, existing links, engagement, or other transparent evidence — implemented first for `shared-topic`, with matched topic IDs/labels retained in candidate evidence
 - use provider-exposed engagement signals such as views or comments only as prioritization evidence, never as automatic editorial approval
 - surface temporal signals such as publication/update age and obvious year/version markers so stale or strongly time-bound content can be reviewed
 - allow explainable semantic-proximity / potential-cannibalization warnings as suggestions only; Hub must not auto-merge, redirect or rewrite content
-- suggest complementary content without automatically changing editorial relationships
+- suggest complementary content without automatically changing editorial relationships — implemented for Static Page pillar → article candidates through `HUB_editorialSuggestions()` and read-only `hub.suggestions.read`
 - allow administrators to approve, dismiss or defer suggestions so repeated audits remain useful
 - generate an editorial roadmap directly from the current inventory and relationship graph
 - display generated roadmaps in Hub administration with clear sections for pillars, satellites, missing links, candidate content and editorial gaps
