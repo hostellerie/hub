@@ -71,6 +71,44 @@ function HUB_normalizeRelationRole($role)
     return isset($roles[$role]) ? $role : 'related';
 }
 
+/**
+ * Optional editorial-function metadata kept separate from graph structure.
+ *
+ * @return array
+ */
+function HUB_editorialRoles()
+{
+    return array(
+        '' => 'None',
+        'guide' => 'Guide',
+        'tutorial' => 'Tutorial',
+        'reference' => 'Reference',
+        'case-study' => 'Case study',
+        'download' => 'Download',
+        'video' => 'Video',
+        'discussion' => 'Discussion',
+        'resource' => 'Resource',
+        'news' => 'News',
+        'archive' => 'Archive',
+    );
+}
+
+/**
+ * Normalize one optional editorial role.
+ *
+ * Unknown values are discarded instead of inferred or coerced.
+ *
+ * @param string $role
+ * @return string
+ */
+function HUB_normalizeEditorialRole($role)
+{
+    $role = strtolower(trim((string) $role));
+    $roles = HUB_editorialRoles();
+
+    return isset($roles[$role]) ? $role : '';
+}
+
 function HUB_findPillar($sourceType, $sourceId)
 {
     global $_TABLES;
@@ -119,7 +157,7 @@ function HUB_getPillars($includeDisabled = true)
     return $rows;
 }
 
-function HUB_savePillar($pillarId, $sourceType, $sourceId, $isEnabled = 1, $ownerId = 0)
+function HUB_savePillar($pillarId, $sourceType, $sourceId, $isEnabled = 1, $ownerId = 0, $editorialRole = '')
 {
     global $_TABLES, $_USER;
 
@@ -127,6 +165,7 @@ function HUB_savePillar($pillarId, $sourceType, $sourceId, $isEnabled = 1, $owne
     $sourceType = HUB_normalizeObjectType($sourceType);
     $sourceId = HUB_normalizeObjectId($sourceId);
     $isEnabled = $isEnabled ? 1 : 0;
+    $editorialRole = HUB_normalizeEditorialRole($editorialRole);
 
     if ($sourceType === '' || $sourceId === '') {
         return false;
@@ -139,12 +178,14 @@ function HUB_savePillar($pillarId, $sourceType, $sourceId, $isEnabled = 1, $owne
     $now = time();
     $typeSql = DB_escapeString($sourceType);
     $idSql = DB_escapeString($sourceId);
+    $editorialRoleSql = DB_escapeString($editorialRole);
 
     if ($pillarId > 0) {
         DB_query(
             "UPDATE {$_TABLES['hub_pillars']} SET "
             . "source_type = '" . $typeSql . "', "
             . "source_id = '" . $idSql . "', "
+            . "editorial_role = '" . $editorialRoleSql . "', "
             . "is_enabled = " . $isEnabled . ", "
             . "modified = " . $now . " "
             . "WHERE id = " . $pillarId,
@@ -156,8 +197,8 @@ function HUB_savePillar($pillarId, $sourceType, $sourceId, $isEnabled = 1, $owne
 
     DB_query(
         "INSERT INTO {$_TABLES['hub_pillars']} "
-        . "(source_type, source_id, is_enabled, created, modified, owner_id) VALUES ("
-        . "'" . $typeSql . "', '" . $idSql . "', "
+        . "(source_type, source_id, editorial_role, is_enabled, created, modified, owner_id) VALUES ("
+        . "'" . $typeSql . "', '" . $idSql . "', '" . $editorialRoleSql . "', "
         . $isEnabled . ", " . $now . ", " . $now . ", " . (int) $ownerId . ")",
         1
     );
@@ -239,7 +280,7 @@ function HUB_invalidateRelationshipCaches($pillarId, $itemType = '', $itemId = '
     }
 }
 
-function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position = 0, $isEnabled = 1, $ownerId = 0, $relationRole = 'related')
+function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position = 0, $isEnabled = 1, $ownerId = 0, $relationRole = 'related', $editorialRole = '')
 {
     global $_TABLES, $_USER;
 
@@ -250,6 +291,7 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
     $position = max(0, min(65535, (int) $position));
     $isEnabled = $isEnabled ? 1 : 0;
     $relationRole = HUB_normalizeRelationRole($relationRole);
+    $editorialRole = HUB_normalizeEditorialRole($editorialRole);
 
     $oldRelation = null;
     if ($relationId > 0) {
@@ -278,6 +320,7 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
     $typeSql = DB_escapeString($itemType);
     $idSql = DB_escapeString($itemId);
     $roleSql = DB_escapeString($relationRole);
+    $editorialRoleSql = DB_escapeString($editorialRole);
 
     if ($relationId > 0) {
         DB_query(
@@ -286,6 +329,7 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
             . "item_type = '" . $typeSql . "', "
             . "item_id = '" . $idSql . "', "
             . "relation_role = '" . $roleSql . "', "
+            . "editorial_role = '" . $editorialRoleSql . "', "
             . "position = " . $position . ", "
             . "is_enabled = " . $isEnabled . ", "
             . "modified = " . $now . " "
@@ -311,8 +355,8 @@ function HUB_saveRelation($relationId, $pillarId, $itemType, $itemId, $position 
 
     DB_query(
         "INSERT INTO {$_TABLES['hub_relations']} "
-        . "(pillar_id, item_type, item_id, relation_role, position, is_enabled, created, modified, owner_id) VALUES ("
-        . $pillarId . ", '" . $typeSql . "', '" . $idSql . "', '" . $roleSql . "', " . $position . ", "
+        . "(pillar_id, item_type, item_id, relation_role, editorial_role, position, is_enabled, created, modified, owner_id) VALUES ("
+        . $pillarId . ", '" . $typeSql . "', '" . $idSql . "', '" . $roleSql . "', '" . $editorialRoleSql . "', " . $position . ", "
         . $isEnabled . ", " . $now . ", " . $now . ", " . (int) $ownerId . ")",
         1
     );
