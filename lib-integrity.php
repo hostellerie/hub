@@ -24,7 +24,9 @@ function HUB_integrityBacklinkEvidence($itemType)
     if ($supported && $mode === 'core-template-fallback') {
         $verification = 'hub-managed';
     } elseif ($supported && $mode === 'staticpage-template-hook') {
-        $verification = 'hub-managed';
+        // This hook guarantees Hub's Static Page pillar rendering, not a
+        // reciprocal backlink when a Static Page is used as a satellite.
+        $verification = 'unconfirmed';
     } elseif ($supported) {
         $verification = 'integration-available';
     }
@@ -36,6 +38,97 @@ function HUB_integrityBacklinkEvidence($itemType)
         'label' => isset($status['label']) ? (string) $status['label'] : '',
         'detail' => isset($status['detail']) ? (string) $status['detail'] : '',
     );
+}
+
+/**
+ * Verify reciprocal-link evidence for one approved relation.
+ *
+ * Core articles are the only current provider type for which Hub both builds
+ * the backlink fragment and owns the full public placement path. Generic
+ * providers may expose a usable fragment while runtime placement remains
+ * unverified.
+ *
+ * @param array $pillar
+ * @param array $relation
+ * @param int $uid
+ * @return array
+ */
+function HUB_integrityReciprocalEvidence($pillar, $relation, $uid = 0)
+{
+    $result = array(
+        'status' => 'unconfirmed',
+        'fragment_available' => false,
+        'runtime_verified' => false,
+        'pillar_url' => '',
+        'detail' => '',
+    );
+
+    if (!is_array($pillar) || !is_array($relation)
+        || empty($relation['item_type']) || empty($relation['item_id'])
+    ) {
+        $result['detail'] = 'Missing pillar or relation identity.';
+        return $result;
+    }
+
+    $pillarResolved = HUB_resolveObject(
+        isset($pillar['source_type']) ? $pillar['source_type'] : '',
+        isset($pillar['source_id']) ? $pillar['source_id'] : '',
+        $uid
+    );
+    $pillarUrl = isset($pillarResolved['url']) ? (string) $pillarResolved['url'] : '';
+    $result['pillar_url'] = $pillarUrl;
+
+    if (empty($pillarResolved['exists']) || $pillarUrl === '') {
+        $result['status'] = 'pillar-unresolved';
+        $result['detail'] = 'The pillar target cannot be resolved to a public URL.';
+        return $result;
+    }
+
+    $type = HUB_normalizeObjectType($relation['item_type']);
+    $id = HUB_normalizeObjectId($relation['item_id']);
+    $target = HUB_resolveObject($type, $id, $uid);
+    if (empty($target['exists'])) {
+        $result['status'] = 'target-unresolved';
+        $result['detail'] = 'The related object cannot be resolved.';
+        return $result;
+    }
+
+    $fragment = function_exists('HUB_renderItemPillarBacklinks')
+        ? HUB_renderItemPillarBacklinks($type, $id)
+        : '';
+    $escapedPillarUrl = htmlspecialchars($pillarUrl, ENT_QUOTES, 'UTF-8');
+    $fragmentHasExpectedLink = $fragment !== ''
+        && (strpos($fragment, $escapedPillarUrl) !== false
+            || strpos($fragment, $pillarUrl) !== false);
+
+    $result['fragment_available'] = $fragmentHasExpectedLink;
+
+    $integration = HUB_integrityBacklinkEvidence($type);
+    if ($type === 'article'
+        && isset($integration['verification'])
+        && $integration['verification'] === 'hub-managed'
+        && $fragmentHasExpectedLink
+    ) {
+        $result['status'] = 'hub-rendered';
+        $result['runtime_verified'] = true;
+        $result['detail'] = 'Hub generates the expected pillar backlink and owns the Core article placement path.';
+        return $result;
+    }
+
+    if ($fragmentHasExpectedLink && !empty($integration['supported'])) {
+        $result['status'] = 'fragment-available-runtime-unverified';
+        $result['detail'] = 'Hub can generate the expected backlink fragment, but provider runtime placement is not verified.';
+        return $result;
+    }
+
+    if (!empty($integration['supported'])) {
+        $result['status'] = 'integration-available-unverified';
+        $result['detail'] = 'A backlink integration path is declared, but the expected rendered backlink is not verifiable here.';
+        return $result;
+    }
+
+    $result['detail'] = 'No confirmed generic reciprocal-link placement path is available.';
+    return $result;
 }
 
 /**
@@ -86,6 +179,12 @@ function HUB_integrityPillar($pillar, $uid = 0)
             'integration_available' => 0,
             'unconfirmed' => 0,
         ),
+        'reciprocal' => array(
+            'hub_rendered' => 0,
+            'fragment_available_runtime_unverified' => 0,
+            'integration_available_unverified' => 0,
+            'unconfirmed' => 0,
+        ),
         'providers' => array(),
         'relations' => array(),
     );
@@ -101,6 +200,7 @@ function HUB_integrityPillar($pillar, $uid = 0)
         $exists = !empty($resolved['exists']);
         $renderable = $exists && !empty($resolved['url']);
         $backlink = HUB_integrityBacklinkEvidence($type);
+        $reciprocal = HUB_integrityReciprocalEvidence($pillar, $relation, $uid);
 
         if ($exists) {
             $result['resolved_relations']++;
@@ -139,6 +239,17 @@ function HUB_integrityPillar($pillar, $uid = 0)
             $result['backlink']['unconfirmed']++;
         }
 
+        $reciprocalStatus = isset($reciprocal['status']) ? (string) $reciprocal['status'] : 'unconfirmed';
+        if ($reciprocalStatus === 'hub-rendered') {
+            $result['reciprocal']['hub_rendered']++;
+        } elseif ($reciprocalStatus === 'fragment-available-runtime-unverified') {
+            $result['reciprocal']['fragment_available_runtime_unverified']++;
+        } elseif ($reciprocalStatus === 'integration-available-unverified') {
+            $result['reciprocal']['integration_available_unverified']++;
+        } else {
+            $result['reciprocal']['unconfirmed']++;
+        }
+
         $result['relations'][] = array(
             'type' => $type,
             'id' => $id,
@@ -154,6 +265,7 @@ function HUB_integrityPillar($pillar, $uid = 0)
             'url' => isset($resolved['url']) ? (string) $resolved['url'] : '',
             'diagnostic' => $renderable ? '' : (isset($resolved['diagnostic']) ? (string) $resolved['diagnostic'] : ''),
             'backlink_evidence' => $backlink,
+            'reciprocal_evidence' => $reciprocal,
         );
     }
 
@@ -192,6 +304,12 @@ function HUB_integritySummary($uid = 0)
             'integration_available' => 0,
             'unconfirmed' => 0,
         ),
+        'reciprocal' => array(
+            'hub_rendered' => 0,
+            'fragment_available_runtime_unverified' => 0,
+            'integration_available_unverified' => 0,
+            'unconfirmed' => 0,
+        ),
         'providers' => array(),
         'pillar_items' => array(),
     );
@@ -216,6 +334,11 @@ function HUB_integritySummary($uid = 0)
         foreach ($summary['backlink'] as $key => $value) {
             if (isset($diagnostic['backlink'][$key])) {
                 $summary['backlink'][$key] += (int) $diagnostic['backlink'][$key];
+            }
+        }
+        foreach ($summary['reciprocal'] as $key => $value) {
+            if (isset($diagnostic['reciprocal'][$key])) {
+                $summary['reciprocal'][$key] += (int) $diagnostic['reciprocal'][$key];
             }
         }
 
