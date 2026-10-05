@@ -245,6 +245,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = HUB_deleteRelation($relationId)
                 ? '<div class="hub-rel-message">Relation deleted.</div>'
                 : '<div class="hub-rel-message hub-rel-error">Unable to delete relation.</div>';
+        } elseif ($action === 'suggestion_decision') {
+            $kind = isset($_POST['suggestion_kind']) ? (string) $_POST['suggestion_kind'] : '';
+            $pillarId = isset($_POST['pillar_id']) ? (int) $_POST['pillar_id'] : 0;
+            $itemType = isset($_POST['item_type']) ? (string) $_POST['item_type'] : '';
+            $itemId = isset($_POST['item_id']) ? (string) $_POST['item_id'] : '';
+            $decisionAction = isset($_POST['decision_action']) ? (string) $_POST['decision_action'] : '';
+
+            if ($decisionAction === 'restore') {
+                $saved = HUB_deleteSuggestionDecision($kind, $pillarId, $itemType, $itemId);
+                $message = $saved
+                    ? '<div class="hub-rel-message">Suggestion decision restored.</div>'
+                    : '<div class="hub-rel-message hub-rel-error">Unable to restore suggestion decision.</div>';
+            } else {
+                $decision = $decisionAction === 'defer' ? 'deferred' : 'dismissed';
+                $deferUntil = $decision === 'deferred' ? time() + (30 * 86400) : 0;
+                $saved = HUB_saveSuggestionDecision(
+                    $kind,
+                    $pillarId,
+                    $itemType,
+                    $itemId,
+                    $decision,
+                    $deferUntil
+                );
+                $message = $saved
+                    ? '<div class="hub-rel-message">Suggestion '
+                        . ($decision === 'deferred' ? 'deferred for 30 days.' : 'dismissed.')
+                        . '</div>'
+                    : '<div class="hub-rel-message hub-rel-error">Unable to save suggestion decision.</div>';
+            }
         }
     }
 }
