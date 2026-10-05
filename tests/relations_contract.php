@@ -138,3 +138,32 @@ hubAssert(strpos($relationsSource, 'ORDER BY position ASC, id ASC') !== false, '
 hubAssert(strpos($relationsSource, "itemType === (string) \$pillar['source_type']") !== false, 'direct self-relations remain rejected');
 
 echo "Hub relation contract tests passed." . PHP_EOL;
+
+
+$relationsSource = file_get_contents(dirname(__DIR__) . '/lib-relations.php');
+$sqlInstallSource = file_get_contents(dirname(__DIR__) . '/sql/mysql_install.php');
+$upgradeSource = file_get_contents(dirname(__DIR__) . '/install_updates.php');
+
+if (strpos($relationsSource, 'function HUB_relationRoles()') === false
+    || strpos($relationsSource, 'function HUB_normalizeRelationRole($role)') === false
+    || strpos($relationsSource, "relation_role = '") === false
+    || strpos($relationsSource, 'relation_role, position') === false
+) {
+    fwrite(STDERR, "Hub structural relation role contract missing\n");
+    exit(1);
+}
+
+if (strpos($sqlInstallSource, "relation_role varchar(32) NOT NULL DEFAULT 'related'") === false
+    || strpos($upgradeSource, 'function HUB_updateSchema_0_5_0()') === false
+    || strpos($upgradeSource, "ADD relation_role varchar(32) NOT NULL DEFAULT 'related'") === false
+) {
+    fwrite(STDERR, "Hub 0.5.0 relation role schema contract missing\n");
+    exit(1);
+}
+
+if (strpos($sqlInstallSource, "title_override varchar(255) NOT NULL DEFAULT ''") === false
+    || strpos($upgradeSource, "ADD title_override varchar(255) NOT NULL DEFAULT ''") === false
+) {
+    fwrite(STDERR, "Hub fresh-install and upgrade pillar schemas are not aligned\n");
+    exit(1);
+}
