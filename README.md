@@ -4,6 +4,17 @@ Hub is an interoperability and content-relationship plugin for Geeklog.
 
 Version **1.0.0 (development)** is the stabilization milestone for the completed relationship, lifecycle, editorial, integrity, multisite and multilingual-context layers. No release is implied until the 1.0 compatibility, upgrade and documentation checks are complete.
 
+## 1.0 stabilization documentation
+
+The 1.0 development archive includes dedicated references for integration and release validation:
+
+- [Plugin author integration guide](docs/plugin-author-guide.md)
+- [Read-only service surface](docs/services.md)
+- [Compatibility matrix](docs/compatibility.md)
+- [Installation and upgrade path](docs/upgrade.md)
+
+The repository CI validates PHP 5.6, 8.1 and 8.3 before packaging. Full Geeklog 2.1.1 and 2.2.2 installation/upgrade smoke tests remain release checks and are not implied by the development version.
+
 ## Requirements
 
 - Geeklog 2.1.1 or newer
