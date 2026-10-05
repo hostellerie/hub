@@ -57,8 +57,8 @@ function HUB_updateSchema_0_3_0()
  * Upgrade Hub relationship persistence for the 0.5.0 graph model.
  *
  * Existing rows keep the neutral structural role "related". The migration also
- * repairs the historical fresh-install/upgrade divergence for title_override
- * so both installation paths converge on the same schema.
+ * removes the obsolete title_override column from older pre-release installs
+ * so provider-owned titles remain resolved dynamically rather than duplicated.
  *
  * @return bool
  */
@@ -68,18 +68,26 @@ function HUB_updateSchema_0_5_0()
 
     $checks = array(
         array(
-            'table' => $_TABLES['hub_pillars'],
-            'column' => 'title_override',
-            'sql' => "ALTER TABLE {$_TABLES['hub_pillars']} "
-                . "ADD title_override varchar(255) NOT NULL DEFAULT '' AFTER source_id",
-        ),
-        array(
             'table' => $_TABLES['hub_relations'],
             'column' => 'relation_role',
             'sql' => "ALTER TABLE {$_TABLES['hub_relations']} "
                 . "ADD relation_role varchar(32) NOT NULL DEFAULT 'related' AFTER item_id",
         ),
     );
+
+    $obsoleteTitle = DB_query(
+        "SHOW COLUMNS FROM " . $_TABLES['hub_pillars'] . " LIKE 'title_override'",
+        1
+    );
+    if ($obsoleteTitle === false) {
+        return false;
+    }
+    if (DB_numRows($obsoleteTitle) > 0) {
+        DB_query("ALTER TABLE {$_TABLES['hub_pillars']} DROP COLUMN title_override", 1);
+        if (DB_error()) {
+            return false;
+        }
+    }
 
     foreach ($checks as $check) {
         $result = DB_query(
