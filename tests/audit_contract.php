@@ -55,7 +55,7 @@ if (strpos($relationsApiSource, 'function HUB_savePillar($pillarId, $sourceType,
 
 $relationsAdminSource = file_get_contents($root . '/admin/relations.php');
 
-if (strpos($configSource, "'pi_version'    => '0.7.0'") === false
+if (strpos($configSource, "'pi_version'    => '0.8.0'") === false
     || strpos($autoinstallSource, "'hub_pillars'") === false
     || strpos($autoinstallSource, "'hub_relations'") === false
     || strpos($functionsSource, 'HUB_updateSchema_0_3_0') === false
@@ -65,7 +65,7 @@ if (strpos($configSource, "'pi_version'    => '0.7.0'") === false
     || strpos($sqlSource, "CREATE TABLE {\$_TABLES['hub_relations']}") === false
     || strpos($upgradeSource, 'CREATE TABLE IF NOT EXISTS') === false
 ) {
-    fwrite(STDERR, "Hub 0.7.0 storage contract missing\n");
+    fwrite(STDERR, "Hub 0.8.0 storage contract missing\n");
     exit(1);
 }
 
@@ -148,7 +148,7 @@ if (strpos($libAudit, 'current 0.1.0 audit milestone') !== false) {
 if (strpos($readme, 'Shared Memorandum alignment') === false
     || strpos($readme, 'Pillars and manual relations (finalized in 0.3.0)') === false
     || strpos($roadmap, '0.2.0 — Generic capability discovery — completed') === false
-    || strpos($roadmap, 'Current development milestone:** `0.7.0`') === false
+    || strpos($roadmap, 'Current development milestone:** `0.8.0`') === false
     || strpos($roadmap, 'hub.context.read') === false
     || strpos($roadmap, 'Agent is the provider-neutral Geeklog machine access layer') === false
 ) {
