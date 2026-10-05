@@ -44,6 +44,7 @@ jobs:
           php tests/lifecycle_contract.php
           php tests/graph_contract.php
           php tests/services_contract.php
+          php tests/render_contract.php
           php tests/indexnow_contract.php
 
       - name: Build Geeklog plugin archive
