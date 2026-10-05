@@ -161,9 +161,9 @@ if (strpos($sqlInstallSource, "relation_role varchar(32) NOT NULL DEFAULT 'relat
     exit(1);
 }
 
-if (strpos($sqlInstallSource, "title_override varchar(255) NOT NULL DEFAULT ''") === false
-    || strpos($upgradeSource, "ADD title_override varchar(255) NOT NULL DEFAULT ''") === false
+if (strpos($sqlInstallSource, 'title_override') !== false
+    || strpos($upgradeSource, 'DROP COLUMN title_override') === false
 ) {
-    fwrite(STDERR, "Hub fresh-install and upgrade pillar schemas are not aligned\n");
+    fwrite(STDERR, "Hub 0.5.0 must remove obsolete pillar title override persistence\n");
     exit(1);
 }
