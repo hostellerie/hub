@@ -38,14 +38,6 @@ function HUB_normalizeEditorialRole($role)
         ? $role : '';
 }
 
-function HUB_normalizeRelationRole($role)
-{
-    $role = strtolower(trim((string) $role));
-    return in_array($role, array('related', 'sub-pillar', 'satellite', 'support'), true)
-        ? $role
-        : 'related';
-}
-
 function HUB_editorialSummary($includeDisabled = false)
 {
     return array(
