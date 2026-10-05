@@ -315,3 +315,14 @@ Hub 0.10.0 starts multisite support by consuming the site context that Geeklog h
 Hub deliberately does **not** select a site from the incoming host itself and does not persist a second Hub-owned site identifier. This follows the multisite Memorandum: plugins consume the active Geeklog configuration rather than implement parallel host routing.
 
 Hub read services can include this site context so callers can distinguish which active site produced relationship, editorial and integrity data. `HUB_siteUrlContext()` can also classify a resolved URL as current-site, relative/current-site, or cross-site without modifying the relationship graph.
+
+
+### Cross-site relationship context
+
+Hub 0.10.0 enriches resolved relationship targets with site context derived from the active Geeklog site URL. Each relation can be classified as:
+
+- `current-site` — relative URL or absolute URL on the configured active host;
+- `cross-site` — resolved absolute URL on another host;
+- `unknown` — unresolved or otherwise non-classifiable target.
+
+Cross-site is context, not an integrity failure by itself. Hub does not rewrite the relation identity, move data between site databases, or infer a language from the target host.
