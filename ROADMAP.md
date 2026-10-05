@@ -1,6 +1,8 @@
 # Hub for Geeklog — Roadmap
 
-**Current development milestone:** `0.4.0` (in development)
+**Current development milestone:** `0.5.0` (next implementation milestone)
+
+**Implemented baseline:** `0.4.0` functional scope is complete in the current codebase. The lifecycle/dependency-graph work described in `0.5.0` is not yet implemented.
 
 ## Vision
 
@@ -229,7 +231,7 @@ Final 0.3.0 hardening completed:
 - relation editor layout simplified to Order / Relation / Enabled / Actions
 - broader cross-plugin discovery/ranking remains scheduled for 0.8.0
 
-## 0.4.0 — Bidirectional navigation
+## 0.4.0 — Bidirectional navigation — implemented
 
 Implemented foundation:
 
@@ -264,7 +266,17 @@ Relationship-role evolution to prepare before richer grouped rendering:
 - use roles to group public sections without changing content ownership
 - never infer or overwrite an administrator-approved role silently
 
-## 0.5.0 — Lifecycle and dependency graph
+## 0.5.0 — Lifecycle and dependency graph — next implementation milestone
+
+Current code status before 0.5.0 work:
+
+- 0.4.0 public bidirectional navigation is implemented;
+- Hub currently has no `plugin_itemsaved_hub()` / `plugin_itemdeleted_hub()` lifecycle listener callbacks;
+- Hub currently exposes no implemented `hub.*` read/service capability;
+- `plugin_getcapabilities_hub()` deliberately advertises an empty capability list until those surfaces exist;
+- relation persistence currently stores stable identity, order and enabled state only; richer dependency/editorial graph semantics remain future work.
+
+Implementation target:
 
 - consume `PLG_itemSaved()` / `PLG_itemDeleted()` notifications
 - refresh cached metadata
@@ -278,7 +290,7 @@ Relationship-role evolution to prepare before richer grouped rendering:
 - keep graph edges explicit and typed so a sub-pillar can itself be a pillar in another approved context
 - expose affected-page/context information through a reusable Hub service for administration and future external consumers
 
-Shared Hub capability targets from the Memorandum:
+Shared Hub capability targets from the Memorandum (future targets; none are advertised by Hub until implemented):
 
 ```text
 hub.context.read
@@ -335,7 +347,7 @@ queue / deduplicate / submit
 - support plugin-rendered and Hub-rendered sections
 - reuse existing engines behind Blocks or Autotags rather than duplicate them
 
-## 0.8.0 — Discovery, editorial inventory and suggestions
+## 0.8.0 — Discovery, editorial inventory and suggestions — planned
 
 - extend the 0.1.1 topic audit beyond core articles
 - use topics, keywords and `PLG_getRelatedItems()`
@@ -433,7 +445,7 @@ human/editorial decision
 Hub stores approved relationship
 ```
 
-## 0.9.0 — SEO, cluster health and integrity
+## 0.9.0 — SEO, cluster health and integrity — planned
 
 - extend the 0.1.1 link audit to saved Hub relationships and plugin-owned content across all supported providers
 - report cluster health per pillar across articles, Static Pages, Maps objects, Documents, Videos, Forum topics and future provider-owned content
