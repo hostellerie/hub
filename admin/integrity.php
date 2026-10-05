@@ -205,6 +205,52 @@ if (empty($pillars)) {
     }
 }
 
+$graph = isset($summary['graph']) && is_array($summary['graph'])
+    ? $summary['graph']
+    : array();
+$graphCounts = isset($graph['counts']) && is_array($graph['counts'])
+    ? $graph['counts']
+    : array();
+
+$content .= '<h2>Graph diagnostics</h2>'
+    . '<ul>'
+    . '<li>Self-relations: ' . (isset($graphCounts['self_relations']) ? (int) $graphCounts['self_relations'] : 0) . '</li>'
+    . '<li>Pillar cycles: ' . (isset($graphCounts['cycles']) ? (int) $graphCounts['cycles'] : 0) . '</li>'
+    . '<li>Multi-parent items: ' . (isset($graphCounts['multi_parent_items']) ? (int) $graphCounts['multi_parent_items'] : 0)
+    . ' <small>(informational; multi-parent participation is allowed)</small></li>'
+    . '</ul>';
+
+if (!empty($graph['cycles']) && is_array($graph['cycles'])) {
+    $content .= '<h3>Cycles to review</h3><ul>';
+    foreach ($graph['cycles'] as $cycle) {
+        $content .= '<li><code>' . HUB_integrityAdminEscape(implode(' → ', $cycle)) . '</code></li>';
+    }
+    $content .= '</ul>';
+}
+
+$canonical = isset($summary['canonical_collisions']) && is_array($summary['canonical_collisions'])
+    ? $summary['canonical_collisions']
+    : array();
+$content .= '<h2>Canonical/public URL consistency</h2>';
+if (empty($canonical)) {
+    $content .= '<p>No duplicate resolved public destination is currently detected in the approved Hub graph.</p>';
+} else {
+    $content .= '<p>Multiple stable identities resolve to the same normalized public URL. Review provider canonical identity and relation selection.</p><ul>';
+    foreach ($canonical as $collision) {
+        $identities = array();
+        if (!empty($collision['identities']) && is_array($collision['identities'])) {
+            foreach ($collision['identities'] as $identity) {
+                $identities[] = (isset($identity['type']) ? $identity['type'] : '')
+                    . ':' . (isset($identity['id']) ? $identity['id'] : '');
+            }
+        }
+        $content .= '<li><code>' . HUB_integrityAdminEscape(
+            isset($collision['url_key']) ? $collision['url_key'] : ''
+        ) . '</code> — ' . HUB_integrityAdminEscape(implode(', ', $identities)) . '</li>';
+    }
+    $content .= '</ul>';
+}
+
 $content .= '<h2>Scope boundary</h2>'
     . '<p>This first 0.9.0 slice does not yet claim actual reciprocal-link presence for generic providers, '
     . 'orphan status, canonical consistency, sitemap/feed coverage or full cluster-health scoring. '
