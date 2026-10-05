@@ -90,11 +90,16 @@ $inventory = HUB_editorialInventory(false);
 hubEditorialAssert($inventory['schema'] === 1, 'editorial inventory schema is explicit');
 hubEditorialAssert(count($inventory['pillars']) === 3, 'editorial inventory exposes every approved pillar');
 hubEditorialAssert(count($inventory['pillars'][0]['items']) === 2, 'pillar inventory exposes approved relation identities');
-hubEditorialAssert($inventory['pillars'][0]['items'][0]['relation_role'] === 'sub-pillar', 'inventory preserves structural relation roles');
-hubEditorialAssert($inventory['pillars'][0]['items'][0]['is_nested_pillar'] === true, 'inventory identifies related objects that are also pillars');
-hubEditorialAssert($inventory['pillars'][0]['items'][0]['nested_pillar_id'] === 2, 'inventory exposes nested pillar identity without duplicating content');
-hubEditorialAssert($inventory['pillars'][0]['items'][0]['parent_count'] === 2, 'inventory exposes multi-parent participation');
-hubEditorialAssert($inventory['pillars'][0]['items'][1]['type'] === 'article', 'inventory remains provider-neutral by stable type + id');
+$inventoryByIdentity = array();
+foreach ($inventory['pillars'][0]['items'] as $inventoryItem) {
+    $inventoryByIdentity[$inventoryItem['type'] . ':' . $inventoryItem['id']] = $inventoryItem;
+}
+hubEditorialAssert(isset($inventoryByIdentity['staticpages:pillar-b']), 'inventory contains the approved nested pillar identity');
+hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['relation_role'] === 'sub-pillar', 'inventory preserves structural relation roles');
+hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['is_nested_pillar'] === true, 'inventory identifies related objects that are also pillars');
+hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['nested_pillar_id'] === 2, 'inventory exposes nested pillar identity without duplicating content');
+hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['parent_count'] === 2, 'inventory exposes multi-parent participation');
+hubEditorialAssert(isset($inventoryByIdentity['article:story-x']), 'inventory remains provider-neutral by stable type + id');
 
 $source = file_get_contents(dirname(__DIR__) . '/lib-editorial.php');
 hubEditorialAssert(strpos($source, 'HUB_resolveObject(') === false, 'structural summary does not mix provider metadata resolution');
