@@ -10,6 +10,19 @@ $_CONF = array(
     'language' => 'french_utf-8',
 );
 
+function PLG_getItemInfo($type, $id, $what, $uid = 0, $options = array())
+{
+    if ($what !== 'language') {
+        return '';
+    }
+
+    if ($type === 'documents' && $id === 'doc-fr') {
+        return 'fr';
+    }
+
+    return '';
+}
+
 require_once dirname(__DIR__) . '/lib-site-context.php';
 
 function hubSiteAssert($condition, $message)
@@ -40,6 +53,17 @@ hubSiteAssert($current['cross_site'] === false, 'same configured host is not cro
 $external = HUB_siteUrlContext('https://en.example.test/maps/1');
 hubSiteAssert($external['current_site'] === false, 'different host is not current site');
 hubSiteAssert($external['cross_site'] === true, 'different host is classified cross-site');
+
+$knownLanguage = HUB_objectLanguageContext('documents', 'doc-fr', 0);
+hubSiteAssert($knownLanguage['object_language_known'] === true, 'provider explicit object language is accepted');
+hubSiteAssert($knownLanguage['object_language'] === 'fr', 'provider language value is preserved');
+hubSiteAssert($knownLanguage['source'] === 'provider-item-info-language', 'provider language provenance is explicit');
+hubSiteAssert($knownLanguage['site_language'] === 'french_utf-8', 'site language remains separate from object language');
+
+$unknownLanguage = HUB_objectLanguageContext('documents', 'doc-unknown', 0);
+hubSiteAssert($unknownLanguage['object_language_known'] === false, 'missing provider language remains unknown');
+hubSiteAssert($unknownLanguage['object_language'] === '', 'Hub does not infer object language from site language');
+hubSiteAssert($unknownLanguage['site_language'] === 'french_utf-8', 'unknown object still exposes active site language context');
 
 $source = file_get_contents(dirname(__DIR__) . '/lib-site-context.php');
 hubSiteAssert(strpos($source, 'HTTP_HOST') !== false, 'site context documents HTTP_HOST boundary');
