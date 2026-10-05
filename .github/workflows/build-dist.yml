@@ -42,6 +42,7 @@ jobs:
           php tests/audit_contract.php
           php tests/relations_contract.php
           php tests/lifecycle_contract.php
+          php tests/graph_contract.php
           php tests/services_contract.php
 
       - name: Build Geeklog plugin archive
@@ -87,6 +88,7 @@ jobs:
             hub/lib-metadata.php \
             hub/lib-render.php \
             hub/lib-relations.php \
+            hub/lib-graph.php \
             hub/lib-lifecycle.php \
             hub/services.inc.php \
             hub/install_updates.php \
