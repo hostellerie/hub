@@ -263,3 +263,22 @@ Backlink diagnostics deliberately distinguish three evidence levels:
 This prevents Monitor, Agent or other consumers from treating integration capability as proof that a backlink is present on a rendered provider page.
 
 Reciprocal-link verification is stricter still: for Core articles, Hub can verify that the expected pillar backlink fragment is generated and owns the placement path, so the relation is reported as `hub-rendered`. For generic providers, Hub may report `fragment-available-runtime-unverified` or `integration-available-unverified`; neither status is treated as proof of a backlink on the rendered provider page.
+
+
+### Hub-unconnected content
+
+Hub 0.9.0 can review provider-owned content exposed through the shared `content.collection` contract and identify items that are absent from the enabled Hub relationship graph.
+
+These items are reported as:
+
+`hub-unconnected`
+
+This is intentionally **not** an SEO-orphan verdict. Hub does not know every hyperlink, menu, sitemap, feed or provider-owned navigation path on the site, so absence from the Hub graph alone cannot prove that a page is globally orphaned.
+
+The diagnostic:
+
+- uses only providers exposing the shared collection contract;
+- does not scan plugin-private tables;
+- does not use the Core article SQL selector for this cross-provider check;
+- excludes collection items already present as a Hub pillar or approved relation;
+- reports the collection limit and whether the returned result may be truncated.
