@@ -230,3 +230,10 @@ Editorial suggestions remain human-controlled. In Relations administration, a ca
 - **Restore** removes the persisted decision immediately.
 
 Hub stores these decisions separately from approved relationships in `hub_suggestion_decisions`; dismissed or deferred candidates never become graph edges unless an administrator explicitly approves them.
+
+
+## Close-content review
+
+Hub 0.8.0 can flag article pairs for human review when they belong to the same Static Page pillar topic context and their titles are lexically close. The first deterministic rule requires at least one shared specific topic, at least two common significant title tokens, and Jaccard title-token similarity of 50% or more.
+
+This is not an automatic SEO cannibalization diagnosis. Hub exposes the exact shared topics, common title tokens and similarity score, and never merges, redirects or rewrites content. Review pairs can be deferred for 30 days, dismissed, or restored through Relations administration.
