@@ -40,6 +40,17 @@ $backlink = isset($summary['backlink']) && is_array($summary['backlink'])
     ? $summary['backlink']
     : array();
 
+$health = isset($summary['health']) && is_array($summary['health'])
+    ? $summary['health']
+    : array();
+
+$content .= '<h2>Pillar health</h2>'
+    . '<ul>'
+    . '<li>Healthy: ' . (isset($health['healthy']) ? (int) $health['healthy'] : 0) . '</li>'
+    . '<li>Needs attention: ' . (isset($health['attention']) ? (int) $health['attention'] : 0) . '</li>'
+    . '<li>Broken: ' . (isset($health['broken']) ? (int) $health['broken'] : 0) . '</li>'
+    . '</ul>';
+
 $content .= '<h2>Backlink integration evidence</h2>';
 $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
     . '<th>Evidence level</th><th>Relations</th><th>Meaning</th>'
@@ -109,13 +120,30 @@ if (empty($pillars)) {
         $sourceIdentity = (isset($source['type']) ? $source['type'] : '')
             . ':' . (isset($source['id']) ? $source['id'] : '');
 
+        $healthStatus = isset($pillar['health']['status']) ? (string) $pillar['health']['status'] : 'attention';
         $content .= '<details style="margin:0 0 12px;border:1px solid #d7d7d7;border-radius:4px;padding:10px">'
             . '<summary style="cursor:pointer"><strong><code>'
             . HUB_integrityAdminEscape($sourceIdentity) . '</code></strong> — '
+            . '<strong>' . HUB_integrityAdminEscape($healthStatus) . '</strong> — '
             . (isset($pillar['relation_count']) ? (int) $pillar['relation_count'] : 0)
             . ' relation(s), '
             . (isset($pillar['unresolved_relations']) ? (int) $pillar['unresolved_relations'] : 0)
             . ' unresolved</summary>';
+
+        $issues = isset($pillar['health']['issues']) && is_array($pillar['health']['issues'])
+            ? $pillar['health']['issues']
+            : array();
+        if (!empty($issues)) {
+            $content .= '<p><strong>Integrity issues:</strong></p><ul>';
+            foreach ($issues as $issue) {
+                $content .= '<li><code>'
+                    . HUB_integrityAdminEscape(isset($issue['code']) ? $issue['code'] : '')
+                    . '</code> — '
+                    . HUB_integrityAdminEscape(isset($issue['severity']) ? $issue['severity'] : '')
+                    . ' (' . (isset($issue['count']) ? (int) $issue['count'] : 0) . ')</li>';
+            }
+            $content .= '</ul>';
+        }
 
         if (empty($source['resolved'])) {
             $content .= '<p><strong>Pillar source unresolved:</strong> '
