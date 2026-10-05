@@ -103,4 +103,9 @@ hubEditorialAssert(strpos($source, 'HUB_resolveObject(') === false, 'editorial m
 hubEditorialAssert(strpos($source, 'HUB_linkAudit') === false, 'editorial models do not mix SEO/link diagnostics');
 hubEditorialAssert(strpos($source, 'suggest') === false, 'editorial models do not mix inferred suggestions');
 
+$adminSource = file_get_contents(dirname(__DIR__) . '/admin/editorial.php');
+hubEditorialAssert(strpos($adminSource, 'Approved relation inventory') !== false, 'editorial admin exposes approved structural inventory');
+hubEditorialAssert(strpos($adminSource, 'HUB_editorialInventory(false)') !== false, 'editorial admin reads the shared inventory model');
+hubEditorialAssert(strpos($adminSource, 'HUB_saveRelation(') === false, 'editorial mapping view remains read-only');
+
 echo "Hub editorial summary contract tests passed." . PHP_EOL;
