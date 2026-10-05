@@ -38,7 +38,7 @@ $hubIntegrityRelations = array(
         array(
             'item_type' => 'events',
             'item_id' => 'event-ok',
-            'relation_role' => 'related',
+            'relation_role' => 'equivalent',
             'editorial_role' => '',
             'is_enabled' => 1,
         ),
@@ -63,6 +63,17 @@ function HUB_objectLanguageContext($type, $id, $uid = 0)
             'id' => 'event-ok',
             'site_language' => 'english',
             'object_language' => 'th',
+            'object_language_known' => true,
+            'source' => 'provider-item-info-language',
+        );
+    }
+
+    if ((string) $type === 'staticpages' && (string) $id === 'guide') {
+        return array(
+            'type' => 'staticpages',
+            'id' => 'guide',
+            'site_language' => 'english',
+            'object_language' => 'en',
             'object_language_known' => true,
             'source' => 'provider-item-info-language',
         );
@@ -325,6 +336,12 @@ hubIntegrityAssert($pillar['current_site_relations'] === 2, 'pillar integrity co
 hubIntegrityAssert($pillar['unknown_site_relations'] === 1, 'pillar integrity counts unresolved/unknown site targets');
 hubIntegrityAssert($pillar['relations'][3]['site_context']['cross_site'] === true, 'relation exposes cross-site URL context');
 hubIntegrityAssert($pillar['relations'][3]['language_context']['object_language'] === 'th', 'relation preserves explicit provider object language');
+hubIntegrityAssert($pillar['relations'][3]['relation_role'] === 'equivalent', 'explicit equivalent-content role is preserved');
+hubIntegrityAssert($pillar['relations'][3]['equivalence_context']['language_status'] === 'cross-language', 'equivalent relation is classified cross-language from provider metadata');
+hubIntegrityAssert($pillar['relations'][3]['equivalence_context']['site_status'] === 'cross-site', 'equivalent relation is classified cross-site from resolved URL');
+hubIntegrityAssert($pillar['equivalents']['total'] === 1, 'pillar counts approved equivalent relation');
+hubIntegrityAssert($pillar['equivalents']['cross_language'] === 1, 'pillar counts cross-language equivalence');
+hubIntegrityAssert($pillar['equivalents']['cross_site'] === 1, 'pillar counts cross-site equivalence');
 hubIntegrityAssert($pillar['relations'][0]['language_context']['object_language_known'] === false, 'relation does not infer missing object language');
 hubIntegrityAssert($pillar['backlink']['hub_managed'] === 1, 'pillar counts Hub-managed backlink paths');
 hubIntegrityAssert($pillar['backlink']['integration_available'] === 2, 'pillar counts generic provider integration availability');
@@ -373,6 +390,8 @@ hubIntegrityAssert($summary['relations'] === 4, 'integrity summary counts relati
 hubIntegrityAssert($summary['unresolved_relations'] === 1, 'integrity summary aggregates unresolved relations');
 hubIntegrityAssert($summary['cross_site_relations'] === 1, 'integrity summary aggregates cross-site relation count');
 hubIntegrityAssert($summary['current_site_relations'] === 2, 'integrity summary aggregates current-site relation count');
+hubIntegrityAssert($summary['equivalents']['total'] === 1, 'integrity summary aggregates equivalent relations');
+hubIntegrityAssert($summary['equivalents']['cross_language'] === 1, 'integrity summary aggregates cross-language equivalents');
 hubIntegrityAssert($summary['providers']['maps']['unresolved'] === 1, 'integrity summary aggregates provider unresolved state');
 hubIntegrityAssert($summary['providers']['videos']['resolved'] === 1, 'integrity summary aggregates provider resolved state');
 hubIntegrityAssert($summary['backlink']['integration_available'] === 2, 'integrity summary aggregates integration evidence');
