@@ -282,3 +282,10 @@ The diagnostic:
 - does not use the Core article SQL selector for this cross-provider check;
 - excludes collection items already present as a Hub pillar or approved relation;
 - reports the collection limit and whether the returned result may be truncated.
+
+
+### Affected-page diagnostics
+
+The existing `hub.affected.read` service now keeps its dependency-context output and adds public-page diagnostics. For each affected Hub pillar it reports the current source identity, dependency reason, whether the public page resolves, its current title/URL, and any resolution diagnostic.
+
+The dependency calculation is not duplicated: `HUB_getAffectedContexts()` remains the authoritative source for which Hub contexts are affected. The 0.9 integrity layer only enriches those contexts for reporting.
