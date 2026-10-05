@@ -3,9 +3,9 @@
 $_SERVER['PHP_SELF'] = 'tests/editorial_contract.php';
 
 $hubEditorialPillars = array(
-    array('id' => 1, 'source_type' => 'staticpages', 'source_id' => 'hub-a', 'is_enabled' => 1),
-    array('id' => 2, 'source_type' => 'staticpages', 'source_id' => 'pillar-b', 'is_enabled' => 1),
-    array('id' => 3, 'source_type' => 'staticpages', 'source_id' => 'hub-c', 'is_enabled' => 1),
+    array('id' => 1, 'source_type' => 'staticpages', 'source_id' => 'hub-a', 'editorial_role' => 'guide', 'is_enabled' => 1),
+    array('id' => 2, 'source_type' => 'staticpages', 'source_id' => 'pillar-b', 'editorial_role' => 'reference', 'is_enabled' => 1),
+    array('id' => 3, 'source_type' => 'staticpages', 'source_id' => 'hub-c', 'editorial_role' => '', 'is_enabled' => 1),
 );
 
 $hubHiddenSuggestions = array();
@@ -14,8 +14,8 @@ $hubEditorialGapMode = false;
 
 $hubEditorialRelations = array(
     1 => array(
-        array('item_type' => 'staticpages', 'item_id' => 'pillar-b', 'relation_role' => 'sub-pillar', 'is_enabled' => 1),
-        array('item_type' => 'article', 'item_id' => 'story-x', 'relation_role' => 'satellite', 'is_enabled' => 1),
+        array('item_type' => 'staticpages', 'item_id' => 'pillar-b', 'relation_role' => 'sub-pillar', 'editorial_role' => 'reference', 'is_enabled' => 1),
+        array('item_type' => 'article', 'item_id' => 'story-x', 'relation_role' => 'satellite', 'editorial_role' => 'tutorial', 'is_enabled' => 1),
     ),
     2 => array(
         array('item_type' => 'article', 'item_id' => 'story-y', 'relation_role' => 'satellite', 'is_enabled' => 1),
@@ -41,6 +41,13 @@ function HUB_normalizeRelationRole($role)
     $role = strtolower(trim((string) $role));
     return in_array($role, array('related', 'sub-pillar', 'satellite', 'support'), true)
         ? $role : 'related';
+}
+
+function HUB_normalizeEditorialRole($role)
+{
+    $role = strtolower(trim((string) $role));
+    return in_array($role, array('', 'guide', 'tutorial', 'reference', 'case-study', 'download', 'video', 'discussion', 'resource', 'news', 'archive'), true)
+        ? $role : '';
 }
 
 function HUB_graphIdentityKey($type, $id)
@@ -198,6 +205,7 @@ $inventory = HUB_editorialInventory(false);
 hubEditorialAssert($inventory['schema'] === 1, 'editorial inventory schema is explicit');
 hubEditorialAssert(count($inventory['pillars']) === 3, 'editorial inventory exposes every approved pillar');
 hubEditorialAssert(count($inventory['pillars'][0]['items']) === 2, 'pillar inventory exposes approved relation identities');
+hubEditorialAssert($inventory['pillars'][0]['editorial_role'] === 'guide', 'inventory preserves pillar editorial role');
 $inventoryByIdentity = array();
 foreach ($inventory['pillars'][0]['items'] as $inventoryItem) {
     $inventoryByIdentity[$inventoryItem['type'] . ':' . $inventoryItem['id']] = $inventoryItem;
@@ -208,6 +216,8 @@ hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['is_nested_pilla
 hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['nested_pillar_id'] === 2, 'inventory exposes nested pillar identity without duplicating content');
 hubEditorialAssert($inventoryByIdentity['staticpages:pillar-b']['parent_count'] === 2, 'inventory exposes multi-parent participation');
 hubEditorialAssert(isset($inventoryByIdentity['article:story-x']), 'inventory remains provider-neutral by stable type + id');
+hubEditorialAssert($inventoryByIdentity['article:story-x']['relation_role'] === 'satellite', 'inventory keeps structural role separately');
+hubEditorialAssert($inventoryByIdentity['article:story-x']['editorial_role'] === 'tutorial', 'inventory keeps editorial role separately');
 
 $suggestions = HUB_editorialSuggestions(1, 10);
 hubEditorialAssert($suggestions['schema'] === 1, 'suggestion schema is explicit');
