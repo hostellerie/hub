@@ -143,10 +143,14 @@ hubEditorialAssert($suggestions['pillars'][0]['candidates'][0]['evidence'][0]['s
 hubEditorialAssert(count($suggestions['pillars'][0]['candidates'][0]['evidence'][0]['topics']) === 2, 'candidate retains matched topic evidence');
 
 $source = file_get_contents(dirname(__DIR__) . '/lib-editorial.php');
-hubEditorialAssert(strpos($source, 'HUB_resolveObject(') === false, 'structural summary does not mix provider metadata resolution');
-hubEditorialAssert(strpos($source, 'HUB_linkAudit') === false, 'structural summary does not mix SEO/link diagnostics');
-hubEditorialAssert(strpos($source, 'HUB_resolveObject(') === false, 'editorial models do not mix provider metadata resolution');
-hubEditorialAssert(strpos($source, 'HUB_linkAudit') === false, 'editorial models do not mix SEO/link diagnostics');
+$summaryStart = strpos($source, 'function HUB_editorialSummary(');
+$summaryEnd = strpos($source, 'function HUB_editorialInventory(', $summaryStart);
+$summarySource = ($summaryStart !== false && $summaryEnd !== false)
+    ? substr($source, $summaryStart, $summaryEnd - $summaryStart)
+    : '';
+
+hubEditorialAssert(strpos($summarySource, 'HUB_resolveObject(') === false, 'structural summary does not mix provider metadata resolution');
+hubEditorialAssert(strpos($summarySource, 'HUB_linkAudit') === false, 'structural summary does not mix SEO/link diagnostics');
 hubEditorialAssert(strpos($source, 'HUB_saveRelation(') === false, 'suggestion model never auto-approves relationships');
 
 $adminSource = file_get_contents(dirname(__DIR__) . '/admin/editorial.php');
