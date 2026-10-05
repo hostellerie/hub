@@ -258,6 +258,9 @@ function HUB_integrityPillar($pillar, $uid = 0)
         'unresolved_relations' => 0,
         'renderable_relations' => 0,
         'non_renderable_relations' => 0,
+        'cross_site_relations' => 0,
+        'current_site_relations' => 0,
+        'unknown_site_relations' => 0,
         'backlink' => array(
             'hub_managed' => 0,
             'integration_available' => 0,
@@ -285,6 +288,18 @@ function HUB_integrityPillar($pillar, $uid = 0)
         $renderable = $exists && !empty($resolved['url']);
         $backlink = HUB_integrityBacklinkEvidence($type);
         $reciprocal = HUB_integrityReciprocalEvidence($pillar, $relation, $uid);
+        $targetUrl = isset($resolved['url']) ? (string) $resolved['url'] : '';
+        $siteUrlContext = function_exists('HUB_siteUrlContext')
+            ? HUB_siteUrlContext($targetUrl)
+            : array();
+
+        if (!empty($siteUrlContext['cross_site'])) {
+            $result['cross_site_relations']++;
+        } elseif (!empty($siteUrlContext['current_site'])) {
+            $result['current_site_relations']++;
+        } else {
+            $result['unknown_site_relations']++;
+        }
 
         if ($exists) {
             $result['resolved_relations']++;
@@ -346,7 +361,8 @@ function HUB_integrityPillar($pillar, $uid = 0)
             'resolved' => $exists,
             'renderable_from_pillar' => $renderable,
             'title' => isset($resolved['title']) ? (string) $resolved['title'] : '',
-            'url' => isset($resolved['url']) ? (string) $resolved['url'] : '',
+            'url' => $targetUrl,
+            'site_context' => $siteUrlContext,
             'diagnostic' => $renderable ? '' : (isset($resolved['diagnostic']) ? (string) $resolved['diagnostic'] : ''),
             'backlink_evidence' => $backlink,
             'reciprocal_evidence' => $reciprocal,
@@ -987,6 +1003,9 @@ function HUB_integritySummary($uid = 0)
         'unresolved_relations' => 0,
         'renderable_relations' => 0,
         'non_renderable_relations' => 0,
+        'cross_site_relations' => 0,
+        'current_site_relations' => 0,
+        'unknown_site_relations' => 0,
         'unresolved_pillar_sources' => 0,
         'health' => array(
             'healthy' => 0,
@@ -1024,6 +1043,12 @@ function HUB_integritySummary($uid = 0)
         $summary['unresolved_relations'] += (int) $diagnostic['unresolved_relations'];
         $summary['renderable_relations'] += (int) $diagnostic['renderable_relations'];
         $summary['non_renderable_relations'] += (int) $diagnostic['non_renderable_relations'];
+        $summary['cross_site_relations'] += isset($diagnostic['cross_site_relations'])
+            ? (int) $diagnostic['cross_site_relations'] : 0;
+        $summary['current_site_relations'] += isset($diagnostic['current_site_relations'])
+            ? (int) $diagnostic['current_site_relations'] : 0;
+        $summary['unknown_site_relations'] += isset($diagnostic['unknown_site_relations'])
+            ? (int) $diagnostic['unknown_site_relations'] : 0;
 
         if (empty($diagnostic['source']['resolved'])) {
             $summary['unresolved_pillar_sources']++;
