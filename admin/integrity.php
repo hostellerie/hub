@@ -251,9 +251,58 @@ if (empty($canonical)) {
     $content .= '</ul>';
 }
 
+$unconnected = isset($summary['unconnected_content']) && is_array($summary['unconnected_content'])
+    ? $summary['unconnected_content']
+    : array();
+$unconnectedProviders = isset($unconnected['providers']) && is_array($unconnected['providers'])
+    ? $unconnected['providers']
+    : array();
+
+$content .= '<h2>Content not connected to the Hub graph</h2>'
+    . '<p><strong>Important:</strong> <code>hub-unconnected</code> means only that provider-owned content returned by the shared '
+    . '<code>content.collection</code> contract is absent from the enabled Hub graph. It does <strong>not</strong> mean SEO orphan.</p>';
+
+if (empty($unconnectedProviders)) {
+    $content .= '<p>No unconnected content is currently reported by collection-capable providers.</p>';
+} else {
+    foreach ($unconnectedProviders as $provider => $providerData) {
+        $items = isset($providerData['items']) && is_array($providerData['items'])
+            ? $providerData['items']
+            : array();
+
+        $content .= '<details style="margin:0 0 12px;border:1px solid #d7d7d7;border-radius:4px;padding:10px">'
+            . '<summary style="cursor:pointer"><strong><code>'
+            . HUB_integrityAdminEscape($provider)
+            . '</code></strong> — '
+            . (isset($providerData['hub_unconnected_count']) ? (int) $providerData['hub_unconnected_count'] : count($items))
+            . ' hub-unconnected item(s)'
+            . (!empty($providerData['possibly_truncated']) ? ' — collection result may be truncated' : '')
+            . '</summary>';
+
+        if (empty($items)) {
+            $content .= '<p>No unconnected item.</p></details>';
+            continue;
+        }
+
+        $content .= '<table class="uk-table uk-table-divider uk-table-small"><thead><tr>'
+            . '<th>Identity</th><th>Title</th><th>Evidence</th>'
+            . '</tr></thead><tbody>';
+
+        foreach ($items as $item) {
+            $identity = (isset($item['type']) ? $item['type'] : $provider)
+                . ':' . (isset($item['id']) ? $item['id'] : '');
+            $content .= '<tr><td><code>' . HUB_integrityAdminEscape($identity) . '</code></td>'
+                . '<td>' . HUB_integrityAdminEscape(isset($item['title']) ? $item['title'] : '') . '</td>'
+                . '<td><code>content.collection</code> + graph membership absent</td></tr>';
+        }
+
+        $content .= '</tbody></table></details>';
+    }
+}
+
 $content .= '<h2>Scope boundary</h2>'
-    . '<p>This first 0.9.0 slice does not yet claim actual reciprocal-link presence for generic providers, '
-    . 'orphan status, canonical consistency, sitemap/feed coverage or full cluster-health scoring. '
+    . '<p>This 0.9.0 diagnostic does not claim actual reciprocal-link presence for generic providers, '
+    . 'global SEO orphan status, sitemap/feed coverage or opaque cluster-health scoring. '
     . 'Those checks will build on this normalized integrity model.</p>';
 
 $display = COM_startBlock('Hub integrity & cluster health') . $content . COM_endBlock();
