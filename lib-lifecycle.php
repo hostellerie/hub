@@ -73,6 +73,21 @@ function HUB_getAffectedContexts($type, $id, $includeDisabled = false)
         }
     }
 
+    if ($identity['type'] === 'topic' && function_exists('HUB_findPillarContextsForTopic')) {
+        foreach (HUB_findPillarContextsForTopic($identity['id'], $includeDisabled) as $topicContext) {
+            if (!is_array($topicContext) || empty($topicContext['pillar_id'])) {
+                continue;
+            }
+
+            $pillarId = (int) $topicContext['pillar_id'];
+            if (!isset($contexts[$pillarId])) {
+                $contexts[$pillarId] = $topicContext;
+            } elseif (!in_array('topic-assignment', $contexts[$pillarId]['reasons'], true)) {
+                $contexts[$pillarId]['reasons'][] = 'topic-assignment';
+            }
+        }
+    }
+
     foreach (HUB_findPillarsForItem($identity['type'], $identity['id'], $includeDisabled) as $pillar) {
         $pillarId = isset($pillar['id']) ? (int) $pillar['id'] : 0;
         if ($pillarId < 1) {
