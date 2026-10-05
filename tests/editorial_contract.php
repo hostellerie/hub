@@ -215,8 +215,9 @@ $adminSource = file_get_contents(dirname(__DIR__) . '/admin/editorial.php');
 hubEditorialAssert(strpos($adminSource, 'Approved relation inventory') !== false, 'editorial admin exposes approved structural inventory');
 hubEditorialAssert(strpos($adminSource, 'HUB_editorialInventory(false)') !== false, 'editorial admin reads the shared inventory model');
 hubEditorialAssert(strpos($adminSource, 'HUB_saveRelation(') === false, 'editorial mapping view remains read-only');
-hubEditorialAssert(strpos($adminSource, 'Review signal:') !== false, 'temporal review signals are visible in admin');
-hubEditorialAssert(strpos($adminSource, 'dated marker:') !== false, 'admin explains dated marker evidence');
-hubEditorialAssert(strpos($adminSource, 'version marker:') !== false, 'admin explains version marker evidence');
+$relationsAdminSource = file_get_contents(dirname(__DIR__) . '/admin/relations.php');
+hubEditorialAssert(strpos($relationsAdminSource, 'Review signal:') !== false, 'temporal review signals are visible in relation suggestions');
+hubEditorialAssert(strpos($relationsAdminSource, 'dated marker:') !== false, 'relation suggestions explain dated marker evidence');
+hubEditorialAssert(strpos($relationsAdminSource, 'version marker:') !== false, 'relation suggestions explain version marker evidence');
 
 echo "Hub editorial summary contract tests passed." . PHP_EOL;
