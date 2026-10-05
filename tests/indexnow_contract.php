@@ -61,7 +61,7 @@ function HUB_serviceHasAction($plugin, $action)
     global $hubIndexNowFixture;
 
     return $plugin === 'indexnow'
-        && $action === 'submit_urls'
+        && in_array($action, array('submit_urls', 'status_read'), true)
         && !empty($hubIndexNowFixture['service_available']);
 }
 
@@ -75,10 +75,29 @@ function PLG_invokeService($type, $action, $args, &$output, &$svc_msg)
         'args' => $args,
     );
 
-    $output = array(
-        'capability' => 'indexnow.urls.submit',
-        'received' => isset($args['urls']) ? count($args['urls']) : 0,
-    );
+    if ($action === 'status_read') {
+        $output = array(
+            'capability' => 'indexnow.status.read',
+            'transport' => array('mode' => 'immediate-batch', 'batch_size' => 100),
+            'key' => array(
+                'present' => true,
+                'valid' => true,
+                'file_exists' => true,
+                'file_readable' => true,
+                'file_matches' => true,
+            ),
+            'history_available' => true,
+            'latest_submission' => array(
+                'status' => 'success',
+                'submitted_at' => '2026-10-05 10:00:00',
+            ),
+        );
+    } else {
+        $output = array(
+            'capability' => 'indexnow.urls.submit',
+            'received' => isset($args['urls']) ? count($args['urls']) : 0,
+        );
+    }
     $svc_msg = array();
 
     return 0;
@@ -185,8 +204,20 @@ $missing = HUB_notifyIndexNowAffectedContexts(
 hubIndexNowAssert(empty($missing['available']), 'Older or missing IndexNow is a no-op');
 hubIndexNowAssert(count($hubIndexNowFixture['calls']) === $before, 'Hub does not invoke an unavailable IndexNow action');
 
+$hubIndexNowFixture['service_available'] = true;
+$hubIndexNowFixture['calls'] = array();
+$statusResult = HUB_indexNowStatus();
+
+hubIndexNowAssert(!empty($statusResult['available']), 'IndexNow status service is available');
+hubIndexNowAssert($statusResult['data']['capability'] === 'indexnow.status.read', 'Hub consumes normalized IndexNow status capability');
+hubIndexNowAssert($statusResult['data']['transport']['mode'] === 'immediate-batch', 'Hub receives provider-owned transport mode as information');
+hubIndexNowAssert(!empty($statusResult['data']['key']['file_matches']), 'Hub receives normalized key readiness only');
+hubIndexNowAssert(count($hubIndexNowFixture['calls']) === 1, 'Hub reads IndexNow status through one service invocation');
+hubIndexNowAssert($hubIndexNowFixture['calls'][0]['action'] === 'status_read', 'Hub uses IndexNow status_read action');
+
 $source = file_get_contents(dirname(__DIR__) . '/lib-indexnow.php');
 hubIndexNowAssert(strpos($source, "PLG_invokeService(") !== false, 'Hub delegates through Geeklog service dispatcher');
 hubIndexNowAssert(strpos($source, "send_to_indexnow(") === false, 'Hub never calls IndexNow transport internals directly');
+hubIndexNowAssert(strpos($source, 'indexnow_key') === false, 'Hub never reads or stores the IndexNow key');
 
 echo "Hub IndexNow integration contract tests passed." . PHP_EOL;
