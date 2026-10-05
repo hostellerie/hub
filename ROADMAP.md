@@ -455,9 +455,9 @@ The normalized editorial summary is therefore the first reusable "marketing mapp
 - keep GitHub synchronization outside Hub itself: Agent/Connector or another external integration may publish/update an exported roadmap in a repository
 - allow future semantic or AI-assisted ranking only as an optional layer
 - AI suggestions must not silently create editorial relationships
-- extend optional editorial-role metadata beyond presentation labels when useful, with generic roles such as `hub`, `pillar`, `sub-pillar`, `satellite`, `archive`, `news` and `resource`
-- keep editorial roles optional, administrator-approved and independent from the provider's own content type
-- never infer or overwrite an approved editorial role silently
+- keep structural graph position in `relation_role` (`related`, `sub-pillar`, `satellite`, `support`) and store optional editorial function separately in `editorial_role` — implemented for both pillars and relations with `guide`, `tutorial`, `reference`, `case-study`, `download`, `video`, `discussion`, `resource`, `news` and `archive`
+- keep editorial roles optional, administrator-approved and independent from the provider's own content type — implemented with an empty default and explicit administration selectors
+- never infer or overwrite an approved editorial role silently — implemented; unknown values normalize to empty and suggestions never assign editorial roles automatically
 
 Suggested inventory model:
 
