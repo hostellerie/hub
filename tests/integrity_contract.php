@@ -76,6 +76,46 @@ function HUB_normalizeEditorialRole($role)
         ? $role : '';
 }
 
+function HUB_relationObjectTypes()
+{
+    return array('article', 'videos', 'documents');
+}
+
+function HUB_relationCollectionSupported($type)
+{
+    return in_array((string) $type, array('videos', 'documents'), true);
+}
+
+function HUB_relationObjectOptions($type, $limit = 100)
+{
+    if ($type === 'videos') {
+        return array(
+            'supported' => true,
+            'items' => array(
+                array('id' => 'video-ok', 'title' => 'Connected video', 'url' => '/video'),
+                array('id' => 'video-free', 'title' => 'Unconnected video', 'url' => '/video-free'),
+            ),
+            'message' => '',
+        );
+    }
+
+    if ($type === 'documents') {
+        return array(
+            'supported' => true,
+            'items' => array(
+                array('id' => 'doc-free', 'title' => 'Unconnected document', 'url' => '/doc-free'),
+            ),
+            'message' => '',
+        );
+    }
+
+    return array(
+        'supported' => false,
+        'items' => array(),
+        'message' => '',
+    );
+}
+
 function HUB_getPillars($includeDisabled = true)
 {
     global $hubIntegrityPillars;
@@ -227,6 +267,18 @@ foreach ($pillar['health']['issues'] as $issue) {
 hubIntegrityAssert(in_array('relation-target-unresolved', $issueCodes, true), 'broken pillar explains unresolved target issue');
 hubIntegrityAssert(in_array('reciprocal-link-runtime-unverified', $issueCodes, true), 'pillar explains runtime-unverified reciprocal links');
 
+$unconnected = HUB_integrityUnconnectedContent(100);
+hubIntegrityAssert($unconnected['status'] === 'hub-unconnected', 'unconnected diagnostic uses explicit non-orphan status');
+hubIntegrityAssert($unconnected['scope'] === 'shared-content-collections-only', 'unconnected diagnostic scope is explicit');
+hubIntegrityAssert($unconnected['total'] === 2, 'hub-unconnected detects collection items outside graph');
+hubIntegrityAssert(isset($unconnected['providers']['videos']), 'collection-capable videos provider participates');
+hubIntegrityAssert(isset($unconnected['providers']['documents']), 'collection-capable documents provider participates');
+hubIntegrityAssert($unconnected['providers']['videos']['hub_unconnected_count'] === 1, 'connected collection item is excluded');
+hubIntegrityAssert($unconnected['providers']['videos']['items'][0]['id'] === 'video-free', 'unconnected video identity is retained');
+hubIntegrityAssert($unconnected['providers']['videos']['items'][0]['evidence']['signal'] === 'content.collection', 'unconnected evidence names shared collection contract');
+hubIntegrityAssert(!isset($unconnected['providers']['article']), 'core article SQL discovery is excluded from provider collection diagnostic');
+hubIntegrityAssert(strpos($unconnected['note'], 'does not mean SEO orphan') !== false, 'unconnected diagnostic rejects orphan overclaim');
+
 $summary = HUB_integritySummary(0);
 hubIntegrityAssert($summary['schema'] === 1, 'integrity summary schema is explicit');
 hubIntegrityAssert($summary['scope'] === 'integrity-0.9', 'integrity summary scope is explicit');
@@ -241,6 +293,8 @@ hubIntegrityAssert($summary['reciprocal']['hub_rendered'] === 1, 'integrity summ
 hubIntegrityAssert($summary['reciprocal']['fragment_available_runtime_unverified'] === 1, 'integrity summary preserves unverified generic fragment distinction');
 hubIntegrityAssert(isset($summary['graph']['counts']), 'integrity summary exposes graph diagnostics');
 hubIntegrityAssert(isset($summary['canonical_collisions']), 'integrity summary exposes canonical collision diagnostics');
+hubIntegrityAssert(isset($summary['unconnected_content']), 'integrity summary exposes provider content unconnected from Hub graph');
+hubIntegrityAssert($summary['unconnected_content']['status'] === 'hub-unconnected', 'integrity summary preserves non-orphan terminology');
 
 $hubIntegrityPillars = array(
     array('id' => 10, 'source_type' => 'staticpages', 'source_id' => 'cycle-a', 'editorial_role' => '', 'is_enabled' => 1),
